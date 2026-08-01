@@ -1,0 +1,9 @@
+html { scrollbar-width: none; }
+  * { scrollbar-width: none; -ms-overflow-style: none; }
+  ::-webkit-scrollbar { display: none; width: 0; height: 0; background: transparent; }
+  html, body, a { cursor: none; }
+  #pg-ball { position: fixed; left: 0; top: 0; width: 22px; height: 22px; border-radius: 50%; background: #ffffff; mix-blend-mode: difference; pointer-events: none; z-index: 9999; transition: width 0.25s ease, height 0.25s ease; }
+  #pg-ball.big { width: 34px; height: 34px; }
+  body { margin: 0; background: #0b0406; color: #f4f4f4; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #f4f4f4; text-decoration: none; }
+  a:hover { color: #ff3b52; }

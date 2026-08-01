@@ -1,0 +1,21 @@
+html, body, a, [data-bs-tile] { cursor: none; }
+  #pg-ball { position: fixed; left: 0; top: 0; width: 22px; height: 22px; mix-blend-mode: difference; pointer-events: none; z-index: 9999; transition: width 0.25s ease, height 0.25s ease; }
+  #pg-ball .pg-ball-inner { width: 100%; height: 100%; background: #ffffff; border-radius: 50%; }
+  #pg-ball.pg-ball-big { width: 34px; height: 34px; }
+  html { scroll-behavior: smooth; scrollbar-width: none; }
+  * { scrollbar-width: none; -ms-overflow-style: none; }
+  ::-webkit-scrollbar { display: none; width: 0; height: 0; background: transparent; }
+  body { margin: 0; background: #ffffff; color: #131313; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #131313; text-decoration: none; }
+  a:hover { color: #666666; }
+  @keyframes bsRise { from { transform: translateY(112%); } to { transform: translateY(0); } }
+  .bs-rise { display: block; overflow: hidden; padding-bottom: 0.18em; margin-bottom: -0.18em; }
+  .bs-rise > span { display: block; transform: translateY(112%); animation: bsRise 1.25s cubic-bezier(0.19, 1, 0.22, 1) both; }
+  .bs-rise:nth-of-type(2) > span { animation-delay: 0.12s; }
+  #bs-grid [data-bs-tile]:focus [data-bs-cap], #bs-grid [data-bs-tile]:focus-within [data-bs-cap] { opacity: 1 !important; }
+  #bs-grid [data-bs-tile]:focus { outline: none; }
+  #bs-grid[data-crop="square"] img { aspect-ratio: 1 / 1; object-fit: cover; }
+  #bs-grid[data-crop="portrait"] img { aspect-ratio: 4 / 5; object-fit: cover; }
+  #bs-grid[data-crop="landscape"] img { aspect-ratio: 3 / 2; object-fit: cover; }
+  @media (max-width: 900px) { #bs-grid { columns: 2 !important; } }
+  @media (max-width: 560px) { #bs-grid { columns: 1 !important; } }
