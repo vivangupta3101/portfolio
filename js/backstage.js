@@ -40,7 +40,32 @@ class Component {
     window.addEventListener('mousemove', this._move);
   }
 
-  componentDidMount() { this._ballMount(); }
+  _glide() {
+    // Glide scrolling: ease the discrete mouse-wheel notch. Trackpad/touch stay native.
+    if ((window.matchMedia && matchMedia('(pointer: coarse)').matches) || (navigator.hardwareConcurrency || 8) <= 4) return;
+    const root = document.documentElement;
+    let target = 0, current = 0, rafId = null, active = false;
+    const maxScroll = () => Math.max(0, root.scrollHeight - window.innerHeight);
+    const stop = () => { if (rafId) cancelAnimationFrame(rafId); rafId = null; active = false; root.style.scrollBehavior = ''; };
+    const tick = () => {
+      const d = target - current;
+      if (Math.abs(d) < 0.4) { window.scrollTo(0, target); stop(); return; }
+      current += d * 0.16;
+      window.scrollTo(0, current);
+      rafId = requestAnimationFrame(tick);
+    };
+    window.addEventListener('wheel', (e) => {
+      if (e.ctrlKey || e.defaultPrevented) return;
+      if (!(e.deltaMode === 1 || Math.abs(e.deltaY) >= 45)) { stop(); return; }
+      e.preventDefault();
+      if (!active) { active = true; target = current = window.scrollY; root.style.scrollBehavior = 'auto'; }
+      const m = e.deltaMode === 1 ? 16 : 1;
+      target = Math.max(0, Math.min(maxScroll(), target + e.deltaY * m));
+      if (rafId === null) rafId = requestAnimationFrame(tick);
+    }, { passive: false });
+  }
+
+  componentDidMount() { this._ballMount(); this._glide(); }
   componentWillUnmount() { if (this._move) window.removeEventListener('mousemove', this._move); }
 
   renderVals() {

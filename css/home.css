@@ -75,3 +75,14 @@
   #vg-ball.vg-ball-watchmaker .vg-ball-inner { border-radius: 0; transform: rotate(360deg); -webkit-mask: url('../assets/images/watchmaker-silhouette.png') center / contain no-repeat; mask: url('../assets/images/watchmaker-silhouette.png') center / contain no-repeat; }
   #vg-ball.vg-ball-strahl { width: 84px; height: 80px; border-radius: 0; background: transparent; transition: width 0.8s cubic-bezier(0.34, 1.2, 0.44, 1), height 0.8s cubic-bezier(0.34, 1.2, 0.44, 1); }
   #vg-ball.vg-ball-strahl .vg-ball-inner { border-radius: 0; transform: rotate(360deg); -webkit-mask: url('../assets/images/strahl-silhouette.png') center / contain no-repeat; mask: url('../assets/images/strahl-silhouette.png') center / contain no-repeat; }
+
+  /* performance fallbacks: applied when the device can't hold 60fps with the heavy effects */
+  html.vg-lite .vg-win { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; transform: none !important; will-change: auto !important; background-size: cover !important; background-position: center !important; }
+  html.vg-lite nav { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: #fbfbfa !important; }
+  html.vg-lite #vg-index { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: rgba(8,8,8,0.92) !important; }
+  html.vg-lite .vg-row.vg-expand { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  #vg-reader { overscroll-behavior: contain; }
+  @media (pointer: coarse) {
+    html, body, a { cursor: auto; }
+    #vg-ball, #vg-sb { display: none !important; }
+  }

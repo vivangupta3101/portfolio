@@ -13,24 +13,75 @@ class Component {
     const main = document.querySelector('main');
     const speed = this.props.leakSpeed ?? 1.5;
     leak.style.transitionDuration = speed + 's';
-    const sync = () => {
-      document.querySelectorAll('.vg-win').forEach((w) => {
-        const r = w.parentElement.getBoundingClientRect();
-        w.style.width = window.innerWidth + 'px';
-        w.style.height = window.innerHeight + 'px';
-        w.style.left = (-r.left) + 'px';
-        w.style.top = (-r.top) + 'px';
-      });
+    // one rAF per frame drives every scroll-reactive job (was: several listeners each forcing layout)
+    const scrollJobs = [];
+    let sJobRaf = null;
+    const runScrollJobs = () => { sJobRaf = null; for (let i = 0; i < scrollJobs.length; i++) scrollJobs[i](); };
+    const onScrollShared = () => { if (sJobRaf === null) sJobRaf = requestAnimationFrame(runScrollJobs); };
+    // weak GPUs choke on 4 full-viewport background layers + a blurred fixed nav.
+    // detect once and drop those two effects instead of dropping frames.
+    const coarse = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+    const lowCore = (navigator.hardwareConcurrency || 8) <= 4;
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let lite = coarse || lowCore || reduce;
+    const setLite = (on) => {
+      lite = on;
+      document.documentElement.classList.toggle('vg-lite', on);
+      if (on) wins.forEach((w) => { w.style.transform = ''; w.style.willChange = ''; });
+      else { sizeWins(); sync(); }
     };
+    let wins = [];
+    let vw = window.innerWidth, vh = window.innerHeight;
+    const sizeWins = () => {
+      wins = Array.prototype.slice.call(document.querySelectorAll('.vg-win'));
+      vw = window.innerWidth; vh = window.innerHeight;
+      if (lite) return;
+      for (let i = 0; i < wins.length; i++) {
+        const w = wins[i];
+        w.style.width = vw + 'px'; w.style.height = vh + 'px';
+        w.style.left = '0px'; w.style.top = '0px';
+        w.style.willChange = 'transform';
+      }
+    };
+    // read every rect first, then write every transform: one layout pass per frame, no thrash
+    const rectBuf = [];
+    const sync = () => {
+      if (lite) return;
+      const n = wins.length;
+      for (let i = 0; i < n; i++) {
+        const p = wins[i].parentElement;
+        rectBuf[i] = p && p.offsetParent !== null ? p.getBoundingClientRect() : null;
+      }
+      for (let i = 0; i < n; i++) {
+        const r = rectBuf[i];
+        if (!r || r.bottom < -vh || r.top > vh * 2) continue;
+        wins[i].style.transform = 'translate3d(' + (-r.left).toFixed(1) + 'px,' + (-r.top).toFixed(1) + 'px,0)';
+      }
+    };
+    if (lite) document.documentElement.classList.add('vg-lite');
+    sizeWins();
     sync();
+    // second safety net: if the first ~1.5s of frames can't hold 45fps, go lite anyway
+    if (!lite) {
+      let frames = 0; const t0 = performance.now();
+      const probe = () => {
+        frames++;
+        const dt = performance.now() - t0;
+        if (dt < 1500) { requestAnimationFrame(probe); return; }
+        if (frames / (dt / 1000) < 45) setLite(true);
+      };
+      requestAnimationFrame(probe);
+    }
     // hero scroll choreography: faded up top while video plays -> settles centered, sub fades in
     const title = document.getElementById('vg-hero-title');
     const sub = document.getElementById('vg-hero-sub');
     const arrow = document.getElementById('vg-hero-arrow');
     const hero = document.getElementById('top');
     const smooth = (t) => t * t * (3 - 2 * t);
+    let heroSettled = false;
     const heroTick = () => {
       if (!title || !hero) return;
+      if (window.scrollY > hero.offsetHeight + 200) { if (heroSettled) return; heroSettled = true; } else heroSettled = false;
       const range = Math.max(1, hero.offsetHeight - window.innerHeight);
       const p = Math.max(0, Math.min(1, window.scrollY / range));
       const e = smooth(p);
@@ -116,10 +167,13 @@ class Component {
       title.style.transition = 'none';
       if (sub) sub.style.transition = 'none';
     }, 1700);
-    const onScroll = () => { sync(); heroTick(); };
-    this._sync = onScroll;
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
+    scrollJobs.push(sync);
+    scrollJobs.push(heroTick);
+    const onResize = () => { sizeWins(); sync(); heroTick(); };
+    this._sync = onScrollShared;
+    this._resize = onResize;
+    window.addEventListener('scroll', onScrollShared, { passive: true });
+    window.addEventListener('resize', onResize);
     // preload leak images so the expand never paints mid-decode
     document.querySelectorAll('[data-wire]').forEach((r) => { const i = new Image(); i.src = (window.__resources && r.dataset.wireRes && window.__resources[r.dataset.wireRes]) || r.dataset.wire; });
     document.querySelectorAll('[data-leak-img]').forEach((r) => { const i = new Image(); i.src = (window.__resources && r.dataset.leakRes && window.__resources[r.dataset.leakRes]) || r.dataset.leakImg; });
@@ -140,7 +194,7 @@ class Component {
         clearTimeout(sbHide);
         if (!sbDragging && !sb.matches(':hover')) sbHide = setTimeout(() => sb.classList.remove('vg-sb-show'), 900);
       };
-      window.addEventListener('scroll', () => { sbUpdate(); sbFlash(); }, { passive: true });
+      scrollJobs.push(() => { sbUpdate(); sbFlash(); });
       window.addEventListener('resize', sbUpdate);
       window.addEventListener('mousemove', (e) => {
         if (window.innerWidth - e.clientX < 40) sbFlash();
@@ -165,9 +219,11 @@ class Component {
     }
     // ball cursor
     const ball = document.getElementById('vg-ball');
-    let bx = -100, by = -100, tx = -100, ty = -100, raf;
+    let bx = -100, by = -100, tx = -100, ty = -100, raf, bh = 11;
     const move = (e) => { tx = e.clientX; ty = e.clientY; };
-    const tick = () => { bx += (tx - bx) * 0.22; by += (ty - by) * 0.22; const h = ball.offsetWidth / 2; ball.style.transform = 'translate(' + (bx - h) + 'px,' + (by - h) + 'px)'; raf = requestAnimationFrame(tick); };
+    const measureBall = () => { bh = ball.offsetWidth / 2; };
+    setInterval(measureBall, 120);
+    const tick = () => { bx += (tx - bx) * 0.22; by += (ty - by) * 0.22; ball.style.transform = 'translate3d(' + (bx - bh).toFixed(1) + 'px,' + (by - bh).toFixed(1) + 'px,0)'; raf = requestAnimationFrame(tick); };
     ball.style.transform = 'translate(-100px,-100px)';
     window.addEventListener('mousemove', move, { passive: true });
     raf = requestAnimationFrame(tick);
@@ -182,65 +238,77 @@ class Component {
       ball.className = '';
       ball.classList.remove('vg-ball-big');
     };
-    // inertial smooth scrolling — Safari steps wheel scrolls line-by-line; lerp toward a target instead
+    // Glide scrolling.
+    // A mouse wheel fires discrete notches (deltaY ~100), which the browser applies as jumps —
+    // that is the "step by step" jitter. Trackpads and touch already glide natively with real
+    // momentum, so we leave those completely alone and only ease the notches.
+    // Note: html has scroll-behavior:smooth for anchor links; it MUST be forced to auto while
+    // we drive the position ourselves, or every frame starts its own competing smooth animation.
     {
-      let target = 0, current = 0, rafId = null;
-      const maxScroll = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      const jump = (y) => window.scrollTo({ top: y, behavior: 'auto' });
+      const root = document.documentElement;
+      const blockScroll = (e) => e.preventDefault();
+      this._lockScroll = (on) => {
+        this._scrollLocked = on;
+        if (on) {
+          window.addEventListener('wheel', blockScroll, { passive: false });
+          window.addEventListener('touchmove', blockScroll, { passive: false });
+        } else {
+          window.removeEventListener('wheel', blockScroll);
+          window.removeEventListener('touchmove', blockScroll);
+        }
+      };
+
+      let target = 0, current = 0, rafId = null, active = false;
+      let rEl = null, rTarget = 0, rCurrent = 0, rRaf = null, rActive = false;
+      const EASE = 0.16, MIN = 0.4;
+      const maxScroll = () => Math.max(0, root.scrollHeight - window.innerHeight);
+      const stop = () => { if (rafId) cancelAnimationFrame(rafId); rafId = null; active = false; root.style.scrollBehavior = ''; };
       const tick = () => {
-        current += (target - current) * 0.1;
-        if (Math.abs(target - current) < 0.5) { current = target; jump(current); rafId = null; return; }
-        jump(current);
+        const d = target - current;
+        if (Math.abs(d) < MIN) { window.scrollTo(0, target); stop(); return; }
+        current += d * EASE;
+        window.scrollTo(0, current);
         rafId = requestAnimationFrame(tick);
       };
-      // the reader overlay gets the same inertia, applied to its own scroll box
-      let rTarget = 0, rCurrent = 0, rRaf = null, rEl = null;
+      const rStop = () => { if (rRaf) cancelAnimationFrame(rRaf); rRaf = null; rActive = false; };
       const rTick = () => {
-        if (!rEl) { rRaf = null; return; }
-        rCurrent += (rTarget - rCurrent) * 0.1;
-        if (Math.abs(rTarget - rCurrent) < 0.5) { rCurrent = rTarget; rEl.scrollTop = rCurrent; rRaf = null; return; }
+        if (!rEl) { rStop(); return; }
+        const d = rTarget - rCurrent;
+        if (Math.abs(d) < MIN) { rEl.scrollTop = rTarget; rStop(); return; }
+        rCurrent += d * EASE;
         rEl.scrollTop = rCurrent;
         rRaf = requestAnimationFrame(rTick);
       };
-      this._readerScrollSync = () => { if (rRaf === null && rEl) { rTarget = rEl.scrollTop; rCurrent = rEl.scrollTop; } };
-      this._readerScrollReset = (el) => {
-        rEl = el || null;
-        if (rRaf) { cancelAnimationFrame(rRaf); rRaf = null; }
-        rTarget = rCurrent = el ? el.scrollTop : 0;
-      };
+      // a notch = line-mode, or a pixel delta big enough that no trackpad would emit it
+      const isNotch = (e) => e.deltaMode === 1 || Math.abs(e.deltaY) >= 45;
+
       const onWheel = (e) => {
+        if (this._scrollLocked) { e.preventDefault(); return; }
+        if (e.ctrlKey || e.defaultPrevented) return;
         if (this._readerOpen) {
-          const el = rEl || document.getElementById('vg-reader');
+          const el = document.getElementById('vg-reader');
           if (!el) return;
-          rEl = el;
-          if (e.ctrlKey || e.defaultPrevented) return;
+          if (!isNotch(e)) { rEl = el; rStop(); return; }
           e.preventDefault();
-          if (rRaf === null) { rTarget = el.scrollTop; rCurrent = el.scrollTop; }
-          const m = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? el.clientHeight : 1;
-          const rMax = Math.max(0, el.scrollHeight - el.clientHeight);
-          rTarget = Math.max(0, Math.min(rMax, rTarget + e.deltaY * m));
+          rEl = el;
+          if (!rActive) { rActive = true; rTarget = rCurrent = el.scrollTop; }
+          const m = e.deltaMode === 1 ? 16 : 1;
+          rTarget = Math.max(0, Math.min(Math.max(0, el.scrollHeight - el.clientHeight), rTarget + e.deltaY * m));
           if (rRaf === null) rRaf = requestAnimationFrame(rTick);
           return;
         }
-        if (this._scrollLocked) { e.preventDefault(); return; }
-        if (document.body.style.overflow === 'hidden' || e.ctrlKey || e.defaultPrevented) return;
+        if (!isNotch(e)) { stop(); return; } // trackpad / touch: hands off
         e.preventDefault();
-        if (rafId === null) { target = window.scrollY; current = window.scrollY; }
-        const mult = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1;
-        target = Math.max(0, Math.min(maxScroll(), target + e.deltaY * mult));
+        if (!active) { active = true; target = current = window.scrollY; root.style.scrollBehavior = 'auto'; }
+        const m = e.deltaMode === 1 ? 16 : 1;
+        target = Math.max(0, Math.min(maxScroll(), target + e.deltaY * m));
         if (rafId === null) rafId = requestAnimationFrame(tick);
       };
-      // stay in sync with scrolls we didn't drive (scrollbar drag, anchor jumps) so the next wheel doesn't lurch
-      const onNativeScroll = () => { if (rafId === null) { target = window.scrollY; current = window.scrollY; } };
-      window.addEventListener('scroll', onNativeScroll, { passive: true });
-      window.addEventListener('wheel', onWheel, { passive: false });
-      this._smoothScroll = () => { window.removeEventListener('wheel', onWheel); window.removeEventListener('scroll', onNativeScroll); if (rafId) cancelAnimationFrame(rafId); };
-      // freeze inertial scrolling while a project opens, then resync so the next wheel doesn't lurch
-      this._lockScroll = (on) => {
-        this._scrollLocked = on;
-        if (on) { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } }
-        else { target = window.scrollY; current = window.scrollY; }
-      };
+      // lite devices keep pure native scroll — no main-thread work in the scroll path at all
+      if (!lite) window.addEventListener('wheel', onWheel, { passive: false });
+      this._smoothScroll = () => { window.removeEventListener('wheel', onWheel); stop(); rStop(); this._lockScroll(false); };
+      this._readerScrollSync = () => { if (rRaf === null && rEl) { rTarget = rCurrent = rEl.scrollTop; } };
+      this._readerScrollReset = (el) => { rEl = el || null; rStop(); rTarget = rCurrent = el ? el.scrollTop : 0; };
     }
     // nav logo expands leftwards to reveal links
     {
@@ -512,6 +580,7 @@ class Component {
         im.src = it.src; im.alt = '';
         im.width = it.w; im.height = it.h; // reserve layout up front: no late jump in scroll height
         if (i > 1) im.loading = 'lazy'; else im.fetchPriority = i === 0 ? 'high' : 'auto';
+        im.decoding = 'async';
         im.style.cssText = 'display:block;width:100%;height:auto;margin-bottom:-1px';
         strip.appendChild(im);
       });
