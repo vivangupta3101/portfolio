@@ -20,10 +20,12 @@ class Component {
     const onScrollShared = () => { if (sJobRaf === null) sJobRaf = requestAnimationFrame(runScrollJobs); };
     // weak GPUs choke on 4 full-viewport background layers + a blurred fixed nav.
     // detect once and drop those two effects instead of dropping frames.
-    const coarse = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+    // (hover: none) = a real touch device. (pointer: coarse) also matches touchscreen laptops,
+    // which are perfectly capable — using it here needlessly stripped the effects on desktops.
+    const noHover = window.matchMedia && matchMedia('(hover: none)').matches;
     const lowCore = (navigator.hardwareConcurrency || 8) <= 4;
     const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let lite = coarse || lowCore || reduce;
+    let lite = noHover || lowCore || reduce;
     const setLite = (on) => {
       lite = on;
       document.documentElement.classList.toggle('vg-lite', on);
@@ -61,17 +63,6 @@ class Component {
     if (lite) document.documentElement.classList.add('vg-lite');
     sizeWins();
     sync();
-    // second safety net: if the first ~1.5s of frames can't hold 45fps, go lite anyway
-    if (!lite) {
-      let frames = 0; const t0 = performance.now();
-      const probe = () => {
-        frames++;
-        const dt = performance.now() - t0;
-        if (dt < 1500) { requestAnimationFrame(probe); return; }
-        if (frames / (dt / 1000) < 45) setLite(true);
-      };
-      requestAnimationFrame(probe);
-    }
     // hero scroll choreography: faded up top while video plays -> settles centered, sub fades in
     const title = document.getElementById('vg-hero-title');
     const sub = document.getElementById('vg-hero-sub');
@@ -219,12 +210,13 @@ class Component {
     }
     // ball cursor
     const ball = document.getElementById('vg-ball');
-    let bx = -100, by = -100, tx = -100, ty = -100, raf, bh = 11;
+    let bx = -100, by = -100, tx = -100, ty = -100, raf;
     const move = (e) => { tx = e.clientX; ty = e.clientY; };
-    const measureBall = () => { bh = ball.offsetWidth / 2; };
-    setInterval(measureBall, 120);
-    const tick = () => { bx += (tx - bx) * 0.22; by += (ty - by) * 0.22; ball.style.transform = 'translate3d(' + (bx - bh).toFixed(1) + 'px,' + (by - bh).toFixed(1) + 'px,0)'; raf = requestAnimationFrame(tick); };
-    ball.style.transform = 'translate(-100px,-100px)';
+    // centre with a -50% translate rather than subtracting offsetWidth/2: the percentage resolves
+    // against the element's own live size, so it stays centred through the 0.8s morph without
+    // reading layout. (Sampling offsetWidth on an interval made the cursor jump ~20px mid-morph.)
+    const tick = () => { bx += (tx - bx) * 0.22; by += (ty - by) * 0.22; ball.style.transform = 'translate3d(' + bx.toFixed(1) + 'px,' + by.toFixed(1) + 'px,0) translate(-50%,-50%)'; raf = requestAnimationFrame(tick); };
+    ball.style.transform = 'translate3d(-100px,-100px,0) translate(-50%,-50%)';
     window.addEventListener('mousemove', move, { passive: true });
     raf = requestAnimationFrame(tick);
     this._ball = { move, stop: () => cancelAnimationFrame(raf) };
@@ -246,7 +238,12 @@ class Component {
     // we drive the position ourselves, or every frame starts its own competing smooth animation.
     {
       const root = document.documentElement;
-      const blockScroll = (e) => e.preventDefault();
+      // the page lock stays on while a project is open — but the reader overlay is what the user
+      // is scrolling at that point, so never swallow its events
+      // read the overlay from the DOM rather than trusting a flag — the flag is set on a different
+      // `this` in one code path, which silently made the reader unscrollable
+      const readerEl = () => document.getElementById('vg-reader');
+      const blockScroll = (e) => { if (!readerEl()) e.preventDefault(); };
       this._lockScroll = (on) => {
         this._scrollLocked = on;
         if (on) {
@@ -283,11 +280,9 @@ class Component {
       const isNotch = (e) => e.deltaMode === 1 || Math.abs(e.deltaY) >= 45;
 
       const onWheel = (e) => {
-        if (this._scrollLocked) { e.preventDefault(); return; }
         if (e.ctrlKey || e.defaultPrevented) return;
-        if (this._readerOpen) {
-          const el = document.getElementById('vg-reader');
-          if (!el) return;
+        const el = readerEl();
+        if (el) {
           if (!isNotch(e)) { rEl = el; rStop(); return; }
           e.preventDefault();
           rEl = el;
@@ -297,6 +292,7 @@ class Component {
           if (rRaf === null) rRaf = requestAnimationFrame(rTick);
           return;
         }
+        if (this._scrollLocked) { e.preventDefault(); return; } // tile mid-expand
         if (!isNotch(e)) { stop(); return; } // trackpad / touch: hands off
         e.preventDefault();
         if (!active) { active = true; target = current = window.scrollY; root.style.scrollBehavior = 'auto'; }

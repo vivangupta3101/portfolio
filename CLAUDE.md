@@ -105,10 +105,18 @@ what made the site lag for users on slower machines.
 Two effects are expensive: four full-viewport background layers, and a `backdrop-filter:
 blur()` on the fixed nav (re-blurs on every scroll frame). Both are dropped when:
 
-- pointer is coarse (touch), **or**
+- `(hover: none)` — a real touch device, **or**
 - `navigator.hardwareConcurrency <= 4`, **or**
-- `prefers-reduced-motion: reduce`, **or**
-- a startup FPS probe measures under 45fps over the first 1.5s.
+- `prefers-reduced-motion: reduce`.
+
+Two earlier triggers were **removed**, and shouldn't come back in the same form:
+
+- `(pointer: coarse)` — also matches touchscreen laptops, which are perfectly capable.
+  Use `(hover: none)` to mean "touch device".
+- A startup FPS probe over the first 1.5s — that window is exactly when the hero video and
+  four large JPEGs are decoding, so it labelled fast machines slow and permanently stripped
+  the hover sketch and cursor morph. If you want an adaptive downgrade, sample a steady-state
+  window well after `load`, and make it reversible.
 
 That adds `.vg-lite` to `<html>`; the fallback rules are at the bottom of `css/home.css`.
 On touch, the custom cursor and fake scrollbar are hidden and the native cursor returns
@@ -142,7 +150,17 @@ machines, because it serialises every scroll frame through the JS main thread.
 `this._lockScroll(true)` additionally attaches a temporary `preventDefault` on
 `wheel`/`touchmove` while a project tile is mid-expand, removed straight after.
 
-The reader overlay (`#vg-reader`) runs the same logic against its own `scrollTop`.
+The reader overlay (`#vg-reader`) runs the same logic against its own `scrollTop`. Whether a
+project is open is decided by `document.getElementById('vg-reader')`, **not** by the
+`this._readerOpen` flag — that flag is assigned on a different `this` in one code path, and
+trusting it made the reader completely unscrollable. Same for the `_lockScroll` blocker: the
+page lock stays on for as long as a project is open, so it must skip events while the overlay
+exists or it swallows the overlay's own scroll.
+
+The custom cursor is centred with a trailing `translate(-50%,-50%)` in the same transform,
+never by subtracting `offsetWidth/2`. Percentages resolve against the element's live size, so
+it stays centred through the 0.8s silhouette morph. Sampling `offsetWidth` on an interval
+instead made it jump ~20px mid-morph.
 The sub-pages carry a trimmed copy of this (a `_glide()` method or an inline block).
 
 ### f. Custom cursor (`#vg-ball`)

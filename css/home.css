@@ -82,7 +82,7 @@
   html.vg-lite #vg-index { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: rgba(8,8,8,0.92) !important; }
   html.vg-lite .vg-row.vg-expand { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   #vg-reader { overscroll-behavior: contain; }
-  @media (pointer: coarse) {
+  @media (hover: none) {
     html, body, a { cursor: auto; }
     #vg-ball, #vg-sb { display: none !important; }
   }

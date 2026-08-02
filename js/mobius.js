@@ -5,7 +5,7 @@ class Component {
   constructor() { this.props = {}; }
   componentDidMount() {
     // Glide scrolling: ease the discrete mouse-wheel notch. Trackpad/touch stay native.
-    if (!(window.matchMedia && matchMedia('(pointer: coarse)').matches) && (navigator.hardwareConcurrency || 8) > 4) {
+    if (!(window.matchMedia && matchMedia('(hover: none)').matches) && (navigator.hardwareConcurrency || 8) > 4) {
       const root = document.documentElement;
       let target = 0, current = 0, rafId = null, active = false;
       const maxScroll = () => Math.max(0, root.scrollHeight - window.innerHeight);
@@ -34,8 +34,7 @@ class Component {
     const move = (e) => { tx = e.clientX; ty = e.clientY; };
     const tick = () => {
       x += (tx - x) * 0.22; y += (ty - y) * 0.22;
-      const h = b.offsetWidth / 2;
-      b.style.transform = 'translate(' + (x - h) + 'px,' + (y - h) + 'px)';
+      b.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) translate(-50%,-50%)';
       raf = requestAnimationFrame(tick);
     };
 
