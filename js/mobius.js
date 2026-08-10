@@ -4,34 +4,13 @@
 class Component {
   constructor() { this.props = {}; }
   componentDidMount() {
-    // Glide scrolling: ease the discrete mouse-wheel notch. Trackpad/touch stay native.
-    if (!(window.matchMedia && matchMedia('(hover: none)').matches) && (navigator.hardwareConcurrency || 8) > 4) {
-      const root = document.documentElement;
-      let target = 0, current = 0, rafId = null, active = false;
-      const maxScroll = () => Math.max(0, root.scrollHeight - window.innerHeight);
-      const stop = () => { if (rafId) cancelAnimationFrame(rafId); rafId = null; active = false; root.style.scrollBehavior = ''; };
-      const tick = () => {
-        const d = target - current;
-        if (Math.abs(d) < 0.4) { window.scrollTo(0, target); stop(); return; }
-        current += d * 0.16;
-        window.scrollTo(0, current);
-        rafId = requestAnimationFrame(tick);
-      };
-      window.addEventListener('wheel', (e) => {
-        if (e.ctrlKey || e.defaultPrevented) return;
-        if (!(e.deltaMode === 1 || Math.abs(e.deltaY) >= 45)) { stop(); return; }
-        e.preventDefault();
-        if (!active) { active = true; target = current = window.scrollY; root.style.scrollBehavior = 'auto'; }
-        const m = e.deltaMode === 1 ? 16 : 1;
-        target = Math.max(0, Math.min(maxScroll(), target + e.deltaY * m));
-        if (rafId === null) rafId = requestAnimationFrame(tick);
-      }, { passive: false });
-    }
+    // Scrolling is native: the eased wheel handler that used to sit here made each notch
+    // drift to a stop, which reads as a bounce-back.
     const b = document.createElement('div');
     b.id = 'pg-ball';
     document.body.appendChild(b);
     let x = -100, y = -100, tx = -100, ty = -100, raf;
-    const move = (e) => { tx = e.clientX; ty = e.clientY; };
+    const move = (e) => { tx = e.clientX; ty = e.clientY; this._pt = { x: e.clientX, y: e.clientY }; __syncHover(); };
     const tick = () => {
       x += (tx - x) * 0.22; y += (ty - y) * 0.22;
       b.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) translate(-50%,-50%)';
@@ -40,10 +19,27 @@ class Component {
 
     window.addEventListener('mousemove', move, { passive: true });
     raf = requestAnimationFrame(tick);
-    document.querySelectorAll('a').forEach((el) => {
-      el.addEventListener('mouseenter', () => b.classList.add('big'));
-      el.addEventListener('mouseleave', () => b.classList.remove('big'));
-    });
+
+    // Hover follows the page, not just the mouse: a trackpad/inertia scroll slides content under a
+    // stationary cursor without firing a mousemove, so re-test the last known cursor point per frame.
+    let __pending = false;
+    const __syncHover = () => {
+      const bb = b;
+      if (!bb) return;
+      if (!this._pt) { bb.classList.remove('big'); return; }
+      const el = document.elementFromPoint(this._pt.x, this._pt.y);
+      bb.classList.toggle('big', !!(el && el.closest && el.closest('a, button')));
+    };
+    const __queueSync = () => {
+      if (__pending) return;
+      __pending = true;
+      requestAnimationFrame(() => { __pending = false; __syncHover(); });
+    };
+    window.addEventListener('scroll', __queueSync, { passive: true });
+    window.addEventListener('wheel', __queueSync, { passive: true });
+    window.addEventListener('resize', __queueSync);
+    document.addEventListener('mouseleave', () => { this._pt = null; __syncHover(); });
+
     this._cleanup = () => { window.removeEventListener('mousemove', move); cancelAnimationFrame(raf); b.remove(); };
   }
   componentWillUnmount() { if (this._cleanup) this._cleanup(); }

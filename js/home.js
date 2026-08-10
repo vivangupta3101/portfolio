@@ -211,7 +211,8 @@ class Component {
     // ball cursor
     const ball = document.getElementById('vg-ball');
     let bx = -100, by = -100, tx = -100, ty = -100, raf;
-    const move = (e) => { tx = e.clientX; ty = e.clientY; };
+    const move = (e) => { tx = e.clientX; ty = e.clientY; this._pt = { x: e.clientX, y: e.clientY }; };
+    document.addEventListener('mouseleave', () => { this._pt = null; if (this._syncHover) this._syncHover(); });
     // centre with a -50% translate rather than subtracting offsetWidth/2: the percentage resolves
     // against the element's own live size, so it stays centred through the 0.8s morph without
     // reading layout. (Sampling offsetWidth on an interval made the cursor jump ~20px mid-morph.)
@@ -230,18 +231,9 @@ class Component {
       ball.className = '';
       ball.classList.remove('vg-ball-big');
     };
-    // Glide scrolling.
-    // A mouse wheel fires discrete notches (deltaY ~100), which the browser applies as jumps —
-    // that is the "step by step" jitter. Trackpads and touch already glide natively with real
-    // momentum, so we leave those completely alone and only ease the notches.
-    // Note: html has scroll-behavior:smooth for anchor links; it MUST be forced to auto while
-    // we drive the position ourselves, or every frame starts its own competing smooth animation.
+    // Scrolling is fully native. An eased wheel handler used to run here; it made every notch
+    // drift to a stop, which reads as a bounce-back, so the page now never touches the scroll path.
     {
-      const root = document.documentElement;
-      // the page lock stays on while a project is open — but the reader overlay is what the user
-      // is scrolling at that point, so never swallow its events
-      // read the overlay from the DOM rather than trusting a flag — the flag is set on a different
-      // `this` in one code path, which silently made the reader unscrollable
       const readerEl = () => document.getElementById('vg-reader');
       const blockScroll = (e) => { if (!readerEl()) e.preventDefault(); };
       this._lockScroll = (on) => {
@@ -254,67 +246,25 @@ class Component {
           window.removeEventListener('touchmove', blockScroll);
         }
       };
-
-      let target = 0, current = 0, rafId = null, active = false;
-      let rEl = null, rTarget = 0, rCurrent = 0, rRaf = null, rActive = false;
-      const EASE = 0.16, MIN = 0.4;
-      const maxScroll = () => Math.max(0, root.scrollHeight - window.innerHeight);
-      const stop = () => { if (rafId) cancelAnimationFrame(rafId); rafId = null; active = false; root.style.scrollBehavior = ''; };
-      const tick = () => {
-        const d = target - current;
-        if (Math.abs(d) < MIN) { window.scrollTo(0, target); stop(); return; }
-        current += d * EASE;
-        window.scrollTo(0, current);
-        rafId = requestAnimationFrame(tick);
-      };
-      const rStop = () => { if (rRaf) cancelAnimationFrame(rRaf); rRaf = null; rActive = false; };
-      const rTick = () => {
-        if (!rEl) { rStop(); return; }
-        const d = rTarget - rCurrent;
-        if (Math.abs(d) < MIN) { rEl.scrollTop = rTarget; rStop(); return; }
-        rCurrent += d * EASE;
-        rEl.scrollTop = rCurrent;
-        rRaf = requestAnimationFrame(rTick);
-      };
-      // a notch = line-mode, or a pixel delta big enough that no trackpad would emit it
-      const isNotch = (e) => e.deltaMode === 1 || Math.abs(e.deltaY) >= 45;
-
-      const onWheel = (e) => {
-        if (e.ctrlKey || e.defaultPrevented) return;
-        const el = readerEl();
-        if (el) {
-          if (!isNotch(e)) { rEl = el; rStop(); return; }
-          e.preventDefault();
-          rEl = el;
-          if (!rActive) { rActive = true; rTarget = rCurrent = el.scrollTop; }
-          const m = e.deltaMode === 1 ? 16 : 1;
-          rTarget = Math.max(0, Math.min(Math.max(0, el.scrollHeight - el.clientHeight), rTarget + e.deltaY * m));
-          if (rRaf === null) rRaf = requestAnimationFrame(rTick);
-          return;
-        }
-        if (this._scrollLocked) { e.preventDefault(); return; } // tile mid-expand
-        if (!isNotch(e)) { stop(); return; } // trackpad / touch: hands off
-        e.preventDefault();
-        if (!active) { active = true; target = current = window.scrollY; root.style.scrollBehavior = 'auto'; }
-        const m = e.deltaMode === 1 ? 16 : 1;
-        target = Math.max(0, Math.min(maxScroll(), target + e.deltaY * m));
-        if (rafId === null) rafId = requestAnimationFrame(tick);
-      };
-      // lite devices keep pure native scroll — no main-thread work in the scroll path at all
-      if (!lite) window.addEventListener('wheel', onWheel, { passive: false });
-      this._smoothScroll = () => { window.removeEventListener('wheel', onWheel); stop(); rStop(); this._lockScroll(false); };
-      this._readerScrollSync = () => { if (rRaf === null && rEl) { rTarget = rCurrent = rEl.scrollTop; } };
-      this._readerScrollReset = (el) => { rEl = el || null; rStop(); rTarget = rCurrent = el ? el.scrollTop : 0; };
+      this._smoothScroll = () => { this._lockScroll(false); };
+      this._readerScrollSync = () => {};
+      this._readerScrollReset = () => {};
     }
     // nav logo expands leftwards to reveal links
     {
       const logo = document.getElementById('vg-navlogo');
       const links = document.getElementById('vg-navlinks');
       if (logo && links) {
-        let open = false;
+        let open = false, settleT;
         const dots = logo.querySelectorAll('.vg-dot');
         const set = (o) => {
           open = o;
+          // The panel expands from max-width 0, so both labels slide sideways for 0.65s. A click
+          // landing mid-slide hits whichever label drifted under the pointer (BACKSTAGE sits nearer
+          // the logo), opening the wrong page — so links stay untargetable until the motion settles.
+          clearTimeout(settleT);
+          links.style.pointerEvents = 'none';
+          if (o) settleT = setTimeout(() => { links.style.pointerEvents = 'auto'; }, 700);
           links.style.maxWidth = o ? '300px' : '0px';
           links.style.opacity = o ? '1' : '0';
           links.style.transform = o ? 'translateX(0)' : 'translateX(14px)';
@@ -395,8 +345,7 @@ class Component {
     [['BitL', 'vg-ball-bitl'], ['Mobius', 'vg-ball-mobius'], ['StrahL', 'vg-ball-strahl'], ['Blind Watchmaker', 'vg-ball-watchmaker']].forEach(([label, cls]) => {
       const row = document.querySelector('[data-screen-label="' + label + '"]');
       if (row) {
-        row.addEventListener('mouseenter', () => ball.classList.add(cls));
-        row.addEventListener('mouseleave', () => ball.classList.remove(cls));
+        void cls; // ball silhouette class is owned by setHover() so scroll-driven hover keeps it in sync
       }
     });
     // first-visit category index overlay: pops once the visitor scrolls past the statement
@@ -551,7 +500,13 @@ class Component {
         const l = document.createElement('link');
         l.rel = 'prefetch'; l.href = page; l.as = 'document';
         document.head.appendChild(l);
-        const im = new Image(); im.src = first;
+        // Warm AND decode the first page, then keep the element alive: the reader reuses this exact
+        // <img> rather than making a fresh one, so the first open has no decode to wait on. Creating a
+        // new element from the same URL still costs a decode, which is what made open #1 blank.
+        const im = new Image();
+        im.src = first;
+        const park = () => { (window.__vgWarm || (window.__vgWarm = {}))[first] = im; };
+        if (im.decode) im.decode().then(park, park); else if (im.complete) park(); else im.onload = park;
       });
     };
     if (window.requestIdleCallback) window.requestIdleCallback(warmPages, { timeout: 4000 }); else setTimeout(warmPages, 800);
@@ -559,9 +514,30 @@ class Component {
       '#mobius': { bg: '#f6e9d2', ink: '#131313', label: 'M\u00d6BIUS', first: 'assets/images/mobius/cover.png',
         imgs: [{ src: 'assets/images/mobius/cover.png', w: 1680, h: 1127 }].concat(Array.from({ length: 12 }, (_, i) => ({
           src: 'assets/images/mobius/p' + String(i).padStart(2, '0') + '.png', w: 1680, h: i === 11 ? 1885 : 1893 }))) },
-      '#bitl': { bg: '#0b0406', ink: '#f4f4f4', label: 'BITL', first: 'assets/images/bitl/p00.png',
-        imgs: Array.from({ length: 16 }, (_, i) => ({ src: 'assets/images/bitl/p' + String(i).padStart(2, '0') + '.png', w: 2745,
-          h: i < 7 ? 1839 : i === 7 ? 1830 : i < 15 ? 1930 : 1922 })) }
+      // pages 1-2 come from js/bitl-live.js: the same flat artwork plus the cursor glow and the
+      // statement break. The strip picks up at p02.
+      '#bitl': { bg: '#000000', ink: '#f4f4f4', label: 'BITL', first: 'assets/images/bitl/p00.png', hero: 'bitl',
+        imgs: Array.from({ length: 14 }, (_, k) => { const i = k + 2; const it = { src: 'assets/images/bitl/p' + String(i).padStart(2, '0') + '.png', w: 2745,
+          h: i < 7 ? 1839 : i === 7 ? 1830 : i < 15 ? 1930 : 1922 };
+          // the mood-board page leaves an empty column under its first image: the caption sits there,
+          // and the line that turns the argument follows the page before the re-mood board
+          if (i === 2) {
+            it.caption = "My first references of 90's design with a modern take were elegant, beautiful and marketable in their own way...";
+            it.after = 'But I am not here to design SAFE.';
+          }
+          // p03 carries the re-mood board and the top of the timeline in one page: it is split so the
+          // note about the new board can sit between them with room to breathe
+          if (i === 3) return [{ src: 'assets/images/bitl/p03a.png', w: 2745, h: 1460,
+              body: ['Being my second year in design and a **passion project**. I knew this is the time i can play a lot more with **my designs**. I wanted to express myself as a designer and take **design decisions** to extents that would be difficult to bring in the **real world**.',
+                'The challenge with this project was to do so while being **industry level** and **manufacturable**.'] },
+            { src: 'assets/images/bitl/p03b.png', w: 2745, h: 379 }];
+          // p04 carries the tail of the timeline and the first sketch slide; p04-p07 hold the four
+          // sketch slides, which run as one auto-playing carousel instead of four scrolled pages
+          if (i === 4) return [{ src: 'assets/images/bitl/p04top.png', w: 2745, h: 1164 },
+            { carousel: [1, 2, 3, 4].map((k) => 'assets/images/bitl/sketch' + k + '.png'), w: 2745, h: 1545 },
+            { gap: true }];
+          if (i === 5 || i === 6 || i === 7) return [];
+          return it; }).flat() }
     };
     this._projects = PROJECTS;
     this._openProject = (p, onClose, insetTo) => {
@@ -569,17 +545,175 @@ class Component {
       ov.id = 'vg-reader';
       ov.style.cssText = 'position:fixed;inset:0;z-index:8000;overflow-y:auto;overflow-x:hidden;background:' + p.bg +
         ';opacity:0;transition:opacity 0.28s ease;-webkit-overflow-scrolling:touch';
+      if (p.hero === 'bitl' && window.mountBitlHero) {
+        this._hero = window.mountBitlHero();
+        ov.appendChild(this._hero.el);
+      }
       const strip = document.createElement('div');
       strip.style.cssText = 'width:100%;line-height:0;font-size:0';
+      // the four sketch slides share one frame: each slides out to the left as the next arrives from
+      // the right. Autoplay pauses on hover, where the arrows appear.
+      const makeCarousel = (it) => {
+        const root = document.createElement('div');
+        root.style.cssText = 'position:relative;width:100%;overflow:hidden;background:#000;line-height:0;' +
+          'font-size:0;aspect-ratio:' + it.w + '/' + it.h;
+        const slides = it.carousel.map((src, idx) => {
+          const im = document.createElement('img');
+          im.src = src; im.alt = ''; im.width = it.w; im.height = it.h; im.decoding = 'async';
+          if (idx) im.loading = 'lazy';
+          im.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;' +
+            'transform:translateX(' + (idx ? 100 : 0) + '%);transition:transform 0.75s cubic-bezier(0.65,0,0.35,1)';
+          root.appendChild(im);
+          return im;
+        });
+        let cur = 0, hovering = false;
+        const go = (next, dir) => {
+          next = (next + slides.length) % slides.length;
+          if (next === cur) return;
+          const a = slides[cur], b = slides[next];
+          b.style.transition = 'none';
+          b.style.transform = 'translateX(' + (dir > 0 ? 100 : -100) + '%)';
+          void b.offsetWidth;
+          b.style.transition = '';
+          a.style.transform = 'translateX(' + (dir > 0 ? -100 : 100) + '%)';
+          b.style.transform = 'translateX(0)';
+          cur = next;
+          dots.forEach((d, k) => { d.style.background = k === cur ? '#f3323f' : 'rgba(255,255,255,0.32)'; });
+        };
+        const arrow = (side) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.setAttribute('aria-label', side === 'left' ? 'Previous sketch' : 'Next sketch');
+          b.textContent = side === 'left' ? '\u2039' : '\u203a';
+          b.style.cssText = 'position:absolute;top:50%;' + side + ':2.2%;transform:translateY(-50%);width:56px;' +
+            'height:56px;border-radius:50%;border:1px solid rgba(255,255,255,0.28);background:rgba(0,0,0,0.55);' +
+            'color:#fff;font-size:30px;line-height:1;cursor:pointer;opacity:0;transition:opacity 0.25s ease;' +
+            'display:flex;align-items:center;justify-content:center;padding:0 0 4px;z-index:3;backdrop-filter:blur(4px)';
+          b.addEventListener('click', (e) => { e.preventDefault(); go(cur + (side === 'left' ? -1 : 1), side === 'left' ? -1 : 1); });
+          root.appendChild(b);
+          return b;
+        };
+        const prev = arrow('left'), next = arrow('right');
+        const rail = document.createElement('div');
+        rail.style.cssText = 'position:absolute;left:0;right:0;bottom:3.2%;display:flex;justify-content:center;' +
+          'gap:10px;z-index:3';
+        const dots = slides.map((_, k) => {
+          const d = document.createElement('button');
+          d.type = 'button'; d.setAttribute('aria-label', 'Sketch ' + (k + 1));
+          d.style.cssText = 'width:9px;height:9px;padding:0;border:0;border-radius:50%;cursor:pointer;background:' +
+            (k ? 'rgba(255,255,255,0.32)' : '#f3323f');
+          d.addEventListener('click', () => go(k, k > cur ? 1 : -1));
+          rail.appendChild(d);
+          return d;
+        });
+        root.appendChild(rail);
+        root.addEventListener('mouseenter', () => { hovering = true; prev.style.opacity = '1'; next.style.opacity = '1'; });
+        root.addEventListener('mouseleave', () => { hovering = false; prev.style.opacity = '0'; next.style.opacity = '0'; });
+        const timer = setInterval(() => {
+          if (!document.body.contains(root)) return clearInterval(timer);
+          if (hovering) return;
+          const r = root.getBoundingClientRect();
+          if (r.bottom < 0 || r.top > innerHeight) return; // only advance while it is on screen
+          go(cur + 1, 1);
+        }, 4000);
+        return root;
+      };
+
+      const risers = [];
       p.imgs.forEach((it, i) => {
+        if (it.gap) { const g = document.createElement('div');
+          g.style.cssText = 'width:100%;background:#000;height:34vh'; strip.appendChild(g); return; }
+        if (it.carousel) { strip.appendChild(makeCarousel(it)); return; }
         const im = document.createElement('img');
         im.src = it.src; im.alt = '';
         im.width = it.w; im.height = it.h; // reserve layout up front: no late jump in scroll height
         if (i > 1) im.loading = 'lazy'; else im.fetchPriority = i === 0 ? 'high' : 'auto';
         im.decoding = 'async';
         im.style.cssText = 'display:block;width:100%;height:auto;margin-bottom:-1px';
-        strip.appendChild(im);
+        if (it.caption) {
+          const holder = document.createElement('div');
+          holder.style.cssText = 'position:relative;width:100%;line-height:0;font-size:0';
+          holder.appendChild(im);
+          const cap = document.createElement('p');
+          cap.textContent = it.caption;
+          cap.style.cssText = "position:absolute;left:2%;bottom:5%;width:27%;margin:0;font-family:Outfit," +
+            "'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:400;font-size:clamp(13px,1.35vw,30px);" +
+            'line-height:1.45;letter-spacing:0.005em;color:rgba(244,244,244,0.82);text-wrap:pretty';
+          holder.appendChild(cap);
+          strip.appendChild(holder);
+        } else strip.appendChild(im);
+        if (it.body) {
+          const sec = document.createElement('section');
+          sec.style.cssText = 'width:100%;background:#000;display:flex;flex-direction:column;gap:2.4rem;' +
+            'align-items:center;padding:26vh 8vw;line-height:1.5;margin-top:-2px;position:relative;font-size:16px;' +
+            'box-sizing:border-box';
+          it.body.forEach((t) => {
+            const par = document.createElement('p');
+            // **phrase** marks the words that carry the point
+            t.split(/\*\*/).forEach((seg, k) => {
+              if (!seg) return;
+              if (k % 2) {
+                const b = document.createElement('strong');
+                b.textContent = seg; b.style.cssText = 'font-weight:700;color:#fff';
+                par.appendChild(b);
+              } else par.appendChild(document.createTextNode(seg));
+            });
+            par.style.cssText = "margin:0;max-width:1000px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;" +
+              'font-weight:400;font-size:clamp(15px,1.35vw,28px);line-height:1.6;letter-spacing:0.005em;' +
+              'color:rgba(244,244,244,0.86);text-wrap:pretty;text-align:center';
+            sec.appendChild(par);
+          });
+          strip.appendChild(sec);
+        }
+        if (it.after) {
+          const brk = document.createElement('section');
+          brk.style.cssText = 'position:relative;width:100%;background:#000;display:flex;align-items:center;' +
+            'justify-content:center;padding:26vh 40px;line-height:1.5;box-sizing:border-box';
+          const mask = document.createElement('div');
+          mask.style.cssText = 'max-width:1180px';
+          // deliberately not the statement voice: plain white sub-heading, only SAFE performs
+          const line = document.createElement('p');
+          line.style.cssText = "margin:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:400;" +
+            'font-size:clamp(20px,2.1vw,40px);line-height:1.35;letter-spacing:0.005em;text-align:center;' +
+            'text-wrap:balance;color:#f4f4f4;opacity:0;transform:translateY(14px);' +
+            'transition:opacity 0.7s ease,transform 0.9s cubic-bezier(0.19,1,0.22,1)';
+          const parts = it.after.split('SAFE');
+          line.appendChild(document.createTextNode(parts[0]));
+          const safe = document.createElement('span');
+          safe.textContent = 'SAFE';
+          safe.style.cssText = 'display:inline-block;font-weight:700;letter-spacing:0.02em;color:#f3323f;' +
+            'opacity:0;transform:translateY(0.12em) scale(0.94)';
+          line.appendChild(safe);
+          line.appendChild(document.createTextNode(parts[1] || ''));
+          mask.appendChild(line); brk.appendChild(mask); strip.appendChild(brk);
+          risers.push({ mask, line, safe, done: false });
+        }
       });
+      // same rise as the statement break, driven off the reader's own scroller
+      const checkRisers = () => {
+        for (let i = 0; i < risers.length; i++) {
+          const r = risers[i];
+          if (r.done) continue;
+          const b = r.mask.getBoundingClientRect();
+          if (b.height && b.top < innerHeight * 0.86 && b.bottom > 0) {
+            r.done = true;
+            r.line.style.opacity = '1';
+            r.line.style.transform = 'translateY(0)';
+            if (r.safe) {
+              const s = r.safe;
+              // SAFE arrives after the line settles, flickering on like a tube warming up
+              setTimeout(() => {
+                s.style.transition = 'opacity 0.14s linear,transform 0.5s cubic-bezier(0.19,1,0.22,1)';
+                s.style.transform = 'translateY(0) scale(1)';
+                [0, 90, 150, 260, 320].forEach((t, k) => setTimeout(() => { s.style.opacity = k % 2 ? '0.15' : '1'; }, t));
+                setTimeout(() => { s.style.opacity = '1'; }, 420);
+              }, 620);
+            }
+          }
+        }
+      };
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) risers.forEach((r) => { r.done = true; r.line.style.opacity = '1'; r.line.style.transform = 'translateY(0)'; if (r.safe) r.safe.style.opacity = '1'; });
+      this._checkRisers = checkRisers;
       ov.appendChild(strip);
       const foot = document.createElement('footer');
       foot.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:24px;padding:64px 40px 72px;' +
@@ -606,18 +740,35 @@ class Component {
       document.body.appendChild(ov);
       this._readerOpen = true;
       if (this._readerScrollReset) this._readerScrollReset(ov);
-      ov.addEventListener('scroll', () => { if (this._readerScrollSync) this._readerScrollSync(); }, { passive: true });
-      const first = strip.querySelector('img');
-      const show = () => { void ov.getBoundingClientRect(); ov.style.opacity = '1'; };
-      if (first && !first.complete) { first.onload = show; first.onerror = show; setTimeout(show, 400); }
-      else show();
+      ov.addEventListener('scroll', () => { if (this._readerScrollSync) this._readerScrollSync(); checkRisers(); }, { passive: true });
+      requestAnimationFrame(checkRisers);
+      // The reader used to fade in on load, which showed a blank panel for a beat while the first
+      // page decoded. Now it is revealed only once that page is decoded and ready to paint, with no
+      // fade — the expanded tile sits underneath in the same colour, so the swap is invisible.
+      const first = ov.querySelector('img');
+      let shown = false;
+      const show = () => {
+        if (shown) return;
+        shown = true;
+        ov.style.transition = 'none';
+        void ov.getBoundingClientRect();
+        ov.style.opacity = '1';
+      };
+      if (first) {
+        const ready = first.decode ? first.decode() : Promise.resolve();
+        ready.then(show, show);
+        setTimeout(show, 900);
+      } else show();
       const close = (e) => {
         if (e) e.preventDefault();
         this._readerOpen = false;
+        if (this._hero) { this._hero.destroy(); this._hero = null; }
         if (this._readerScrollReset) this._readerScrollReset(null);
         document.removeEventListener('keydown', onKey);
         const target = insetTo && insetTo();
         if (!target) {
+          ov.style.transition = 'opacity 0.28s ease';
+          void ov.getBoundingClientRect();
           ov.style.opacity = '0';
           setTimeout(() => { ov.remove(); if (onClose) onClose(); }, 300);
           return;
@@ -627,10 +778,12 @@ class Component {
         // hand the frame the reader is showing to the small #vg-full layer, then drop the
         // reader entirely — a full-viewport scroller of 1680px strips can't be re-rastered
         // per frame, so the shrink has to run on the light layer alone.
-        const shown = Array.from(strip.querySelectorAll('img')).find((im) => {
+        // search the whole overlay, not just the strip: pages 1-2 live in the hero wrap, so a strip
+        // search hands the shrink the wrong artwork on the first three screens
+        const shown = Array.from(ov.querySelectorAll('img')).find((im) => {
           const b = im.getBoundingClientRect();
           return b.bottom > 1 && b.top < 2;
-        }) || strip.querySelector('img');
+        }) || ov.querySelector('img');
         const src = shown.getAttribute('src');
         const offset = Math.round(shown.getBoundingClientRect().top);
         const finish = () => {
@@ -758,6 +911,8 @@ class Component {
       const img = row.querySelector('img');
       return img ? img.src : null;
     };
+    const HOVER = new Map();
+    let hoverRow = null;
     document.querySelectorAll('.vg-row').forEach((row) => {
       let posterOpen = false;
       let lastPt = null;
@@ -869,6 +1024,7 @@ class Component {
         // once the rectangle has filled the screen, hand off to the project page
         const deckFor = PROJECTS[row.getAttribute('href')];
         if (deckFor) {
+          if (deckFor.first) { const pre = new Image(); pre.src = deckFor.first; }
           setTimeout(() => {
             const insetTo = () => {
               const b = row.getBoundingClientRect();
@@ -930,11 +1086,60 @@ class Component {
         document.querySelectorAll('.vg-focus-row').forEach((p) => p.classList.remove('vg-focus-row'));
         main.classList.remove('vg-dim');
       };
-      row.addEventListener('mouseenter', (e) => { if (!this._locked) enter(e); });
-      row.addEventListener('mouseleave', (e) => { if (!this._locked) leave(e); });
+      // every hover path funnels through one hover-state setter, so a trackpad scroll that slides a
+      // tile under a stationary cursor reads exactly like the cursor moving onto it
+      HOVER.set(row, { enter, leave });
+      row.addEventListener('mouseenter', (e) => { setHover(row, { x: e.clientX, y: e.clientY }); });
+      row.addEventListener('mouseleave', () => { if (hoverRow === row) setHover(null, null); });
       row.addEventListener('click', reveal);
       this._handlers.push([row, enter, leave]);
     });
+
+    // Hover follows the page, not just the mouse.
+    // A trackpad/inertia scroll moves content under a cursor that never fires a mousemove, and the
+    // browser's own mouseenter on scroll is unreliable — so we hit-test the last known cursor point
+    // against the tile rects on every scroll frame and drive the same enter/leave.
+    const BALL_CLS = { 'BitL': 'vg-ball-bitl', 'Mobius': 'vg-ball-mobius', 'StrahL': 'vg-ball-strahl', 'Blind Watchmaker': 'vg-ball-watchmaker' };
+    const rowAt = (pt) => {
+      if (!pt) return null;
+      let found = null;
+      HOVER.forEach((_v, row) => {
+        if (found) return;
+        const r = row.getBoundingClientRect();
+        if (pt.x >= r.left && pt.x <= r.right && pt.y >= r.top && pt.y <= r.bottom) found = row;
+      });
+      return found;
+    };
+    const setHover = (row, pt) => {
+      // while a project is opening/open the hover layers are owned by the reveal; drop the tracked
+      // row so the first hover after it closes counts as a fresh enter
+      if (this._locked) { hoverRow = null; return; }
+      if (row === hoverRow) return;
+      if (hoverRow) {
+        const prev = HOVER.get(hoverRow);
+        if (prev) prev.leave();
+        const c0 = BALL_CLS[hoverRow.getAttribute('data-screen-label')];
+        if (c0 && ball) ball.classList.remove(c0);
+      }
+      hoverRow = row;
+      if (row) {
+        const p = pt || this._pt;
+        const nxt = HOVER.get(row);
+        if (nxt) nxt.enter(p ? { clientX: p.x, clientY: p.y } : null);
+        const c1 = BALL_CLS[row.getAttribute('data-screen-label')];
+        if (c1 && ball) ball.classList.add(c1);
+      }
+    };
+    this._syncHover = () => { setHover(rowAt(this._pt), this._pt); };
+    let hoverRafPending = false;
+    const queueSync = () => {
+      if (hoverRafPending) return;
+      hoverRafPending = true;
+      requestAnimationFrame(() => { hoverRafPending = false; this._syncHover(); });
+    };
+    window.addEventListener('scroll', queueSync, { passive: true });
+    window.addEventListener('wheel', queueSync, { passive: true });
+    window.addEventListener('resize', queueSync);
   }
   componentWillUnmount() {
     if (this._io) this._io.disconnect();
