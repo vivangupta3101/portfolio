@@ -231,8 +231,8 @@ class Component {
       ball.className = '';
       ball.classList.remove('vg-ball-big');
     };
-    // Scrolling is fully native. An eased wheel handler used to run here; it made every notch
-    // drift to a stop, which reads as a bounce-back, so the page now never touches the scroll path.
+    // Scrolling is fully native — a wheel-lerp handler here made each notch drift to a stop, which
+    // reads as lag on the live site.
     {
       const readerEl = () => document.getElementById('vg-reader');
       const blockScroll = (e) => { if (!readerEl()) e.preventDefault(); };
@@ -357,7 +357,8 @@ class Component {
       const tabsSec = document.querySelector('[data-screen-label="Category tabs"]');
       const onIdxScroll = () => {
         if (idxShown) return;
-        const due = tabsSec ? tabsSec.getBoundingClientRect().top < window.innerHeight * 0.9 : (stmt && stmt.getBoundingClientRect().bottom < window.innerHeight * 0.4);
+        // wait until the statement has been read and the tabs bar is well into view
+        const due = tabsSec ? tabsSec.getBoundingClientRect().top < window.innerHeight * 0.42 : (stmt && stmt.getBoundingClientRect().bottom < window.innerHeight * 0.2);
         if (due) {
           idxShown = true;
           idx.classList.add('vg-idx-show');
