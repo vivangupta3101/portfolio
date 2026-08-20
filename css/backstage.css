@@ -2,6 +2,8 @@ html, body, a, [data-bs-tile] { cursor: none; }
   #pg-ball { position: fixed; left: 0; top: 0; width: 22px; height: 22px; mix-blend-mode: difference; pointer-events: none; z-index: 9999; transition: width 0.25s ease, height 0.25s ease; }
   #pg-ball .pg-ball-inner { width: 100%; height: 100%; background: #ffffff; border-radius: 50%; }
   #pg-ball.pg-ball-big { width: 34px; height: 34px; }
+  #bs-cap { position: fixed; left: 0; top: 0; z-index: 9998; pointer-events: none; max-width: 260px; padding: 9px 12px; background: #131313; color: #faf7f0; font-size: 12px; line-height: 1.45; letter-spacing: 0.01em; text-wrap: pretty; opacity: 0; transform: translate3d(-300px, -300px, 0) translate(22px, 14px) scale(0.96); transform-origin: 0 0; transition: opacity 0.22s ease, transform 0.45s cubic-bezier(0.19, 1, 0.22, 1); }
+  #bs-cap.bs-cap-on { opacity: 1; }
   html { scroll-behavior: smooth; scrollbar-width: none; }
   * { scrollbar-width: none; -ms-overflow-style: none; }
   ::-webkit-scrollbar { display: none; width: 0; height: 0; background: transparent; }

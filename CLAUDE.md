@@ -11,7 +11,7 @@ work from `file://` because of relative asset paths + fetches.
 ```
 index.html          Home. Hero + category tabs + project tiles + in-page project reader.
 backstage.html      3-column masonry of 67 behind-the-scenes photos.
-about.html          Portrait, bio, four fact blocks.
+about.html          Rotating-place headline, manifesto, Currently, Tools, black contact footer.
 mobius.html         Standalone Möbius project page (13 PDF strips).
 bitl.html           Standalone BitL project page (16 PDF strips).
 
@@ -20,7 +20,7 @@ css/backstage.css   css/about.css   css/mobius.css   css/bitl.css
 
 js/home.js          ~900 lines. The only non-trivial script. See §3.
 js/backstage.js     Masonry + lazy load + caption reveal.
-js/about.js         Cursor + text rise.
+js/about.js         Cursor + text rise + rotating-place headline + photo cursor window.
 js/mobius.js        js/bitl.js   Cursor only.
 
 assets/images/      67 backstage photos, tile stills, PDF strips (mobius/, bitl/), silhouettes.
@@ -209,10 +209,18 @@ Fades in near the right edge or on scroll. Draggable. Hidden on touch.
 
 ## 5. Known gaps / TODO
 
-- **Backstage captions are placeholders.** Every tile reads `PROJECT TBD / Caption pending`.
-  Needs a real list in filename order: `Website Pics_01` … `_35`, then `Pics1_01` … `_32`.
+- **Backstage captions are live.** `js/backstage.js` opens with a `CAPTIONS` map keyed by image
+  basename (no extension, no `trim-` prefix); a tile's `data-caption` attribute overrides it.
+  A missing entry simply shows no caption. The caption trails the cursor dot (`#bs-cap`) and
+  flips side/vertical near the viewport edges. The old "67 ITEMS · UNSORTED" label is gone.
 - **StrahL and Blind Watchmaker** have tiles, silhouettes and hover art, but no decks and
   no project pages. `mobius.html` / `bitl.html` are the templates to copy.
+- **About headline needs eight photos.** The rotating word in "Hi! Vivan here from …" cycles
+  eight places; each `.hi-item` carries `data-photo="assets/images/about/place-<name>.jpg"`
+  and that photo fills the cursor window on hover (sketch treatment + crop marks). Drop the
+  files in `assets/images/about/`: `place-cnc-lab`, `-studio`, `-field`, `-print-lab`,
+  `-home-desk`, `-bed`, `-wood-lab`, `-traffic`. The words fan in from 26° below, darken as
+  they rise into position over 1.1s, hold 2.8s, then fade upward.
 - **About page portrait is a placeholder.**
 - Project taglines on the tiles still say "One-line tagline to fill in".
 - Sub-pages (`about`, `backstage`, `mobius`, `bitl`) don't have `lite` mode. If any of them

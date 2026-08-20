@@ -558,28 +558,45 @@ class Component {
         const root = document.createElement('div');
         root.style.cssText = 'position:relative;width:100%;overflow:hidden;background:#000;line-height:0;' +
           'font-size:0;aspect-ratio:' + it.w + '/' + it.h;
-        const slides = it.carousel.map((src, idx) => {
+        // one sliding track instead of per-slide transforms: nothing is re-laid-out mid-move, so the
+        // motion stays on the compositor. A clone of the first frame trails the last one, letting the
+        // loop keep sliding forward and snap back invisibly once it lands.
+        const N = it.carousel.length;
+        const track = document.createElement('div');
+        track.style.cssText = 'position:absolute;inset:0;display:flex;width:100%;height:100%;' +
+          'will-change:transform;transform:translate3d(0,0,0);backface-visibility:hidden';
+        const EASE = 'transform 0.9s cubic-bezier(0.5, 0, 0.2, 1)';
+        it.carousel.concat(it.carousel[0]).forEach((src, idx) => {
           const im = document.createElement('img');
           im.src = src; im.alt = ''; im.width = it.w; im.height = it.h; im.decoding = 'async';
-          if (idx) im.loading = 'lazy';
-          im.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;' +
-            'transform:translateX(' + (idx ? 100 : 0) + '%);transition:transform 0.75s cubic-bezier(0.65,0,0.35,1)';
-          root.appendChild(im);
-          return im;
+          if (idx > 1) im.loading = 'lazy';
+          im.draggable = false;
+          im.style.cssText = 'flex:0 0 100%;width:100%;height:100%;display:block;object-fit:cover';
+          track.appendChild(im);
         });
-        let cur = 0, hovering = false;
-        const go = (next, dir) => {
-          next = (next + slides.length) % slides.length;
-          if (next === cur) return;
-          const a = slides[cur], b = slides[next];
-          b.style.transition = 'none';
-          b.style.transform = 'translateX(' + (dir > 0 ? 100 : -100) + '%)';
-          void b.offsetWidth;
-          b.style.transition = '';
-          a.style.transform = 'translateX(' + (dir > 0 ? -100 : 100) + '%)';
-          b.style.transform = 'translateX(0)';
+        root.appendChild(track);
+        let pos = 0, cur = 0, hovering = false, moving = false;
+        const place = (p, animate) => {
+          track.style.transition = animate ? EASE : 'none';
+          track.style.transform = 'translate3d(' + (-p * 100) + '%,0,0)';
+          if (!animate) void track.offsetWidth;
+        };
+        const paintDots = () => dots.forEach((d, k) => {
+          d.style.background = k === cur ? '#f3323f' : 'rgba(255,255,255,0.32)';
+        });
+        track.addEventListener('transitionend', (e) => {
+          if (e.propertyName !== 'transform') return;
+          moving = false;
+          if (pos === N) { pos = 0; place(0, false); }
+        });
+        const go = (next) => {
+          if (moving) return;
+          if (next === cur && !(next === 0 && pos === N)) return;
+          moving = true;
+          pos = next === 0 && cur === N - 1 ? N : next;
           cur = next;
-          dots.forEach((d, k) => { d.style.background = k === cur ? '#f3323f' : 'rgba(255,255,255,0.32)'; });
+          place(pos, true);
+          paintDots();
         };
         const arrow = (side) => {
           const b = document.createElement('button');
@@ -590,7 +607,7 @@ class Component {
             'height:56px;border-radius:50%;border:1px solid rgba(255,255,255,0.28);background:rgba(0,0,0,0.55);' +
             'color:#fff;font-size:30px;line-height:1;cursor:pointer;opacity:0;transition:opacity 0.25s ease;' +
             'display:flex;align-items:center;justify-content:center;padding:0 0 4px;z-index:3;backdrop-filter:blur(4px)';
-          b.addEventListener('click', (e) => { e.preventDefault(); go(cur + (side === 'left' ? -1 : 1), side === 'left' ? -1 : 1); });
+          b.addEventListener('click', (e) => { e.preventDefault(); go((cur + (side === 'left' ? -1 : 1) + N) % N); });
           root.appendChild(b);
           return b;
         };
@@ -598,12 +615,12 @@ class Component {
         const rail = document.createElement('div');
         rail.style.cssText = 'position:absolute;left:0;right:0;bottom:3.2%;display:flex;justify-content:center;' +
           'gap:10px;z-index:3';
-        const dots = slides.map((_, k) => {
+        const dots = it.carousel.map((_, k) => {
           const d = document.createElement('button');
           d.type = 'button'; d.setAttribute('aria-label', 'Sketch ' + (k + 1));
           d.style.cssText = 'width:9px;height:9px;padding:0;border:0;border-radius:50%;cursor:pointer;background:' +
             (k ? 'rgba(255,255,255,0.32)' : '#f3323f');
-          d.addEventListener('click', () => go(k, k > cur ? 1 : -1));
+          d.addEventListener('click', () => go(k));
           rail.appendChild(d);
           return d;
         });
@@ -615,8 +632,8 @@ class Component {
           if (hovering) return;
           const r = root.getBoundingClientRect();
           if (r.bottom < 0 || r.top > innerHeight) return; // only advance while it is on screen
-          go(cur + 1, 1);
-        }, 4000);
+          go((cur + 1) % N);
+        }, 4200);
         return root;
       };
 
