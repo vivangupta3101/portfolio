@@ -27,6 +27,7 @@ Static host, no configuration needed. Upload the whole folder as-is:
     index.html          Home — hero video, marquee, 12 project rows,
                         hover sketch traces, in-page project reader
     backstage.html      Backstage — 67-photo masonry collage, cursor-trailing captions
+    watchmaker.html     Blind Watchmaker — cover + 12-page deck
     about.html          About — rotating-place headline, manifesto, contact footer
     mobius.html         Möbius deck (also opens in-page from the home grid)
     bitl.html           BitL deck (ditto)

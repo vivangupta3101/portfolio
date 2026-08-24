@@ -92,7 +92,7 @@ class Component {
         sub.style.transform = 'translateY(' + (22 * (1 - se)).toFixed(1) + 'px)';
         sub.style.letterSpacing = (0.55 - 0.27 * se).toFixed(3) + 'em';
       }
-      if (arrow) arrow.style.opacity = (1 - Math.min(1, p / 0.2)).toFixed(3);
+      if (arrow) arrow.style.opacity = (se * 0.75).toFixed(3);
     };
     document.querySelectorAll('.vg-rise > span').forEach((l, i) => { l.style.animationDelay = (0.35 + i * 0.13) + 's'; });
     // fetch silhouettes at top priority before the video hogs bandwidth
@@ -497,7 +497,8 @@ class Component {
     if (window.requestIdleCallback) window.requestIdleCallback(warm); else setTimeout(warm, 1);
     // pre-warm project pages + their first screens: navigation then has nothing left to fetch
     const warmPages = () => {
-      [['mobius.html', 'assets/images/mobius/cover.png'], ['bitl.html', 'assets/images/bitl/p00.png']].forEach(([page, first]) => {
+      [['mobius.html', 'assets/images/mobius/cover.png'], ['bitl.html', 'assets/images/bitl/p00.png'],
+       ['watchmaker.html', 'assets/images/watchmaker/cover.png']].forEach(([page, first]) => {
         const l = document.createElement('link');
         l.rel = 'prefetch'; l.href = page; l.as = 'document';
         document.head.appendChild(l);
@@ -517,6 +518,9 @@ class Component {
           src: 'assets/images/mobius/p' + String(i).padStart(2, '0') + '.png', w: 1680, h: i === 11 ? 1885 : 1893 }))) },
       // pages 1-2 come from js/bitl-live.js: the same flat artwork plus the cursor glow and the
       // statement break. The strip picks up at p02.
+      '#blind-watchmaker': { bg: '#eaeaea', ink: '#131313', label: 'BLIND WATCHMAKER', first: 'assets/images/watchmaker/cover.png',
+        imgs: [{ src: 'assets/images/watchmaker/cover.png', w: 2880, h: 1620 }].concat(Array.from({ length: 12 }, (_, i) => ({
+          src: 'assets/images/watchmaker/p' + String(i).padStart(2, '0') + '.png', w: 2880, h: i === 11 ? 1622 : 1632 }))) },
       '#bitl': { bg: '#000000', ink: '#f4f4f4', label: 'BITL', first: 'assets/images/bitl/p00.png', hero: 'bitl',
         imgs: Array.from({ length: 14 }, (_, k) => { const i = k + 2; const it = { src: 'assets/images/bitl/p' + String(i).padStart(2, '0') + '.png', w: 2745,
           h: i < 7 ? 1839 : i === 7 ? 1830 : i < 15 ? 1930 : 1922 };
@@ -541,6 +545,16 @@ class Component {
           return it; }).flat() }
     };
     this._projects = PROJECTS;
+    // the watchmaker opening statement is baked into p00: cover it and re-set it live, so the words
+    // light up one by one as the reader scrolls (js/scrollwords.js)
+    if (window.VG_WATCHMAKER_WORDS) PROJECTS['#blind-watchmaker'].imgs[1].words = window.VG_WATCHMAKER_WORDS;
+    // the "A world for the blind" statement straddles p01/p02: both are masked and it plays live
+    // between them (js/statement.js)
+    if (window.vgStatement) {
+      PROJECTS['#blind-watchmaker'].imgs[2].crop = [1140, 0];
+      PROJECTS['#blind-watchmaker'].imgs[2].statement = true;
+      PROJECTS['#blind-watchmaker'].imgs[3].crop = [1604, 28];
+    }
     this._openProject = (p, onClose, insetTo) => {
       const ov = document.createElement('div');
       ov.id = 'vg-reader';
@@ -648,7 +662,20 @@ class Component {
         if (i > 1) im.loading = 'lazy'; else im.fetchPriority = i === 0 ? 'high' : 'auto';
         im.decoding = 'async';
         im.style.cssText = 'display:block;width:100%;height:auto;margin-bottom:-1px';
-        if (it.caption) {
+        if (it.words && window.vgScrollWords) {
+          // the page before it is pinned along with this one, so the whole frame holds still
+          const prev = strip.lastElementChild && strip.lastElementChild.tagName === 'IMG' ? strip.lastElementChild : null;
+          strip.appendChild(window.vgScrollWords(im, Object.assign({}, it.words, { scroller: ov, above: prev })));
+        } else if (it.crop) {
+          const w = document.createElement('div');
+          w.style.cssText = 'position:relative;width:100%;overflow:hidden;line-height:0;font-size:0;' +
+            'aspect-ratio:2880/' + it.crop[0];
+          im.style.marginBottom = '0';
+          if (it.crop[1]) im.style.marginTop = (-it.crop[1] / 2880 * 100).toFixed(4) + '%';
+          w.appendChild(im);
+          strip.appendChild(w);
+          if (it.statement) strip.appendChild(window.vgStatement({ scroller: ov }));
+        } else if (it.caption) {
           const holder = document.createElement('div');
           holder.style.cssText = 'position:relative;width:100%;line-height:0;font-size:0';
           holder.appendChild(im);
@@ -859,27 +886,46 @@ class Component {
         host.innerHTML = this._prepCache[url] || this._prepare(url, rawMarkup);
         const svg = host.querySelector('svg');
         if (!svg) return;
-        // 'slice' = the same cover-fit the colour photo uses, so the outlines land on it exactly
+        // 'slice' = the same cover-fit the colour photo uses, so the outlines land on it exactly.
+        // 'topfit' traces were drawn over the project page, where the photo runs full width from the
+        // top: crop the canvas to the photo's own rect before the usual cover-fit
+        const topfit = mode === 'topfit';
         svg.setAttribute('preserveAspectRatio', 'xMidYMid slice');
         svg.style.width = '100%'; svg.style.height = '100%';
+        svg.style.overflow = 'visible'; // nothing the drawing carries gets cut by the frame
+        // dx/dy trim per trace file; js/trace-dev.js (dev only, press D) writes these live
+        const n = (window.__vgNudge && window.__vgNudge(url)) || (topfit ? { dx: 1.7, dy: -0.6 } : { dx: 0, dy: 0 });
+        if (ar && topfit) {
+          const v = svg.viewBox.baseVal;
+          const bx = v.x, by = v.y, bw = v.width, bh = v.width / ar;
+          svg.setAttribute('data-basevb', bx + ' ' + by + ' ' + bw + ' ' + bh);
+          svg.setAttribute('viewBox', (bx + bw * n.dx / 100) + ' ' + (by + bh * n.dy / 100) +
+            ' ' + bw + ' ' + bh);
+        }
         // re-frame the drawing to the photo's aspect so both cover-fit to the identical rect
-        if (ar) {
-          const v = svg.viewBox.baseVal, a0 = v.width / v.height;
-          if (Math.abs(a0 - ar) > 0.002) {
-            let w = v.width, h = v.height, x = v.x, y = v.y;
-            if (ar < a0) { const nh = w / ar; y -= (nh - h) / 2; h = nh; }
-            else { const nw = h * ar; x -= (nw - w) / 2; w = nw; }
-            svg.setAttribute('viewBox', x + ' ' + y + ' ' + w + ' ' + h);
+        if (!topfit) {
+          const v = svg.viewBox.baseVal;
+          let w = v.width, h = v.height, x = v.x, y = v.y;
+          if (ar) {
+            const a0 = w / h;
+            if (Math.abs(a0 - ar) > 0.002) {
+              if (ar < a0) { const nh = w / ar; y -= (nh - h) / 2; h = nh; }
+              else { const nw = h * ar; x -= (nw - w) / 2; w = nw; }
+            }
           }
+          svg.setAttribute('data-basevb', x + ' ' + y + ' ' + w + ' ' + h);
+          svg.setAttribute('viewBox', (x + w * n.dx / 100) + ' ' + (y + h * n.dy / 100) +
+            ' ' + w + ' ' + h);
         }
         const paths = Array.from(svg.querySelectorAll('path, ellipse, circle, rect, polyline, polygon, line'));
         const vb = svg.viewBox.baseVal;
         // cursor (viewport px) -> viewBox units under cover-fit
         const hr = host.getBoundingClientRect();
         const k = Math.max(hr.width / vb.width, hr.height / vb.height);
-        const offX = (hr.width - vb.width * k) / 2, offY = (hr.height - vb.height * k) / 2;
+        const ky = k;
+        const offX = (hr.width - vb.width * k) / 2, offY = (hr.height - vb.height * ky) / 2;
         const px = ox == null ? hr.width / 2 : ox - hr.left, py = oy == null ? hr.height / 2 : oy - hr.top;
-        const cx0 = (px - offX) / k, cy0 = (py - offY) / k;
+        const cx0 = (px - offX) / k, cy0 = (py - offY) / ky;
         const scored = paths.map((p) => {
           const bx = +p.getAttribute('data-cx'), by = +p.getAttribute('data-cy');
           const dx = (isNaN(bx) ? 0 : bx) - cx0, dy = (isNaN(by) ? 0 : by) - cy0;
@@ -1090,7 +1136,9 @@ class Component {
         leak.style.clipPath = 'circle(0% at ' + cx + 'px ' + cy + 'px)';
         wireBox.style.opacity = '0';
         const sk = document.getElementById('vg-sketch');
-        sk.style.transition = 'none'; sk.style.opacity = '1'; sk.style.clipPath = 'none'; sk.innerHTML = '';
+        // the trace dev bar (js/trace-dev.js) holds the drawing on screen so it can be nudged
+        if (window.__vgTraceHold) { sk.style.transition = 'none'; sk.style.opacity = '1'; sk.style.clipPath = 'none'; }
+        else { sk.style.transition = 'none'; sk.style.opacity = '1'; sk.style.clipPath = 'none'; sk.innerHTML = ''; }
         zoom.style.transition = 'none';
         zoom.style.transform = 'scale(1)';
         posterOpen = false;

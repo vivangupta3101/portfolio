@@ -1,0 +1,14 @@
+html { scrollbar-width: none; }
+  * { scrollbar-width: none; -ms-overflow-style: none; }
+  ::-webkit-scrollbar { display: none; width: 0; height: 0; background: transparent; }
+  html, body, a { cursor: none; }
+  #pg-ball { position: fixed; left: 0; top: 0; width: 22px; height: 22px; border-radius: 50%; background: #ffffff; mix-blend-mode: difference; pointer-events: none; z-index: 9999; transition: width 0.25s ease, height 0.25s ease; }
+  #pg-ball.big { width: 34px; height: 34px; }
+  body { margin: 0; background: #eaeaea; color: #131313; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #131313; text-decoration: none; }
+  a:hover { color: #b4123c; }
+  @keyframes wmRise { from { transform: translateY(112%); } to { transform: translateY(0); } }
+  .wm-rise { display: block; overflow: hidden; padding-bottom: 0.08em; }
+  .wm-rise > span { display: block; transform: translateY(112%); animation: wmRise 1.25s cubic-bezier(0.19, 1, 0.22, 1) both; }
+
+  @keyframes wmStickerSway { 0% { transform: translate3d(0,0,0) rotate(-0.35deg); } 50% { transform: translate3d(0.35%,-0.5%,0) rotate(0.3deg); } 100% { transform: translate3d(-0.25%,0.35%,0) rotate(-0.2deg); } }

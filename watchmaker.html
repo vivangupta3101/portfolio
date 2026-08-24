@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blind Watchmaker — Vivan Gupta</title>
+  
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="css/watchmaker.css">
+</head>
+<body>
+<div style="min-height: 100vh; background: #eaeaea">
+  <a href="index.html" aria-label="Home" style="position: fixed; left: 40px; top: 20px; z-index: 41; display: flex; align-items: center"><img src="assets/images/logo-mark.png" alt="Vivan Gupta" style="height: 24px; width: auto; display: block"></a>
+  <nav style="position: fixed; left: 0; right: 0; top: 0; z-index: 40; display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; mix-blend-mode: difference; color: #ffffff">
+    <span></span>
+    <a href="index.html" style="display: flex; align-items: center; gap: 10px; font-size: 12px; letter-spacing: 0.14em; font-weight: 500; color: #ffffff">
+      <span>&#8592;</span>
+      <span>BACK</span>
+    </a>
+  </nav>
+
+  <div data-screen-label="Blind Watchmaker hero" style="position: relative; width: 100%; line-height: 0">
+    <img src="assets/images/watchmaker/cover.png" alt="Blind Watchmaker toolkit" fetchpriority="high" decoding="sync" style="display: block; width: 100%; height: auto; margin-bottom: -1px" />
+  </div>
+
+  <div data-screen-label="Blind Watchmaker deck" style="width: 100%; line-height: 0; font-size: 0">
+      <img id="pg-wm-p00" src="assets/images/watchmaker/p00.png" alt="" loading="eager" fetchpriority="high" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
+      <img id="pg-wm-p01" src="assets/images/watchmaker/p01.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
+      <img id="pg-wm-p02" src="assets/images/watchmaker/p02.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
+      <img src="assets/images/watchmaker/p03.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
+      <img src="assets/images/watchmaker/p04.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
+      <img src="assets/images/watchmaker/p05.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
+      <img src="assets/images/watchmaker/p06.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
+      <img src="assets/images/watchmaker/p07.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
+      <img src="assets/images/watchmaker/p08.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
+      <img src="assets/images/watchmaker/p09.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
+      <img src="assets/images/watchmaker/p10.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
+      <img src="assets/images/watchmaker/p11.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
+  </div>
+
+  <footer style="padding: 64px 40px 72px; background: #eaeaea; display: flex; align-items: center; justify-content: space-between; gap: 24px; font-size: 11px; letter-spacing: 0.16em; color: rgba(19,19,19,0.5)">
+    <a href="index.html">&#8592; BACK TO PROJECTS</a>
+    <span>BLIND WATCHMAKER</span>
+  </footer>
+</div>
+
+
+<script src="js/scrollwords.js"></script>
+<script src="js/statement.js"></script>
+<script>
+  (function () {
+    // the baked statement is masked out of p01/p02 and played live between them
+    var a = document.getElementById('pg-wm-p01'), b = document.getElementById('pg-wm-p02');
+    if (!a || !b || !window.vgStatement) return;
+    // the baked statement is cropped away rather than painted over, so it leaves no empty band
+    var crop = function (img, keepH, cutTop) {
+      var w = document.createElement('div');
+      w.style.cssText = 'position:relative;width:100%;overflow:hidden;line-height:0;font-size:0;' +
+        'aspect-ratio:2880/' + keepH;
+      img.parentNode.insertBefore(w, img);
+      w.appendChild(img);
+      img.style.marginBottom = '0';
+      if (cutTop) img.style.marginTop = (-cutTop / 2880 * 100).toFixed(4) + '%';
+      return w;
+    };
+    var wa = crop(a, 1140, 0);      // p01 without the statement at its foot
+    crop(b, 1604, 28);              // p02 without the tail line at its head
+    wa.parentNode.insertBefore(window.vgStatement({}), wa.nextSibling);
+  })();
+</script>
+<script>
+  (function () {
+    var im = document.getElementById('pg-wm-p00');
+    if (!im || !window.vgScrollWords) return;
+    var above = document.querySelector('[data-screen-label="Blind Watchmaker hero"] img');
+    var slot = document.createElement('div');
+    im.parentNode.insertBefore(slot, im);
+    var cfg = Object.assign({}, window.VG_WATCHMAKER_WORDS, above ? { above: above } : {});
+    slot.parentNode.replaceChild(window.vgScrollWords(im, cfg), slot);
+  })();
+</script>
+<script src="js/stickers.js"></script>
+<script src="js/hmw.js"></script>
+<script src="js/watchmaker.js"></script>
+<script src="js/eye-cursor.js"></script>
+</body>
+</html>

@@ -63,13 +63,13 @@ class Component {
       if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         const mask = document.getElementById('hi-mask');
         if (mask) mask.classList.add('hi-open');
-        setTimeout(() => {
-          setInterval(() => {
-            turn += 1;
-            paint();
-            if (win && win.classList.contains('hi-win-on')) showPhoto();
-          }, 2800);
-        }, 1600);
+        const spin = () => {
+          turn += 1;
+          paint();
+          if (win && win.classList.contains('hi-win-on')) showPhoto();
+        };
+        // first swap fires as soon as the headline has finished rising, then settles into its cadence
+        setTimeout(() => { spin(); setInterval(spin, 2800); }, 1500);
       }
 
       rot.addEventListener('mouseenter', () => {
