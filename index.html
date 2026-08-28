@@ -14,10 +14,36 @@
 <body>
 <div id="vg-intro" style="display: none; position: fixed; inset: 0; z-index: 9999; background: #000000; align-items: center; justify-content: center">
   <video muted playsinline preload="auto" src="assets/videos/logo-intro.mp4" style="width: min(62vmin, 620px); height: min(62vmin, 620px); object-fit: contain"></video>
-  <img id="vg-intro-mark" src="assets/images/logo-mark.png" alt="" style="position: absolute; width: min(31vmin, 310px); height: auto; opacity: 0; transform-origin: left top; will-change: transform, opacity">
+  <img id="vg-intro-mark" src="assets/icons/logo-mark.svg" alt="" width="194" height="168" style="position: absolute; width: 194px; height: 168px; opacity: 0; transform-origin: left top; will-change: transform, opacity">
 
 </div>
 <script src="js/intro.js"></script>
+<script>
+// returning from a project page that isn't the in-page reader (e.g. watchmaker.html): cover the
+// screen with its cover image immediately, before the grid paints, then home.js shrinks it down
+// onto the tile so the return feels like the same close animation the in-page projects use
+(function(){
+  try {
+    var k = sessionStorage.getItem('vgReturnFrom');
+    if (!k) return;
+    sessionStorage.removeItem('vgReturnFrom');
+    var covers = { watchmaker: { src: 'assets/images/watchmaker/cover.png', bg: '#eaeaea', href: 'watchmaker.html' } };
+    var c = covers[k];
+    if (!c) return;
+    var d = document.createElement('div');
+    d.id = 'vg-return-cover';
+    d.style.cssText = 'position:fixed;inset:0;z-index:9999;clip-path:inset(0px 0px 0px 0px round 0px);' +
+      "background:" + c.bg + " url('" + c.src + "') center/cover no-repeat;";
+    document.documentElement.style.background = c.bg;
+    document.documentElement.appendChild(d);
+    // hold the shrink until the cover bitmap is actually decoded: starting the clip-path against an
+    // undecoded background is what shows as a flash
+    var pre = new Image();
+    pre.src = c.src;
+    window.__vgReturnCover = { el: d, href: c.href, ready: (pre.decode ? pre.decode().catch(function () {}) : Promise.resolve()) };
+  } catch (e) {}
+})();
+</script>
 
 <link rel="preload" as="image" href="assets/images/pasted-1784884557335-0-x.jpg"><link rel="preload" as="image" href="assets/images/pasted-1784891319683-0-x.jpg"><link rel="preload" as="image" href="assets/images/pasted-1784891346988-0-x.jpg"><link rel="preload" as="image" href="assets/images/watchmaker/cover.png"><link rel="preload" as="image" href="assets/images/watchmaker-silhouette.png"><link rel="preload" as="image" href="assets/images/bitl-silhouette.png"><link rel="preload" as="image" href="assets/images/mobius-silhouette.png"><link rel="preload" as="image" href="assets/images/strahl-silhouette.png">
 <svg width="0" height="0" style="position: absolute" aria-hidden="true">
@@ -97,17 +123,17 @@
 <div id="vg-sb"><div id="vg-sb-thumb"></div></div>
 
 <nav style="position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: 20px 48px; background: rgba(251,251,250,0.82); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(19,19,19,0.08)">
-  <a href="#top" style="display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 700; letter-spacing: 0.18em"><img id="vg-navmark" src="assets/images/logo-mark.png" alt="Vivan Gupta" style="height: 26px; width: auto; display: block"></a>
+  <a href="#top" style="display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 700; letter-spacing: 0.18em"><img id="vg-navmark" src="assets/icons/logo-mark.svg" alt="Vivan Gupta" style="height: 26px; width: auto; display: block"></a>
   <div id="vg-navmenu" style="display: flex; align-items: center; gap: 0px; font-size: 13px; letter-spacing: 0.12em; font-weight: 500">
     <div id="vg-navlinks" style="display: flex; align-items: center; gap: 32px; max-width: 0px; opacity: 0; overflow: hidden; white-space: nowrap; transform: translateX(14px); transition: max-width 0.65s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), margin-right 0.65s cubic-bezier(0.22, 1, 0.36, 1); margin-right: 0px">
       <a href="about.html">ABOUT</a>
       <a href="backstage.html">BACKSTAGE</a>
     </div>
     <button id="vg-navlogo" aria-label="Menu" style="position: relative; width: 40px; height: 40px; border: none; border-radius: 999px; background: transparent; cursor: none; padding: 0; transition: transform 0.6s cubic-bezier(0.34, 1.4, 0.5, 1)">
-      <span class="vg-dot" style="position: absolute; width: 7px; height: 7px; border-radius: 999px; background: #ec7e41; left: 11px; top: 11px; transition: transform 0.7s cubic-bezier(0.34, 1.3, 0.45, 1), opacity 0.4s ease, border-radius 0.5s ease"></span>
-      <span class="vg-dot" style="position: absolute; width: 7px; height: 7px; border-radius: 999px; background: #ec7e41; left: 22px; top: 11px; transition: transform 0.7s cubic-bezier(0.34, 1.3, 0.45, 1) 0.05s, opacity 0.4s ease 0.05s, border-radius 0.5s ease 0.05s"></span>
-      <span class="vg-dot" style="position: absolute; width: 7px; height: 7px; border-radius: 999px; background: #ec7e41; left: 11px; top: 22px; transition: transform 0.7s cubic-bezier(0.34, 1.3, 0.45, 1) 0.1s, opacity 0.4s ease 0.1s, border-radius 0.5s ease 0.1s"></span>
-      <span class="vg-dot" style="position: absolute; width: 7px; height: 7px; border-radius: 999px; background: #ec7e41; left: 22px; top: 22px; transition: transform 0.7s cubic-bezier(0.34, 1.3, 0.45, 1) 0.15s, opacity 0.4s ease 0.15s, border-radius 0.5s ease 0.15s"></span>
+      <span class="vg-dot" style="position: absolute; width: 7px; height: 7px; border-radius: 999px; background: #020202; left: 11px; top: 11px; transition: transform 0.7s cubic-bezier(0.34, 1.3, 0.45, 1), opacity 0.4s ease, border-radius 0.5s ease, background 0.45s ease"></span>
+      <span class="vg-dot" style="position: absolute; width: 7px; height: 7px; border-radius: 999px; background: #020202; left: 22px; top: 11px; transition: transform 0.7s cubic-bezier(0.34, 1.3, 0.45, 1) 0.05s, opacity 0.4s ease 0.05s, border-radius 0.5s ease 0.05s, background 0.45s ease 0.05s"></span>
+      <span class="vg-dot" style="position: absolute; width: 7px; height: 7px; border-radius: 999px; background: #ec7e41; left: 11px; top: 22px; transition: transform 0.7s cubic-bezier(0.34, 1.3, 0.45, 1) 0.1s, opacity 0.4s ease 0.1s, border-radius 0.5s ease 0.1s, background 0.45s ease 0.1s"></span>
+      <span class="vg-dot" style="position: absolute; width: 7px; height: 7px; border-radius: 999px; background: #020202; left: 22px; top: 22px; transition: transform 0.7s cubic-bezier(0.34, 1.3, 0.45, 1) 0.15s, opacity 0.4s ease 0.15s, border-radius 0.5s ease 0.15s, background 0.45s ease 0.15s"></span>
       <span class="vg-dot-c" style="position: absolute; width: 6px; height: 6px; border-radius: 1px; background: #ec7e41; left: 17px; top: 17px; opacity: 0; transform: scale(0.2); transition: transform 0.6s cubic-bezier(0.34, 1.4, 0.5, 1) 0.12s, opacity 0.35s ease 0.12s"></span>
     </button>
   </div>
@@ -205,7 +231,7 @@
   </div>
 
   <div class="vg-proj" data-cat="accessibility" style="display: flex; flex-direction: row; align-items: center; gap: 56px" data-ink="dark">
-    <a href="#blind-watchmaker" class="vg-row vg-reveal" data-leak="#eaeaea" data-wire="assets/images/wire-watchmaker.png" data-wire-res="wireWatchmaker" data-trace="assets/icons/watchmaker-trace.svg" data-trace-mode="topfit" data-leak-img="assets/images/watchmaker/cover.png" data-screen-label="Blind Watchmaker" style="position: relative; display: block; flex: 0 0 68%; overflow: hidden; aspect-ratio: 1.9 / 1; border-radius: 20px; background: #ffffff">
+    <a href="watchmaker.html" class="vg-row vg-reveal" data-leak="#eaeaea" data-wire="assets/images/wire-watchmaker.png" data-wire-res="wireWatchmaker" data-trace="assets/icons/watchmaker-trace.svg" data-trace-mode="topfit" data-leak-img="assets/images/watchmaker/cover.png" data-screen-label="Blind Watchmaker" style="position: relative; display: block; flex: 0 0 68%; overflow: hidden; aspect-ratio: 1.9 / 1; border-radius: 20px; background: #ffffff">
     <div class="vg-win" style="position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background: #ffffff url('assets/images/watchmaker/cover.png') center / cover no-repeat"></div>
     <div class="vg-scrim" style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 38%)"></div>
     <div class="vg-cap" style="position: absolute; left: 0; right: 0; bottom: 0; padding: 32px 40px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; color: #ffffff">
@@ -428,6 +454,5 @@
 <script src="js/scrollwords.js"></script>
 <script src="js/statement.js"></script>
 <script src="js/home.js"></script>
-
 </body>
 </html>

@@ -11,7 +11,7 @@
 
   function mount(page) {
     var holder = document.createElement('div');
-    holder.style.cssText = 'position:relative;width:100%;line-height:0;font-size:0';
+    holder.style.cssText = 'position:relative;width:100%;line-height:0;font-size:0;margin-bottom:-1px';
     page.parentNode.insertBefore(holder, page);
 
     var tail = document.createElement('img');
@@ -36,6 +36,7 @@
       ';height:' + pct(180);
     top.appendChild(head);
 
+
     // the printed statement and the printed rule under it
     var cover = document.createElement('div');
     cover.style.cssText = 'position:absolute;left:0;right:0;background:#ffffff;' +
@@ -59,15 +60,15 @@
     gap.style.cssText = 'position:relative;width:100%;background:#ffffff;display:flex;' +
       'justify-content:center;padding:min(5vw,132px) 0 min(7vw,190px)';
     var rule = document.createElement('div');
-    rule.style.cssText = 'width:1px;height:min(5.3vw,154px);background:rgba(19,19,19,0.45);' +
+    rule.style.cssText = 'width:1px;height:min(9vw,250px);background:rgba(19,19,19,0.42);' +
       'transform:scaleY(0);transform-origin:50% 0;' +
-      'transition:transform 0.55s cubic-bezier(0.22,1,0.36,1)';
+      'transition:transform 1.1s cubic-bezier(0.22,1,0.36,1)';
     gap.appendChild(rule);
     holder.appendChild(gap);
 
     var bottom = document.createElement('div');
     bottom.style.cssText = 'position:relative;width:100%;overflow:hidden;line-height:0;font-size:0;' +
-      'aspect-ratio:' + PAGE_W + '/' + (PAGE_H - SPLIT);
+      'margin-top:-1px;aspect-ratio:' + PAGE_W + '/' + (PAGE_H - SPLIT);
     bottom.appendChild(tail);
     holder.appendChild(bottom);
 
@@ -82,13 +83,18 @@
         line.style.transition = 'transform 1.25s cubic-bezier(0.19,1,0.22,1)';
         line.style.transform = 'translateY(0)';
       }
-      if (!shown.rule && inView(rule)) {
+      if (!shown.rule && inView(gap)) {
         shown.rule = true;
         rule.style.transform = 'scaleY(1)';
       }
     };
     window.addEventListener('scroll', check, { passive: true });
     window.addEventListener('resize', check);
+    if (window.IntersectionObserver) {
+      var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) check(); }); },
+        { threshold: 0.01 });
+      io.observe(mask); io.observe(gap);
+    }
     requestAnimationFrame(check);
   }
 

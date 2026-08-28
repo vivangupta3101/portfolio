@@ -8,6 +8,39 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap">
 <link rel="stylesheet" href="css/watchmaker.css">
+<link rel="preload" as="image" href="assets/images/watchmaker/cover.png" fetchpriority="high">
+<link rel="preload" as="image" href="assets/images/watchmaker/p00.png" fetchpriority="high">
+<link rel="preload" as="image" href="assets/images/watchmaker/p01.png">
+<link rel="preload" as="image" href="assets/images/watchmaker/p02.png">
+<script>
+  // arriving from the grid's expand: the browser must not restore a previous scroll position, or
+  // the hand-off lands mid-deck instead of on the cover the rectangle just grew into
+  try { history.scrollRestoration = 'manual'; } catch (e) {}
+  window.addEventListener('pageshow', function () { window.scrollTo(0, 0); });
+  document.documentElement.style.background = '#eaeaea';
+  // the grid's expand ends on this page's cover: paint that cover over the whole screen before
+  // anything else and only take it away once the real cover has decoded, so the hand-off has no
+  // frame of empty page in it
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = document.createElement('div');
+    c.style.cssText = 'position:fixed;inset:0;z-index:9998;pointer-events:none;' +
+      "background:#eaeaea url('assets/images/watchmaker/cover.png') center/cover no-repeat;" +
+      'transition:opacity 0.45s ease';
+    document.body.appendChild(c);
+    var hero = document.querySelector('img[src$="watchmaker/cover.png"]');
+    var drop = function () {
+      requestAnimationFrame(function () {
+        c.style.opacity = '0';
+        setTimeout(function () { c.remove(); }, 500);
+      });
+    };
+    if (hero && hero.decode) hero.decode().then(drop, drop);
+    else if (hero && hero.complete) drop();
+    else if (hero) hero.addEventListener('load', drop), hero.addEventListener('error', drop);
+    else drop();
+    setTimeout(drop, 2500);
+  });
+</script>
 </head>
 <body>
 <div style="min-height: 100vh; background: #eaeaea">
@@ -21,26 +54,35 @@
   </nav>
 
   <div data-screen-label="Blind Watchmaker hero" style="position: relative; width: 100%; line-height: 0">
-    <img src="assets/images/watchmaker/cover.png" alt="Blind Watchmaker toolkit" fetchpriority="high" decoding="sync" style="display: block; width: 100%; height: auto; margin-bottom: -1px" />
+    <img src="assets/images/watchmaker/cover.png" alt="Blind Watchmaker toolkit" width="2880" height="1620" fetchpriority="high" decoding="sync" style="display: block; width: 100%; height: auto; margin-bottom: -2px" />
   </div>
 
   <div data-screen-label="Blind Watchmaker deck" style="width: 100%; line-height: 0; font-size: 0">
-      <img id="pg-wm-p00" src="assets/images/watchmaker/p00.png" alt="" loading="eager" fetchpriority="high" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
-      <img id="pg-wm-p01" src="assets/images/watchmaker/p01.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
-      <img id="pg-wm-p02" src="assets/images/watchmaker/p02.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
-      <img src="assets/images/watchmaker/p03.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
-      <img src="assets/images/watchmaker/p04.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
-      <img src="assets/images/watchmaker/p05.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
-      <img src="assets/images/watchmaker/p06.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
-      <img src="assets/images/watchmaker/p07.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
-      <img src="assets/images/watchmaker/p08.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
-      <img src="assets/images/watchmaker/p09.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
-      <img src="assets/images/watchmaker/p10.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
-      <img src="assets/images/watchmaker/p11.png" alt="" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -1px">
+      <img id="pg-wm-p00" src="assets/images/watchmaker/p00.png" alt="" width="2880" height="1632" loading="eager" fetchpriority="high" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
+      <img id="pg-wm-p01" src="assets/images/watchmaker/p01.png" alt="" width="2880" height="1632" loading="eager" fetchpriority="high" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
+      <img id="pg-wm-p02" src="assets/images/watchmaker/p02.png" alt="" width="2880" height="1632" loading="eager" fetchpriority="high" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
+      <img src="assets/images/watchmaker/p03.png" alt="" width="2880" height="1632" loading="eager" fetchpriority="high" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
+      <img src="assets/images/watchmaker/p04.png" alt="" width="2880" height="1632" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
+      <img src="assets/images/watchmaker/p05.png" alt="" width="2880" height="1632" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
+      <img src="assets/images/watchmaker/p06.png" alt="" width="2880" height="1632" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
+      <img src="assets/images/watchmaker/p07.png" alt="" width="2880" height="1632" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
+      <img src="assets/images/watchmaker/p08.png" alt="" width="2880" height="1632" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
+      <img src="assets/images/watchmaker/p09.png" alt="" width="2880" height="1632" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
+      <img src="assets/images/watchmaker/p10.png" alt="" width="2880" height="1632" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
+      <img src="assets/images/watchmaker/p11.png" alt="" width="2880" height="1622" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
   </div>
 
   <footer style="padding: 64px 40px 72px; background: #eaeaea; display: flex; align-items: center; justify-content: space-between; gap: 24px; font-size: 11px; letter-spacing: 0.16em; color: rgba(19,19,19,0.5)">
     <a href="index.html">&#8592; BACK TO PROJECTS</a>
+    <script>
+      // any exit from this page back to the grid — the back link, the logo, or the browser's own
+      // back button — hands the grid the flag it needs to shrink the cover onto the tile
+      function markReturn() { try { sessionStorage.setItem('vgReturnFrom', 'watchmaker'); } catch (e) {} }
+      document.querySelectorAll('a[href="index.html"]').forEach(function (a) {
+        a.addEventListener('click', markReturn);
+      });
+      window.addEventListener('pagehide', markReturn);
+    </script>
     <span>BLIND WATCHMAKER</span>
   </footer>
 </div>

@@ -257,6 +257,9 @@ class Component {
       if (logo && links) {
         let open = false, settleT;
         const dots = logo.querySelectorAll('.vg-dot');
+        // dots carry mixed colours at rest (one orange, three black); once they merge into the square
+        // they must read as one solid orange block, so the rest colour is remembered and restored
+        const restFill = Array.from(dots).map((d) => d.style.background);
         const set = (o) => {
           open = o;
           // The panel expands from max-width 0, so both labels slide sideways for 0.65s. A click
@@ -276,10 +279,15 @@ class Component {
             dots.forEach((d, i) => {
               d.style.transform = 'translate(' + shift[i][0] + 'px, ' + shift[i][1] + 'px) scale(0.86)';
               d.style.borderRadius = '1px';
+              d.style.background = '#ec7e41';
             });
             if (center) { center.style.opacity = '1'; center.style.transform = 'scale(1)'; }
           } else {
-            dots.forEach((d) => { d.style.transform = 'none'; d.style.borderRadius = '999px'; });
+            dots.forEach((d, i) => {
+              d.style.transform = 'none';
+              d.style.borderRadius = '999px';
+              d.style.background = restFill[i];
+            });
             if (center) { center.style.opacity = '0'; center.style.transform = 'scale(0.2)'; }
           }
         };
@@ -304,9 +312,42 @@ class Component {
       if (pill) { const tr = pill.style.transition; pill.style.transition = 'none'; movePill(); void pill.offsetWidth; pill.style.transition = tr; }
       window.addEventListener('resize', movePill);
       this._movePill = movePill;
+      // restoring a remembered category on load must not replay the swap: the grid is put straight
+      // into its filtered state so the return-shrink can measure the real tile position
+      const applySilent = (cat) => {
+        tabsEl.querySelectorAll('.vg-tab').forEach((t) => {
+          const on = (t.dataset.cat || 'all') === cat;
+          t.classList.toggle('vg-tab-on', on);
+          t.style.color = on ? '#ffffff' : '#131313';
+        });
+        const prevT = pill ? pill.style.transition : null;
+        if (pill) pill.style.transition = 'none';
+        movePill();
+        const projs = Array.from(document.querySelectorAll('.vg-proj'));
+        let j = 0;
+        projs.forEach((p) => {
+          const show = cat === 'all' || p.dataset.cat === cat;
+          p.classList.remove('vg-swap-out', 'vg-swap-in');
+          p.style.transition = 'none';
+          p.style.display = show ? 'flex' : 'none';
+          if (show) {
+            p.style.flexDirection = j % 2 === 0 ? 'row-reverse' : 'row';
+            const desc = p.querySelector(':scope > div.vg-reveal');
+            if (desc) desc.style.textAlign = j % 2 === 0 ? 'left' : 'right';
+            p.querySelectorAll('.vg-reveal').forEach((el) => el.classList.add('vg-in'));
+            j++;
+          }
+        });
+        void document.body.offsetWidth;
+        projs.forEach((p) => { p.style.transition = ''; });
+        if (pill) pill.style.transition = prevT;
+        sync();
+      };
+      this._applyCat = applySilent;
       tabsEl.addEventListener('click', (e) => {
         const btn = e.target.closest('.vg-tab');
         if (!btn) return;
+        try { sessionStorage.setItem('vgCat', btn.dataset.cat || 'all'); } catch (e2) {}
         tabsEl.querySelectorAll('.vg-tab').forEach((t) => {
           const on = t === btn;
           t.classList.toggle('vg-tab-on', on);
@@ -353,6 +394,20 @@ class Component {
     if (idx) {
       const stmt = document.querySelector('[data-screen-label="Partnership statement"]');
       let idxShown = false;
+      // a remembered category is re-applied to the grid, but it only suppresses the picker when the
+      // visitor is coming back from a project page (those flags are still set at this point, and are
+      // cleared further down) — a fresh load of the home page always gets the picker on scroll
+      let savedCat = null, returning = false;
+      try {
+        savedCat = sessionStorage.getItem('vgCat');
+        returning = sessionStorage.getItem('vgHomeScroll') != null || sessionStorage.getItem('vgExpandedFrom') != null;
+      } catch (e) {}
+      if (savedCat && this._applyCat) this._applyCat(savedCat);
+      if (savedCat && returning) {
+        idxShown = true;
+        idx.classList.remove('vg-idx-show');
+        idx.style.display = 'none';
+      }
       idx.querySelectorAll('.vg-idx-head, .vg-idx-item').forEach((el, i) => { el.style.transitionDelay = (0.15 + i * 0.07) + 's'; });
       const tabsSec = document.querySelector('[data-screen-label="Category tabs"]');
       const onIdxScroll = () => {
@@ -370,7 +425,9 @@ class Component {
       window.addEventListener('scroll', onIdxScroll, { passive: true });
       idx.addEventListener('click', (e) => {
         const b = e.target.closest('.vg-idx-item');
-        const tab = document.querySelector('#vg-tabs .vg-tab[data-cat="' + (b ? b.dataset.cat : 'all') + '"]');
+        const picked = b ? b.dataset.cat : 'all';
+        try { sessionStorage.setItem('vgCat', picked); } catch (e2) {}
+        const tab = document.querySelector('#vg-tabs .vg-tab[data-cat="' + picked + '"]');
         document.body.style.overflow = '';
         if (tab) tab.click();
         // jump behind the frosted glass so the tabs bar is on screen for the sort
@@ -496,6 +553,46 @@ class Component {
     };
     if (window.requestIdleCallback) window.requestIdleCallback(warm); else setTimeout(warm, 1);
     // pre-warm project pages + their first screens: navigation then has nothing left to fetch
+    if (window.__vgReturnCover) {
+      const { el, href, ready } = window.__vgReturnCover;
+      delete window.__vgReturnCover;
+      const row = document.querySelector('a[href="' + href + '"]');
+      // put the grid back exactly where it was before the tile expanded, so the shrink lands on the
+      // tile rather than on wherever a fresh load happens to start
+      let savedY = null;
+      try {
+        const v = sessionStorage.getItem('vgHomeScroll');
+        if (v != null) { savedY = parseFloat(v); sessionStorage.removeItem('vgHomeScroll'); }
+      } catch (e) {}
+      if (savedY != null && isFinite(savedY)) {
+        try { history.scrollRestoration = 'manual'; } catch (e) {}
+        // smooth scrolling is on globally: it would animate this jump and the shrink would measure the
+        // tile mid-flight, so it is off until the rect is taken
+        const prevBehavior = document.documentElement.style.scrollBehavior;
+        document.documentElement.style.scrollBehavior = 'auto';
+        setTimeout(() => { document.documentElement.style.scrollBehavior = prevBehavior; }, 1200);
+        const settle = () => window.scrollTo(0, savedY);
+        settle();
+        requestAnimationFrame(settle);
+        setTimeout(settle, 120);
+      }
+      const start = () => {
+        if (row) {
+          const b = row.getBoundingClientRect();
+          el.style.transition = 'clip-path 0.9s cubic-bezier(0.62,0,0.2,1), opacity 0.5s ease 0.55s';
+          el.style.clipPath = 'inset(' + b.top + 'px ' + (window.innerWidth - b.right) + 'px ' +
+            (window.innerHeight - b.bottom) + 'px ' + b.left + 'px round 20px)';
+          setTimeout(() => { el.style.opacity = '0'; }, 900);
+          setTimeout(() => { el.remove(); }, 1450);
+        } else {
+          el.style.transition = 'opacity 0.4s ease';
+          el.style.opacity = '0';
+          setTimeout(() => el.remove(), 450);
+        }
+      };
+      // wait for the cover bitmap to decode before the shrink begins, so no frame of it is missing
+      Promise.resolve(ready).then(() => setTimeout(start, 180));
+    }
     const warmPages = () => {
       [['mobius.html', 'assets/images/mobius/cover.png'], ['bitl.html', 'assets/images/bitl/p00.png'],
        ['watchmaker.html', 'assets/images/watchmaker/cover.png']].forEach(([page, first]) => {
@@ -1036,6 +1133,11 @@ class Component {
         if (this.props.dimOthers ?? true) main.classList.add('vg-dim');
       };
       const reveal = (e) => {
+        // a real page link (not a "#" in-page project) always navigates normally
+        const href = row.getAttribute('href') || '';
+        // a tile whose href is a real page (watchmaker.html) plays the same grow-to-fullscreen
+        // as the in-page projects, then navigates once the rectangle has filled the screen
+        const pageNav = href.slice(0, 1) !== '#' ? href : null;
         if (posterOpen || this._locked || !srcFor(row)) return;
         e.preventDefault();
         posterOpen = true;
@@ -1050,7 +1152,8 @@ class Component {
         // click = the tile's own rectangle grows smoothly to fill the screen
         const insetFrom = 'inset(' + r2.top + 'px ' + (window.innerWidth - r2.right) + 'px ' +
           (window.innerHeight - r2.bottom) + 'px ' + r2.left + 'px round 20px)';
-        const deck = PROJECTS[row.getAttribute('href')];
+        const PAGE_DECK = { 'watchmaker.html': '#blind-watchmaker' };
+        const deck = PROJECTS[pageNav ? PAGE_DECK[pageNav] : href];
         if (deck) full.style.backgroundImage = 'url("' + deck.first + '")';
         full.style.transition = 'none';
         full.style.clipPath = insetFrom;
@@ -1085,8 +1188,17 @@ class Component {
         row.classList.remove('vg-lift');
         document.body.classList.add('vg-focus');
         if (proj) proj.classList.add('vg-focus-row');
+        if (pageNav) {
+          // the shrink-back on return is set up by the cover block in index.html
+          try {
+            sessionStorage.setItem('vgExpandedFrom', pageNav);
+            sessionStorage.setItem('vgHomeScroll', String(window.scrollY || 0));
+          } catch (e2) {}
+          setTimeout(() => { location.href = pageNav; }, 1010);
+          return;
+        }
         // once the rectangle has filled the screen, hand off to the project page
-        const deckFor = PROJECTS[row.getAttribute('href')];
+        const deckFor = PROJECTS[href];
         if (deckFor) {
           if (deckFor.first) { const pre = new Image(); pre.src = deckFor.first; }
           setTimeout(() => {

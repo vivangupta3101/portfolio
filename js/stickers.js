@@ -11,11 +11,37 @@
     { src: 'assets/images/watchmaker/zoom3.png', left: 52.951, top: 33.578, width: 45.139, pad: 23.96, tilt: -1.3, rise: 4.6 }
   ];
 
+  var SPOTS_LIVE = [];
+  var queued = false;
+  // one winner at a time: the hotspots overlap (zoom1 straddles the seam and covers most of the
+  // spread), so a plain rect test lifts the wrong cut-out. elementFromPoint respects stacking,
+  // and only the topmost hotspot under the cursor is allowed to lift.
+  function runTests() {
+    queued = false;
+    var p = window.__vgPt;
+    var winner = null;
+    if (p) {
+      var el = document.elementFromPoint(p.x, p.y);
+      for (var i = 0; i < SPOTS_LIVE.length; i++) if (SPOTS_LIVE[i].hot === el) { winner = SPOTS_LIVE[i]; break; }
+    }
+    for (var j = 0; j < SPOTS_LIVE.length; j++) {
+      if (SPOTS_LIVE[j] === winner) SPOTS_LIVE[j].enter(); else SPOTS_LIVE[j].leave();
+    }
+  }
+  function queueTests() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(runTests);
+  }
+
   function mount(page) {
     var wrap = document.createElement('div');
-    wrap.style.cssText = 'position:relative;line-height:0;font-size:0;z-index:3';
+    // the wrapper takes over the page image's own 1px overlap, otherwise the seam above p03 shows
+    // as a hairline of page background straight across the spread
+    wrap.style.cssText = 'position:relative;line-height:0;font-size:0;z-index:3;margin-bottom:-1px';
     page.parentNode.insertBefore(wrap, page);
     wrap.appendChild(page);
+    page.style.marginBottom = '0';
 
     SPOTS.forEach(function (s, i) {
       // the silhouette the sticker vacates: filled with a heavily smeared, slightly enlarged copy of
@@ -93,19 +119,17 @@
         hole.style.transition = 'opacity 0.45s ease 0.25s';
         hole.style.opacity = '0';
       };
-      hot.addEventListener('mouseenter', enter);
-      hot.addEventListener('mouseleave', leave);
-      // trackpad inertia slides the page under a still cursor: re-test on scroll
-      window.addEventListener('scroll', function () {
-        if (!on) return;
-        var r = hot.getBoundingClientRect(), p = window.__vgPt;
-        if (!p) return;
-        if (p.x < r.left || p.x > r.right || p.y < r.top || p.y > r.bottom) leave();
-      }, { passive: true });
+      SPOTS_LIVE.push({ hot: hot, enter: enter, leave: leave });
     });
   }
 
-  window.addEventListener('mousemove', function (e) { window.__vgPt = { x: e.clientX, y: e.clientY }; }, { passive: true });
+  window.addEventListener('mousemove', function (e) {
+    window.__vgPt = { x: e.clientX, y: e.clientY };
+    queueTests();
+  }, { passive: true });
+  window.addEventListener('scroll', queueTests, { passive: true });
+  window.addEventListener('wheel', queueTests, { passive: true });
+  window.addEventListener('resize', queueTests);
 
   function boot() {
     var page = document.querySelector('img[src$="watchmaker/p03.png"]');
