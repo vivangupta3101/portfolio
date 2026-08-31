@@ -661,8 +661,37 @@ class Component {
           src: 'assets/images/mobius/p' + String(i).padStart(2, '0') + '.png', w: 1680, h: i === 11 ? 1885 : 1893 }))) },
       // StrahL: 29 pages sliced from the lighting PDF with pdfslice-strahl.html, stacked flush
       '#strahl': { bg: '#f6e2c6', ink: '#131313', label: 'STRAHL', first: 'assets/images/strahl/p00.png',
-        imgs: Array.from({ length: 29 }, (_, i) => ({ src: 'assets/images/strahl/p' + String(i).padStart(2, '0') + '.png',
-          w: 2382, h: [0, 2, 4, 6, 8, 10, 11, 12].indexOf(i) >= 0 ? 1802 : 1684 })) },
+        imgs: [{ spread: {
+          bg: '#f6e2c6',
+          pages: [{ src: 'assets/images/strahl/p00s.png', w: 2382, h: 1802 },
+                  { src: 'assets/images/strahl/p01s.png', w: 2382, h: 1684 }],
+          mask: null,
+          ring: { src: 'assets/images/strahl/ring.png', left: 22.4, top: 21.01, w: 148.07, origin: '53.72% 46.28%' },
+          products: [{ src: 'assets/images/strahl/prod-a.png', left: 35.89, top: 18.27, w: 64.69 },
+                     { src: 'assets/images/strahl/prod-b.png', left: 25.27, top: 52.18, w: 62.47 },
+                     { src: 'assets/images/strahl/prod-c.png', left: 54.28, top: 76.25, w: 64.99 }]
+        } }].concat(Array.from({ length: 27 }, (_, k) => { const i = k + 2;
+          // p02 carries the tail of the printed lamp that the live overlay redraws; p03's question mark
+          // and grey rule are lifted off the plate and drawn live (cleaned plates carry the 's' suffix)
+          const it = { src: 'assets/images/strahl/p' + String(i).padStart(2, '0') + ([2, 3, 4, 5, 14].indexOf(i) >= 0 ? 's' : '') + '.png',
+            w: 2382, h: [4, 6, 8, 10, 11, 12].indexOf(i) >= 0 ? 1802 : 1684 };
+          if (i === 3) it.draw = {
+            // measured off the printed page, in per cent of the page box
+            q: { left: 65.66, top: 53.62, w: 1.1335, ink: '#b81414' },
+            rule: { left: 52.85, top: 56.71, w: 0.084, h: 43.29, ink: '#adacab' }
+          };
+          // the red rule down the Tinkering spread runs off p04 and continues at the top of p05:
+          // both are lifted off the plates and drawn by the scroll, same width and ink as printed
+          if (i === 4) it.draw = { rule: { left: 4.1142, top: 15.094, w: 0.2939, h: 84.906, ink: '#c40000' } };
+          if (i === 5) it.draw = { rule: { left: 4.1142, top: 0, w: 0.2939, h: 27.612, ink: '#c40000' } };
+          // the skyline is three depth planes in the artwork: they are lifted off the plate and pop
+          // up in order, nearest first, when the band arrives on screen
+          if (i === 14) it.pop = { top: 77.019, layers: [
+            { src: 'assets/images/strahl/p14-l2.png', dy: 7, z: 4, delay: 0 },
+            { src: 'assets/images/strahl/p14-l1.png', dy: 5, z: 3, delay: 0.2 },
+            { src: 'assets/images/strahl/p14-l0.png', dy: 3.5, z: 2, delay: 0.4 }
+          ] };
+          return it; })) },
       // pages 1-2 come from js/bitl-live.js: the same flat artwork plus the cursor glow and the
       // statement break. The strip picks up at p02.
       '#blind-watchmaker': { bg: '#eaeaea', ink: '#131313', label: 'BLIND WATCHMAKER', first: 'assets/images/watchmaker/cover.png',
@@ -798,17 +827,162 @@ class Component {
         return root;
       };
 
+      // p00+p01 of StrahL are one spread: the printed pattern ring is erased with a cream annulus and
+      // re-laid live so it can turn, with the three product renders back on top of it. Geometry is in
+      // per cent of the spread box, measured against the printed pages.
+      const makeSpread = (sp) => {
+        const root = document.createElement('div');
+        root.style.cssText = 'position:relative;width:100%;line-height:0;font-size:0';
+        sp.pages.forEach((pg, k) => {
+          const im = document.createElement('img');
+          im.src = pg.src; im.alt = ''; im.width = pg.w; im.height = pg.h;
+          im.decoding = 'async';
+          if (!k) im.fetchPriority = 'high';
+          im.style.cssText = 'display:block;width:100%;height:auto;margin-bottom:-1px;position:relative;z-index:0';
+          root.appendChild(im);
+        });
+        // cream annulus: covers the printed ring whatever angle the live one lands on
+        if (sp.mask) {
+        const mask = document.createElement('div');
+        mask.style.cssText = 'position:absolute;left:' + sp.mask.left + '%;top:' + sp.mask.top + '%;width:' +
+          sp.mask.w + '%;height:' + sp.mask.h + '%;z-index:1;pointer-events:none;background:radial-gradient(circle closest-side,' +
+          'rgba(0,0,0,0) 0 ' + sp.mask.inner + '%,' + sp.bg + ' ' + sp.mask.inner + '%,' + sp.bg + ' 100%,rgba(0,0,0,0) 100%)';
+        root.appendChild(mask);
+        }
+        const ring = document.createElement('img');
+        ring.src = sp.ring.src; ring.alt = ''; ring.decoding = 'async'; ring.fetchPriority = 'high';
+        ring.style.cssText = 'position:absolute;left:' + sp.ring.left + '%;top:' + sp.ring.top + '%;width:' +
+          sp.ring.w + '%;height:auto;z-index:2;pointer-events:none;transform-origin:' + sp.ring.origin +
+          ';transition:transform 0.7s cubic-bezier(0.22,1,0.36,1)';
+        root.appendChild(ring);
+        sp.products.forEach((pr) => {
+          const im = document.createElement('img');
+          im.src = pr.src; im.alt = ''; im.decoding = 'async'; im.fetchPriority = 'high';
+          im.style.cssText = 'position:absolute;left:' + pr.left + '%;top:' + pr.top + '%;width:' + pr.w +
+            '%;height:auto;z-index:3;pointer-events:none';
+          root.appendChild(im);
+        });
+        // one 15deg step every 800ms: each step eases out and the next leaves straight away
+        let deg = 0;
+        const timer = setInterval(() => {
+          if (!document.body.contains(root)) return clearInterval(timer);
+          const r = root.getBoundingClientRect();
+          if (r.bottom < -200 || r.top > innerHeight + 200) return;
+          deg += 15;
+          ring.style.transform = 'rotate(' + deg + 'deg)';
+        }, 800);
+        return root;
+      };
+
       const risers = [];
       p.imgs.forEach((it, i) => {
+        if (it.spread) { strip.appendChild(makeSpread(it.spread)); return; }
         if (it.gap) { const g = document.createElement('div');
           g.style.cssText = 'width:100%;background:#000;height:34vh'; strip.appendChild(g); return; }
         if (it.carousel) { strip.appendChild(makeCarousel(it)); return; }
+        // A page whose ink finishes itself: the question mark is stroked on when the line lands on
+        // screen, and the rule under it is drawn downward by the scroll itself.
+        const makeDrawPage = (cfg, img) => {
+          const NS = 'http://www.w3.org/2000/svg';
+          const w = document.createElement('div');
+          w.style.cssText = 'position:relative;width:100%;line-height:0;font-size:0';
+          w.appendChild(img);
+          let hook = null, dot = null;
+          if (cfg.q) {
+          const svg = document.createElementNS(NS, 'svg');
+          svg.setAttribute('viewBox', '0 0 27 46');
+          svg.setAttribute('fill', 'none');
+          svg.style.cssText = 'position:absolute;left:' + cfg.q.left + '%;top:' + cfg.q.top + '%;width:' +
+            cfg.q.w + '%;height:auto;overflow:visible;pointer-events:none;z-index:2';
+          hook = document.createElementNS(NS, 'path');
+          hook.setAttribute('d', 'M 3.6 17.4 A 10.35 10.35 0 1 1 23.85 17 C 23.85 23 13.5 24 13.5 28.5 L 13.5 33');
+          hook.setAttribute('stroke', cfg.q.ink);
+          hook.setAttribute('stroke-width', '2.3');
+          hook.setAttribute('stroke-linecap', 'round');
+          hook.setAttribute('stroke-linejoin', 'round');
+          dot = document.createElementNS(NS, 'circle');
+          dot.setAttribute('cx', '13.5'); dot.setAttribute('cy', '41.5'); dot.setAttribute('r', '1.55');
+          dot.setAttribute('fill', cfg.q.ink);
+          dot.style.cssText = 'opacity:0;transition:opacity 0.28s ease 0.9s';
+          svg.appendChild(hook); svg.appendChild(dot); w.appendChild(svg);
+          }
+          const rule = document.createElement('div');
+          rule.style.cssText = 'position:absolute;left:' + cfg.rule.left + '%;top:' + cfg.rule.top + '%;width:' +
+            cfg.rule.w + '%;height:' + cfg.rule.h + '%;background:' + cfg.rule.ink +
+            ';transform:scaleY(0);transform-origin:top center;pointer-events:none;z-index:2';
+          w.appendChild(rule);
+          let L = 0, drawn = false, seen = false;
+          const sync = () => {
+            const box = w.getBoundingClientRect();
+            if (box.height) {
+              if (hook && !L && hook.getTotalLength) {
+                L = hook.getTotalLength();
+                hook.style.strokeDasharray = L;
+                hook.style.strokeDashoffset = L;
+                hook.style.transition = 'stroke-dashoffset 1.05s cubic-bezier(0.22, 1, 0.36, 1)';
+              }
+              const qTop = cfg.q ? box.top + box.height * cfg.q.top / 100 : 0;
+              if (cfg.q && !drawn && L && qTop < window.innerHeight * 0.8 && qTop > -box.height) {
+                drawn = true;
+                hook.style.strokeDashoffset = '0';
+                dot.style.opacity = '1';
+              }
+              // the rule tracks the scroll directly rather than easing: it reads as the page being
+              // ruled in by the movement, and it retracts if the reader scrolls back up
+              const rTop = box.top + box.height * cfg.rule.top / 100;
+              const rH = box.height * cfg.rule.h / 100;
+              const p = Math.max(0, Math.min(1, (window.innerHeight * 0.86 - rTop) / rH));
+              rule.style.transform = 'scaleY(' + p.toFixed(4) + ')';
+            }
+            // one rAF loop rather than scroll listeners: momentum scrolling on the reader does not
+            // fire reliably per frame. The strip is still detached on the first frames, so the loop
+            // waits to have been connected once before it treats removal as the reader closing.
+            if (w.isConnected) seen = true;
+            if (!seen || w.isConnected) requestAnimationFrame(sync);
+          };
+          requestAnimationFrame(sync);
+          return w;
+        };
+        // Depth planes lifted off a flat page: each pops up into place, nearest first, once the band
+        // reaches the screen. It plays once and is not tied to scroll position.
+        const makePopPage = (cfg, img) => {
+          const w = document.createElement('div');
+          w.style.cssText = 'position:relative;width:100%;line-height:0;font-size:0;overflow:hidden';
+          w.appendChild(img);
+          const els = cfg.layers.map((L) => {
+            const el = document.createElement('img');
+            el.src = L.src; el.alt = ''; el.loading = 'lazy'; el.decoding = 'async';
+            el.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:auto;pointer-events:none;' +
+              'z-index:' + L.z + ';opacity:0;transform:translateY(' + L.dy + '%);transition:transform 0.95s ease-in-out ' +
+              L.delay + 's, opacity 0.6s ease-in-out ' + L.delay + 's';
+            w.appendChild(el);
+            return el;
+          });
+          let done = false, seen = false;
+          const sync = () => {
+            const box = w.getBoundingClientRect();
+            if (!done && box.height) {
+              const top = box.top + box.height * cfg.top / 100;
+              if (top < window.innerHeight * 0.5 && top > -box.height) {
+                done = true;
+                els.forEach((el) => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
+              }
+            }
+            if (w.isConnected) seen = true;
+            if (done || (seen && !w.isConnected)) return;
+            requestAnimationFrame(sync);
+          };
+          requestAnimationFrame(sync);
+          return w;
+        };
         const im = document.createElement('img');
         im.src = it.src; im.alt = '';
         im.width = it.w; im.height = it.h; // reserve layout up front: no late jump in scroll height
         if (i > 1) im.loading = 'lazy'; else im.fetchPriority = i === 0 ? 'high' : 'auto';
         im.decoding = 'async';
         im.style.cssText = 'display:block;width:100%;height:auto;margin-bottom:-1px';
+        if (it.draw) { strip.appendChild(makeDrawPage(it.draw, im)); return; }
+        if (it.pop) { strip.appendChild(makePopPage(it.pop, im)); return; }
         if (it.words && window.vgScrollWords) {
           // the page before it is pinned along with this one, so the whole frame holds still
           const prev = strip.lastElementChild && strip.lastElementChild.tagName === 'IMG' ? strip.lastElementChild : null;
@@ -1335,6 +1509,10 @@ class Component {
       let found = null;
       HOVER.forEach((_v, row) => {
         if (found) return;
+        // the grid keeps its layout while the category picker is up, so a rect test alone would let a
+        // scroll slide a still-hidden tile under the cursor and morph it. The gate's pointer-events:none
+        // inherits down to the rows, which is exactly the "not interactive yet" signal to respect.
+        if (getComputedStyle(row).pointerEvents === 'none') return;
         const r = row.getBoundingClientRect();
         if (pt.x >= r.left && pt.x <= r.right && pt.y >= r.top && pt.y <= r.bottom) found = row;
       });

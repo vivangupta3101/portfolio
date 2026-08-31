@@ -121,10 +121,11 @@
   if (vid) {
     vid.addEventListener('ended', hold);
     // some browsers stall just short of 'ended'
-    // the mark is fully formed with about two seconds of hold left in the file: cut that tail and
-    // hand off instead of waiting it out
+    // The file is 9.3s but the mark stops moving at 3.75s and then holds on an unchanging frame for
+    // the remaining 5.5s. Hand off just after it lands instead of playing the dead tail out.
+    var CUT = 4.0;
     vid.addEventListener('timeupdate', function () {
-      if (vid.duration && vid.duration - vid.currentTime < 2) hold();
+      if (vid.currentTime >= CUT || (vid.duration && vid.duration - vid.currentTime < 0.3)) hold();
     });
     // a safety net: if the file stalls, don't trap the visitor on a black screen
     vid.addEventListener('error', fade);

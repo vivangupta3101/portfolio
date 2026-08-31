@@ -49,12 +49,18 @@
   #vg-index.vg-idx-show .vg-idx-item, #vg-index.vg-idx-show .vg-idx-head { opacity: 1; transform: none; }
   #vg-index.vg-idx-show .vg-idx-item { transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.8s ease; }
   #vg-index.vg-idx-show .vg-idx-item:hover { transform: scale(1.09); }
+  /* only the doodles that fly in around the hovered line take the accent */
+  .vg-idx-item:hover .vg-ic:not([stroke="none"]) { stroke: #ec7e41; }
+  .vg-idx-item:hover .vg-ic:not([fill="none"]) { fill: #ec7e41; }
   .vg-ic { position: absolute; opacity: 0; pointer-events: none; transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease; }
   .vg-icL { transform: translate(40px, 0) scale(0.2) rotate(20deg); }
   .vg-icR { transform: translate(-40px, 0) scale(0.2) rotate(-20deg); }
   .vg-icT { transform: translateY(28px) scale(0.2); }
   .vg-icB { transform: translateY(-28px) scale(0.2); }
   .vg-idx-item:hover .vg-ic { opacity: 1; }
+  /* the rows sit 6px apart, so anything above or below a label lands on its neighbour: only the
+     doodles out to the left and right are revealed */
+  .vg-idx-item .vg-icT, .vg-idx-item .vg-icB { display: none; }
   .vg-idx-item:hover .vg-icL { transform: translate(0, 0) scale(1) rotate(-8deg); }
   .vg-idx-item:hover .vg-icR { transform: translate(0, 0) scale(1) rotate(8deg); }
   .vg-idx-item:hover .vg-icT { transform: translateY(0) scale(1) rotate(-6deg); }
