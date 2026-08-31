@@ -400,7 +400,9 @@ class Component {
       let savedCat = null, returning = false;
       try {
         savedCat = sessionStorage.getItem('vgCat');
-        returning = sessionStorage.getItem('vgHomeScroll') != null || sessionStorage.getItem('vgExpandedFrom') != null;
+        // vgHomeScroll is the one flag consumed per return (cleared further down); vgExpandedFrom is
+        // write-only and would stick for the whole session, wrongly suppressing every later load
+        returning = sessionStorage.getItem('vgHomeScroll') != null;
       } catch (e) {}
       if (savedCat && this._applyCat) this._applyCat(savedCat);
       if (savedCat && returning) {
@@ -408,8 +410,51 @@ class Component {
         idx.classList.remove('vg-idx-show');
         idx.style.display = 'none';
       }
+      // Nothing of the work section is on screen before the choice is made: the category bar and the
+      // grid are held back (layout intact, so the picker's scroll trigger and the tile-return
+      // measurements still work) and then rise in together once a category has been picked.
+      const gateBar = document.querySelector('[data-screen-label="Category tabs"]');
+      const gateWork = document.getElementById('vg-work');
+      const gated = [gateBar, gateWork].filter(Boolean);
+      const closeGate = () => gated.forEach((el) => {
+        el.style.transition = 'none';
+        el.style.opacity = '0';
+        // the bar only fades: the picker flies its words into the real tab rects, so the bar must not
+        // be shifted while that hand-off is measured
+        if (el !== gateBar) el.style.transform = 'translateY(24px)';
+        el.style.pointerEvents = 'none';
+      });
+      const openGate = () => {
+        const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
+        gated.forEach((el, i) => {
+          el.style.transition = 'opacity 0.75s ease ' + (i * 0.28) + 's, transform 0.95s ' + EASE + ' ' + (i * 0.28) + 's';
+          void el.offsetWidth; // closeGate set transition:none — commit that before the target values
+          el.style.opacity = '1';
+          if (el !== gateBar) el.style.transform = 'translateY(0)';
+          el.style.pointerEvents = '';
+        });
+        // the rows come up one after the other behind the bar, same rise as every other reveal
+        if (gateWork) {
+          Array.from(gateWork.querySelectorAll('.vg-proj')).forEach((p, i) => {
+            if (p.style.display === 'none') return;
+            p.style.transition = 'opacity 0.8s ease ' + (0.4 + i * 0.1) + 's, transform 0.95s cubic-bezier(0.22, 1, 0.36, 1) ' + (0.4 + i * 0.1) + 's';
+            p.style.opacity = '0';
+            p.style.transform = 'translateY(30px)';
+            void p.offsetWidth;
+            p.style.opacity = '';
+            p.style.transform = 'translateY(0)';
+          });
+          setTimeout(() => {
+            gated.forEach((el) => { el.style.transition = ''; el.style.transform = ''; el.style.opacity = ''; });
+            gateWork.querySelectorAll('.vg-proj').forEach((p) => { p.style.transition = ''; p.style.transform = ''; });
+          }, 2200);
+        }
+      };
+      // a return visit was never gated, so it needs no entrance
+      if (!idxShown) closeGate();
       idx.querySelectorAll('.vg-idx-head, .vg-idx-item').forEach((el, i) => { el.style.transitionDelay = (0.15 + i * 0.07) + 's'; });
-      const tabsSec = document.querySelector('[data-screen-label="Category tabs"]');
+      // the category bar is a fixed bottom dock, so the work grid is what the picker waits for
+      const tabsSec = document.getElementById('vg-work');
       const onIdxScroll = () => {
         if (idxShown) return;
         // wait until the statement has been read and the tabs bar is well into view
@@ -431,13 +476,14 @@ class Component {
         document.body.style.overflow = '';
         if (tab) tab.click();
         // jump behind the frosted glass so the tabs bar is on screen for the sort
-        const sec = document.querySelector('[data-screen-label="Category tabs"]');
+        const sec = document.getElementById('vg-work');
         if (sec) {
           const prev = document.documentElement.style.scrollBehavior;
           document.documentElement.style.scrollBehavior = 'auto';
           window.scrollTo(0, window.scrollY + sec.getBoundingClientRect().top - window.innerHeight * 0.24);
           document.documentElement.style.scrollBehavior = prev;
         }
+        openGate();
         // every category sorts itself into its slot in the bar; tab text is ghosted (pills stay) until each clone lands, then cross-fades in place
         const tabs = Array.from(document.querySelectorAll('#vg-tabs .vg-tab'));
         tabs.forEach((t) => t.classList.add('vg-tab-ghost'));
@@ -613,6 +659,10 @@ class Component {
       '#mobius': { bg: '#f6e9d2', ink: '#131313', label: 'M\u00d6BIUS', first: 'assets/images/mobius/cover.png',
         imgs: [{ src: 'assets/images/mobius/cover.png', w: 1680, h: 1127 }].concat(Array.from({ length: 12 }, (_, i) => ({
           src: 'assets/images/mobius/p' + String(i).padStart(2, '0') + '.png', w: 1680, h: i === 11 ? 1885 : 1893 }))) },
+      // StrahL: 29 pages sliced from the lighting PDF with pdfslice-strahl.html, stacked flush
+      '#strahl': { bg: '#f6e2c6', ink: '#131313', label: 'STRAHL', first: 'assets/images/strahl/p00.png',
+        imgs: Array.from({ length: 29 }, (_, i) => ({ src: 'assets/images/strahl/p' + String(i).padStart(2, '0') + '.png',
+          w: 2382, h: [0, 2, 4, 6, 8, 10, 11, 12].indexOf(i) >= 0 ? 1802 : 1684 })) },
       // pages 1-2 come from js/bitl-live.js: the same flat artwork plus the cursor glow and the
       // statement break. The strip picks up at p02.
       '#blind-watchmaker': { bg: '#eaeaea', ink: '#131313', label: 'BLIND WATCHMAKER', first: 'assets/images/watchmaker/cover.png',
@@ -991,7 +1041,9 @@ class Component {
         svg.style.width = '100%'; svg.style.height = '100%';
         svg.style.overflow = 'visible'; // nothing the drawing carries gets cut by the frame
         // dx/dy trim per trace file; js/trace-dev.js (dev only, press D) writes these live
-        const n = (window.__vgNudge && window.__vgNudge(url)) || (topfit ? { dx: 1.7, dy: -0.6 } : { dx: 0, dy: 0 });
+        const n = (window.__vgNudge && window.__vgNudge(url)) ||
+          (window.VG_TRACE_BAKED && window.VG_TRACE_BAKED[url]) ||
+          (topfit ? { dx: 1.7, dy: -0.6 } : { dx: 0, dy: 0 });
         if (ar && topfit) {
           const v = svg.viewBox.baseVal;
           const bx = v.x, by = v.y, bw = v.width, bh = v.width / ar;
