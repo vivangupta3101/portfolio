@@ -718,7 +718,20 @@ class Component {
             { carousel: [1, 2, 3, 4].map((k) => 'assets/images/bitl/sketch' + k + '.png'), w: 2745, h: 1545 },
             { gap: true }];
           if (i === 5 || i === 6 || i === 7) return [];
-          return it; }).flat() }
+          return it; }).flat() },
+      // Sun Pharma dispenser: not a printed deck — a render, the brief, and the sketch/CAD sheets
+      // laid on the grey paper as plates. Same expand/close as the other readers.
+      '#sun-pharma': { bg: '#eaeaea', ink: '#131313', label: 'SUN PHARMA', first: 'assets/images/vending/hero.png',
+        copyInk: 'rgba(19,19,19,0.78)', strongInk: '#131313',
+        imgs: [
+          { src: 'assets/images/vending/hero.png', w: 2880, h: 1226, body: [
+            'Client — **Sun pharma, Laser Innovative technologies**',
+            'A unique requirement for a medicine dispenser in pharmacies to reduce touch points of a consumer and easing the process of buying non prescription medicines.',
+            'An instant connection and inspiration from capsules, I sketched out some forms that I believed stood out while still blending in.'] },
+          { plate: [{ src: 'assets/images/vending/sketch-form1.jpg', w: 900, h: 1600, cap: 'Form 1 — vending machine' },
+                    { src: 'assets/images/vending/sketch-form2.jpg', w: 900, h: 1600, cap: 'Form 2 — capsule inspired' }] },
+          { plate: [{ src: 'assets/images/vending/cad.jpg', w: 422, h: 887 }] }
+        ] }
     };
     this._projects = PROJECTS;
     // the watchmaker opening statement is baked into p00: cover it and re-set it live, so the words
@@ -874,11 +887,42 @@ class Component {
         return root;
       };
 
-      const risers = [];
+      const risers = [], plateFigs = [];
       p.imgs.forEach((it, i) => {
         if (it.spread) { strip.appendChild(makeSpread(it.spread)); return; }
         if (it.gap) { const g = document.createElement('div');
-          g.style.cssText = 'width:100%;background:#000;height:34vh'; strip.appendChild(g); return; }
+          g.style.cssText = 'width:100%;background:' + p.bg + ';height:34vh'; strip.appendChild(g); return; }
+        // loose sheets rather than printed pages: each sits on the paper with its own margin and
+        // rises in with the house reveal
+        if (it.plate) {
+          const sec = document.createElement('section');
+          sec.style.cssText = 'width:100%;box-sizing:border-box;background:' + p.bg + ';padding:12vh 8vw;display:grid;' +
+            'grid-template-columns:repeat(' + it.plate.length + ',minmax(0,1fr));gap:6vw;align-items:end;' +
+            'justify-items:center;line-height:0;font-size:0';
+          it.plate.forEach((pg) => {
+            const fig = document.createElement('figure');
+            fig.style.cssText = 'margin:0;display:flex;flex-direction:column;gap:18px;max-width:100%;opacity:0;' +
+              'transform:translateY(26px);transition:opacity 0.9s cubic-bezier(0.22,1,0.36,1),' +
+              'transform 0.9s cubic-bezier(0.22,1,0.36,1)';
+            const pim = document.createElement('img');
+            pim.src = pg.src; pim.alt = pg.cap || ''; pim.width = pg.w; pim.height = pg.h;
+            pim.loading = 'lazy'; pim.decoding = 'async';
+            pim.style.cssText = 'display:block;width:auto;max-width:100%;max-height:76vh;height:auto';
+            fig.appendChild(pim);
+            if (pg.cap) {
+              const c = document.createElement('figcaption');
+              c.textContent = pg.cap;
+              c.style.cssText = "font-family:'neuzeit-grotesk','DIN Neuzeit Grotesk','Helvetica Neue',Helvetica," +
+                'Arial,sans-serif;font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;' +
+                'line-height:1.5;color:rgba(19,19,19,0.55)';
+              fig.appendChild(c);
+            }
+            sec.appendChild(fig);
+            plateFigs.push(fig);
+          });
+          strip.appendChild(sec);
+          return;
+        }
         if (it.carousel) { strip.appendChild(makeCarousel(it)); return; }
         // A page whose ink finishes itself: the question mark is stroked on when the line lands on
         // screen, and the rule under it is drawn downward by the scroll itself.
@@ -1010,7 +1054,7 @@ class Component {
         } else strip.appendChild(im);
         if (it.body) {
           const sec = document.createElement('section');
-          sec.style.cssText = 'width:100%;background:#000;display:flex;flex-direction:column;gap:2.4rem;' +
+          sec.style.cssText = 'width:100%;background:' + p.bg + ';display:flex;flex-direction:column;gap:2.4rem;' +
             'align-items:center;padding:26vh 8vw;line-height:1.5;margin-top:-2px;position:relative;font-size:16px;' +
             'box-sizing:border-box';
           it.body.forEach((t) => {
@@ -1020,13 +1064,13 @@ class Component {
               if (!seg) return;
               if (k % 2) {
                 const b = document.createElement('strong');
-                b.textContent = seg; b.style.cssText = 'font-weight:700;color:#fff';
+                b.textContent = seg; b.style.cssText = 'font-weight:700;color:' + (p.strongInk || '#fff');
                 par.appendChild(b);
               } else par.appendChild(document.createTextNode(seg));
             });
             par.style.cssText = "margin:0;max-width:1000px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;" +
               'font-weight:400;font-size:clamp(15px,1.35vw,28px);line-height:1.6;letter-spacing:0.005em;' +
-              'color:rgba(244,244,244,0.86);text-wrap:pretty;text-align:center';
+              'color:' + (p.copyInk || 'rgba(244,244,244,0.86)') + ';text-wrap:pretty;text-align:center';
             sec.appendChild(par);
           });
           strip.appendChild(sec);
@@ -1035,6 +1079,7 @@ class Component {
           const brk = document.createElement('section');
           brk.style.cssText = 'position:relative;width:100%;background:#000;display:flex;align-items:center;' +
             'justify-content:center;padding:26vh 40px;line-height:1.5;box-sizing:border-box';
+          brk.style.background = p.bg;
           const mask = document.createElement('div');
           mask.style.cssText = 'max-width:1180px';
           // deliberately not the statement voice: plain white sub-heading, only SAFE performs
@@ -1080,6 +1125,15 @@ class Component {
       };
       if (matchMedia('(prefers-reduced-motion: reduce)').matches) risers.forEach((r) => { r.done = true; r.line.style.opacity = '1'; r.line.style.transform = 'translateY(0)'; if (r.safe) r.safe.style.opacity = '1'; });
       this._checkRisers = checkRisers;
+      if (plateFigs.length) {
+        const io = new IntersectionObserver((es) => es.forEach((e) => {
+          if (!e.isIntersecting) return;
+          e.target.style.opacity = '1';
+          e.target.style.transform = 'translateY(0)';
+          io.unobserve(e.target);
+        }), { root: ov, threshold: 0.08, rootMargin: '0px 0px -8% 0px' });
+        plateFigs.forEach((f) => io.observe(f));
+      }
       ov.appendChild(strip);
       const foot = document.createElement('footer');
       foot.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:24px;padding:64px 40px 72px;' +
@@ -1311,23 +1365,23 @@ class Component {
         const cy = pt ? pt.y : Math.max(0, Math.min(window.innerHeight, r.top + r.height / 2));
         const src = srcFor(row);
         if (src) {
-          // hover = wireframe map: pre-traced crisp line art when available, live edge filter otherwise
-          const wireSrc = (window.__resources && row.dataset.wireRes && window.__resources[row.dataset.wireRes]) || row.dataset.wire || src;
-          wireA.style.filter = row.dataset.wire ? 'none' : 'url(#vg-edge)';
-          wireA.style.background = '#ffffff url("' + wireSrc + '") center / contain no-repeat';
           document.body.classList.add('vg-focus');
           const proj0 = row.closest('.vg-proj');
           if (proj0) proj0.classList.add('vg-focus-row');
+          // Only a tile with a hand-traced SVG draws: the white sheet comes up and the paths ink
+          // themselves in. Tiles without one get the plain photo flood — no live edge filter, no
+          // stand-in line art. Adding data-trace="…svg" to a row is all it takes to opt it in.
           if (row.dataset.trace) {
+            wireA.style.filter = 'none';
             wireA.style.background = '#ffffff';
-            // möbius reads denser than bitl at the same stroke opacity — knock it back
             const sk0 = document.getElementById('vg-sketch');
             if (sk0) sk0.style.opacity = '1';
             this._sketch(row.dataset.trace, cx, cy, src, row.dataset.traceMode);
+          } else {
+            document.getElementById('vg-sketch').innerHTML = '';
           }
-          else document.getElementById('vg-sketch').innerHTML = '';
           const bg = 'url("' + src + '") center / cover no-repeat';
-          wireBox.style.opacity = '1';
+          wireBox.style.opacity = row.dataset.trace ? '1' : '0';
           full.style.transition = 'none';
           full.style.opacity = '0';
           full.style.background = row.dataset.leak + ' ' + bg;
