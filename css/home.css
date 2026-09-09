@@ -65,9 +65,9 @@
   .vg-idx-item:hover .vg-icR { transform: translate(0, 0) scale(1) rotate(8deg); }
   .vg-idx-item:hover .vg-icT { transform: translateY(0) scale(1) rotate(-6deg); }
   .vg-idx-item:hover .vg-icB { transform: translateY(0) scale(1) rotate(6deg); }
-  #vg-sketch svg { fill: none; stroke: rgba(19, 19, 19, 0.15); stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; }
+  #vg-sketch svg { fill: none; stroke: rgba(236, 126, 65, 0.26); stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; }
   #vg-sketch svg { fill: none; }
-  #vg-sketch svg path, #vg-sketch svg ellipse, #vg-sketch svg circle, #vg-sketch svg rect, #vg-sketch svg polyline, #vg-sketch svg polygon, #vg-sketch svg line { stroke: rgba(19, 19, 19, 0.15); stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; opacity: 1; vector-effect: non-scaling-stroke; }
+  #vg-sketch svg path, #vg-sketch svg ellipse, #vg-sketch svg circle, #vg-sketch svg rect, #vg-sketch svg polyline, #vg-sketch svg polygon, #vg-sketch svg line { stroke: rgba(236, 126, 65, 0.26); stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; opacity: 1; vector-effect: non-scaling-stroke; }
   #vg-leak { position: fixed; inset: 0; pointer-events: none; z-index: 0; clip-path: circle(0% at 50% 50%); transition: clip-path 0.9s cubic-bezier(0.45, 0, 0.35, 1); will-change: clip-path; }
   html, body, a { cursor: none; }
   #vg-ball { position: fixed; left: 0; top: 0; width: 22px; height: 22px; mix-blend-mode: difference; pointer-events: none; z-index: 2147483000; transition: width 0.25s ease, height 0.25s ease; }
@@ -93,3 +93,32 @@
     #vg-ball, #vg-sb { display: none !important; }
   }
 
+
+
+
+/* logo flow: evenly spaced marks drift right to left, largest and sharpest at centre,
+   fading symmetrically towards both edges (scale/opacity/blur driven per frame in js/logo-flow.js).
+   Colours kept as-is. */
+@keyframes vgFlowRight { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-25%, 0, 0); } }
+.vg-flow-track {
+  position: absolute; top: 0; left: 0; height: 100%;
+  display: flex; width: max-content; align-items: center;
+  animation: vgFlowRight 44s linear infinite;
+  will-change: transform;
+}
+.vg-flow-group { display: flex; align-items: center; gap: 130px; padding-right: 130px; }
+.vg-flow-item { display: flex; align-items: center; justify-content: center; height: 54px; will-change: transform, opacity, filter; }
+.vg-flow:hover .vg-flow-track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .vg-flow-track { animation: none; } }
+@media (max-width: 700px) { .vg-flow { height: 100px; } .vg-flow-group { gap: 84px; padding-right: 84px; } }
+
+/* per-letter lean towards the cursor (js/title-tilt.js) */
+#vg-hero-title { perspective: 1100px; perspective-origin: 50% 50%; }
+#vg-hero-title .vg-l { display: inline-block; transform-style: preserve-3d; transform-origin: 50% 50%; backface-visibility: visible; will-change: transform; }
+#vg-hero-title .vg-rise { display: inline-block; transform-style: preserve-3d; will-change: transform; }
+#vg-hero-title .vg-rise > span { transform-style: preserve-3d; }
+
+/* the expanded tile's glass sits under the growing rectangle and the tile itself is faded to
+   nothing, so its 26px backdrop blur is invisible — and blurring a large box while a clip-path
+   animates is the most expensive thing on the page. Drop it for the duration. */
+body.vg-focus .vg-row.vg-expand { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }

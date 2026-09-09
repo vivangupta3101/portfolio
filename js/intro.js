@@ -1,12 +1,11 @@
 // Logo reveal: plays on every fresh load of the home page, on a black screen, before the site is
 // shown. Arriving back from a project/about page or via browser back/forward skips it.
-// Handoff: video (white/orange on black) -> background turns white, the black/orange mark takes
-// over in place -> the mark flies to its nav position, then the site is revealed.
+// Sequence: the mark video plays on black while the page's own HUD chrome assembles around it,
+// piece by piece, like the interface booting. When the mark lands the HUD drops away, the mark
+// travels to its nav position, and the site pops up behind it. The screen stays black throughout.
 (function () {
   'use strict';
 
-  // plays on every fresh load of the home page, but not when the visitor comes back from
-  // another page of the site (project, about, backstage) or uses browser back/forward
   var internal = false;
   try {
     var r = document.referrer;
@@ -37,18 +36,96 @@
 
   var vid = host.querySelector('video');
   var mark = document.getElementById('vg-intro-mark');
-  // the nav lives further down the document than this script, so it cannot be looked up yet —
-  // resolve it at handoff time, when parsing has reached it
   var navMark = null;
   var done = false;
 
+  // ---- HUD: the same chrome vocabulary as the hero overlay, assembled while the mark plays ----
+  var MONO = "font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:0.18em;font-weight:500";
+  var HAIR = 'rgba(255,255,255,0.45)';
+  var EASE = 'cubic-bezier(0.22,1,0.36,1)';
+  // the HUD is placed on the hero's own 16:9 box, not the viewport, so every piece sits exactly
+  // where the real overlay will be and the two are indistinguishable at handoff
+  var hud = document.createElement('div');
+  hud.style.cssText = 'position:absolute;pointer-events:none;color:#fff';
+  host.appendChild(hud);
+  function fitHud() {
+    var box = document.querySelector('#top > div > div');
+    var r = box ? box.getBoundingClientRect() : null;
+    if (!r || !r.width) { hud.style.cssText += ';left:0;top:0;right:0;bottom:0'; return; }
+    hud.style.left = r.left + 'px';
+    hud.style.top = r.top + 'px';
+    hud.style.width = r.width + 'px';
+    hud.style.height = r.height + 'px';
+  }
+  fitHud();
+  window.addEventListener('resize', fitHud);
+
+  var pieces = [];
+  function piece(css, html, delay) {
+    var d = document.createElement('div');
+    d.style.cssText = css + ';opacity:0;transition:opacity 0.7s ease,transform 0.9s ' + EASE + ',width 0.9s ' + EASE + ',height 0.9s ' + EASE;
+    if (html) d.innerHTML = html;
+    hud.appendChild(d);
+    pieces.push({ el: d, at: delay });
+    return d;
+  }
+
+  // frame corners
+  var CO = 'position:absolute;width:22px;height:22px;border:1px solid ' + HAIR;
+  piece(CO + ';left:26px;top:96px;border-right:0;border-bottom:0', '', 0.35);
+  piece(CO + ';right:26px;top:96px;border-left:0;border-bottom:0', '', 0.45);
+  piece(CO + ';left:26px;bottom:26px;border-right:0;border-top:0', '', 0.55);
+  piece(CO + ';right:26px;bottom:26px;border-left:0;border-top:0', '', 0.65);
+
+  // left tick rail
+  var railWrap = piece('position:absolute;left:26px;top:132px;bottom:74px;width:1px;background:' + HAIR, '', 0.9);
+  for (var t = 0; t < 10; t++) {
+    var tick = document.createElement('div');
+    tick.style.cssText = 'position:absolute;left:0;top:' + (t * 100 / 9) + '%;width:6px;height:1px;background:' + HAIR;
+    railWrap.appendChild(tick);
+  }
+
+  piece('position:absolute;left:60px;top:96px;' + MONO, 'SKETCH \u2192 CAD \u2192 CUT \u2192 TEST', 1.25);
+  var count = piece('position:absolute;right:60px;top:96px;text-align:right;' + MONO, '10 SHOTS / 00:28', 1.45);
+  piece('position:absolute;right:30px;top:50%;' + MONO +
+    ';white-space:nowrap;writing-mode:vertical-rl;transform:translateY(-50%);letter-spacing:0.22em', 'DESIGN REDESIGN REPEAT', 1.8);
+
+  var foot = piece('position:absolute;left:60px;bottom:26px;display:flex;align-items:baseline;gap:12px;' + MONO,
+    '<span style="width:5px;height:5px;background:#ec7e41;display:inline-block"></span><span data-cap>INITIALISING</span>', 2.1);
+  var clock = piece('position:absolute;right:60px;bottom:26px;' + MONO, '00:00.0 / SHOT 01', 2.3);
+
+  // a hairline that fills as the reel plays — the only piece that reads as loading
+  var barWrap = piece('position:absolute;left:60px;right:60px;bottom:58px;height:1px;background:rgba(255,255,255,0.18)', '', 2.5);
+  var bar = document.createElement('div');
+  bar.style.cssText = 'position:absolute;left:0;top:0;height:100%;width:0%;background:#ec7e41';
+  barWrap.appendChild(bar);
+
+  var t0 = performance.now();
+  var CUT = 4.0;
+  var CAPS = [[0, 'INITIALISING'], [1.4, 'LOADING ASSETS'], [2.6, 'DEFINING GEOMETRY'], [3.4, 'READY']];
+  var hudRaf = requestAnimationFrame(function step(now) {
+    hudRaf = requestAnimationFrame(step);
+    var s = (now - t0) / 1000;
+    for (var i = 0; i < pieces.length; i++) {
+      if (!pieces[i].done && s >= pieces[i].at) { pieces[i].done = true; pieces[i].el.style.opacity = '1'; }
+    }
+    var p = Math.max(0, Math.min(1, s / CUT));
+    bar.style.width = (p * 100).toFixed(1) + '%';
+    var secs = Math.min(CUT, s);
+    clock.textContent = '00:0' + Math.floor(secs) + '.' + Math.floor((secs % 1) * 10) + ' / SHOT 01';
+    var cap = foot.querySelector('[data-cap]');
+    for (var c = CAPS.length - 1; c >= 0; c--) {
+      if (s >= CAPS[c][0]) { if (cap.textContent !== CAPS[c][1]) cap.textContent = CAPS[c][1]; break; }
+    }
+  });
+
   var clear = function () {
+    cancelAnimationFrame(hudRaf);
     lock(false);
     if (navMark) navMark.style.opacity = '';
     host.remove();
   };
 
-  // fallback: no mark to hand off to, so just fade the black screen away
   var fade = function () {
     if (done) return;
     done = true;
@@ -58,6 +135,33 @@
     setTimeout(clear, 900);
   };
 
+  // the page rises in behind the black: opacity only on the scroll-critical wrappers, a small
+  // scale on the hero's own content, so nothing that owns sticky/fixed positioning is transformed
+  function popPage() {
+    var heroBox = document.querySelector('#top > div > div');
+    var navEl = document.querySelector('nav');
+    if (heroBox) {
+      heroBox.style.transition = 'none';
+      heroBox.style.transform = 'scale(1.045)';
+      heroBox.style.opacity = '0.4';
+      requestAnimationFrame(function () {
+        heroBox.style.transition = 'transform 1.1s ' + EASE + ', opacity 0.7s ease';
+        heroBox.style.transform = 'scale(1)';
+        heroBox.style.opacity = '1';
+        setTimeout(function () { heroBox.style.transition = ''; heroBox.style.transform = ''; heroBox.style.opacity = ''; }, 1250);
+      });
+    }
+    if (navEl) {
+      navEl.style.transition = 'none';
+      navEl.style.opacity = '0';
+      requestAnimationFrame(function () {
+        navEl.style.transition = 'opacity 0.6s ease 0.15s';
+        navEl.style.opacity = '1';
+        setTimeout(function () { navEl.style.transition = ''; navEl.style.opacity = ''; }, 900);
+      });
+    }
+  }
+
   var handoff = function () {
     if (done) return;
     navMark = navMark || document.getElementById('vg-navmark');
@@ -65,29 +169,20 @@
     if (!mark || !navMark) return fade();
     done = true;
 
-    // 1. the screen turns over: black -> white while the white/orange mark dissolves out and the
-    //    black/orange mark takes its place in the same spot. The white sits alone for a beat so the
-    //    inverted logo is read as a logo before it moves.
-    // the video's own box is a black rectangle: it has to be gone BEFORE the screen turns white,
-    // or the square fades on a different curve than the background and reads as a black plate
+    // 1. the HUD stays exactly where it is — the real overlay sits under it in the same place, so
+    //    it is handed over rather than faded out and back in. Only the reel dissolves.
     if (vid) {
-      vid.style.transition = 'opacity 0.26s linear';
+      vid.style.transition = 'opacity 0.55s ease';
       vid.style.opacity = '0';
     }
-    setTimeout(function () {
-      if (vid) vid.style.display = 'none';
-      host.style.transition = 'background-color 0.6s cubic-bezier(0.42,0,0.26,1)';
-      host.style.backgroundColor = '#fbfbfa';
-    }, 270);
-    // pin the mark to the centre in real pixels: as a bare absolute child of a flex box its static
-    // position is not reliably the centre, which is why it could look like nothing was there to fly
     var mw = mark.offsetWidth || mark.naturalWidth, mh = mark.offsetHeight || mark.naturalHeight;
     mark.style.left = Math.round((window.innerWidth - mw) / 2) + 'px';
     mark.style.top = Math.round((window.innerHeight - mh) / 2) + 'px';
-    mark.style.transition = 'opacity 0.4s ease 0.42s';
+    mark.style.transition = 'opacity 0.55s ease';
     mark.style.opacity = '1';
+    setTimeout(function () { if (vid) vid.style.display = 'none'; }, 580);
 
-    // 2. fly it to where the nav mark sits
+    // 2. it travels to the nav position
     setTimeout(function () {
       var from = mark.getBoundingClientRect();
       var to = navMark.getBoundingClientRect();
@@ -97,20 +192,21 @@
       mark.style.transition = 'transform 0.85s cubic-bezier(0.5,0.02,0.24,1)';
       mark.style.transform = 'translate(' + (to.left - from.left) + 'px,' + (to.top - from.top) + 'px) scale(' + s + ')';
 
-      // 3. the white plate dissolves while the mark is still travelling — fading the whole overlay
-      //    would take the mark with it and read as a box catching up with the page
+      // 3. the black lifts while the mark is still travelling and the page pops in behind it
       setTimeout(function () {
-        host.style.transition = 'background-color 0.45s cubic-bezier(0.4,0,0.3,1)';
-        host.style.backgroundColor = 'rgba(251,251,250,0)';
+        host.style.transition = 'background-color 0.55s cubic-bezier(0.4,0,0.3,1)';
+        host.style.backgroundColor = 'rgba(0,0,0,0)';
         lock(false);
+        popPage();
         setTimeout(function () {
+          hud.remove();
           if (navMark) navMark.style.opacity = '1';
           mark.style.transition = 'opacity 0.14s linear';
           mark.style.opacity = '0';
           setTimeout(clear, 160);
-        }, 560);
-      }, 300);
-    }, 940);
+        }, 520);
+      }, 260);
+    }, 900);
   };
 
   var hold = function () {
@@ -120,23 +216,17 @@
 
   if (vid) {
     vid.addEventListener('ended', hold);
-    // some browsers stall just short of 'ended'
-    // The file is 9.3s but the mark stops moving at 3.75s and then holds on an unchanging frame for
-    // the remaining 5.5s. Hand off just after it lands instead of playing the dead tail out.
-    var CUT = 4.0;
+    // the file is 9.3s but the mark stops moving at 3.75s; hand off just after it lands
     vid.addEventListener('timeupdate', function () {
       if (vid.currentTime >= CUT || (vid.duration && vid.duration - vid.currentTime < 0.3)) hold();
     });
-    // a safety net: if the file stalls, don't trap the visitor on a black screen
     vid.addEventListener('error', fade);
     var p = vid.play();
     if (p && p.catch) p.catch(fade);
     setTimeout(function () { if (!done && (!vid.duration || vid.currentTime < 0.05)) fade(); }, 4000);
   } else handoff();
 
-  // the reveal is not skippable: it plays out even if the visitor scrolls, clicks or types
-  // through it. Scroll is already locked while the overlay is up.
-  ['wheel', 'touchmove'].forEach(function (t) {
-    host.addEventListener(t, function (e) { e.preventDefault(); }, { passive: false });
+  ['wheel', 'touchmove'].forEach(function (t2) {
+    host.addEventListener(t2, function (e) { e.preventDefault(); }, { passive: false });
   });
 })();

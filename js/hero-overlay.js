@@ -481,7 +481,33 @@
   function pad(n) { return (n < 10 ? '0' : '') + n; }
 
   var last = -1, held = false;
+  // the reel only runs while the hero is on screen: off screen it stops dead and rewinds, so it
+  // costs nothing while the grid is being read and starts from its first shot on the way back up
+  var onScreen = true;
+  if (window.IntersectionObserver) {
+    new IntersectionObserver(function (es) {
+      var vis = es[0].isIntersecting;
+      if (vis === onScreen) return;
+      onScreen = vis;
+      if (vis) {
+        try { video.currentTime = 0; video.play(); } catch (e) {}
+      } else {
+        try { video.pause(); video.currentTime = 0; } catch (e) {}
+        cur = -1; last = -1;
+        ann.style.opacity = '0';
+      }
+    }, { threshold: 0.01 }).observe(box);
+  }
+
+  var wasPlaying = false;
   function frame() {
+    if (!onScreen) { requestAnimationFrame(frame); return; }
+    if (window.__vgBusy) {
+      if (!wasPlaying && !video.paused) { wasPlaying = true; try { video.pause(); } catch (e) {} }
+      requestAnimationFrame(frame);
+      return;
+    }
+    if (wasPlaying) { wasPlaying = false; try { video.play(); } catch (e) {} }
     if (!held) {
       var t = video.currentTime || 0;
       if (!shown && t > 0.2) { shown = true; chrome.style.opacity = '1'; }

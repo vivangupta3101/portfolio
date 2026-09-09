@@ -84,7 +84,9 @@ class Component {
       const navClear = Math.max(0, 74 - boxTop); // fixed nav ≈58px + margin, minus how far the box has scrolled up
       const maxUp = Math.max(0, staticTop - navClear);
       const off = Math.min(boxH * 0.25, maxUp);
-      title.style.transform = 'translateY(' + (-off * (1 - e)).toFixed(1) + 'px)';
+      // starts small and high, grows to full size as it settles
+      const hs = 0.52 + 0.48 * e;
+      title.style.transform = 'translateY(' + (-off * (1 - e)).toFixed(1) + 'px) scale(' + hs.toFixed(3) + ')';
       title.style.opacity = (0.4 + 0.6 * e).toFixed(3);
       const se = smooth(Math.max(0, Math.min(1, (p - 0.3) / 0.5)));
       if (sub) {
@@ -114,6 +116,7 @@ class Component {
       let t0 = performance.now();
       const draw = (now) => {
         this._flowRaf = requestAnimationFrame(draw);
+        if (window.__vgBusy) return;
         const heroEl = document.getElementById('top');
         if (heroEl && heroEl.getBoundingClientRect().bottom < 0) return; // off-screen: skip work
         const t = (now - t0) / 1000;
@@ -238,6 +241,7 @@ class Component {
       const blockScroll = (e) => { if (!readerEl()) e.preventDefault(); };
       this._lockScroll = (on) => {
         this._scrollLocked = on;
+        window.__vgScrollLocked = on;
         if (on) {
           window.addEventListener('wheel', blockScroll, { passive: false });
           window.addEventListener('touchmove', blockScroll, { passive: false });
@@ -1423,6 +1427,8 @@ class Component {
         posterOpen = true;
         // hold the page still: no hover teardown, no scroll fighting the growing rectangle
         this._locked = true;
+        window.__vgBusy = true;
+        if (window.__vgSmooth) window.__vgSmooth.stop();
         if (this._ballReset) this._ballReset();
         if (this._lockScroll) this._lockScroll(true);
         const r2 = row.getBoundingClientRect();
@@ -1434,13 +1440,18 @@ class Component {
           (window.innerHeight - r2.bottom) + 'px ' + r2.left + 'px round 20px)';
         const PAGE_DECK = { 'watchmaker.html': '#blind-watchmaker' };
         const deck = PROJECTS[pageNav ? PAGE_DECK[pageNav] : href];
-        if (deck) full.style.backgroundImage = 'url("' + deck.first + '")';
+        if (deck) {
+          full.style.backgroundColor = deck.bg || '#131313';
+          full.style.backgroundImage = 'url("' + deck.first + '")';
+        }
         full.style.transition = 'none';
         full.style.clipPath = insetFrom;
         full.style.opacity = '1';
         void full.offsetWidth;
+        full.style.willChange = 'clip-path';
         full.style.transition = 'clip-path 1.05s cubic-bezier(0.62, 0, 0.2, 1)';
         full.style.clipPath = 'inset(0px 0px 0px 0px round 0px)';
+        setTimeout(() => { full.style.willChange = ''; }, 1100);
         if (row.dataset.trace) {
           // colour swallows the outlines: the drawing dissolves just behind the flood front
           const sk = document.getElementById('vg-sketch');
@@ -1514,12 +1525,13 @@ class Component {
               leak.style.clipPath = 'circle(0% at 50% 50%)';
               posterOpen = false;
               this._locked = false;
+              window.__vgBusy = false;
               if (this._lockScroll) this._lockScroll(false);
             }, insetTo);
             this._closeReader = close;
           }, 1080);
         }
-        else setTimeout(() => { this._locked = false; if (this._lockScroll) this._lockScroll(false); }, 1200);
+        else setTimeout(() => { this._locked = false; window.__vgBusy = false; if (this._lockScroll) this._lockScroll(false); }, 1200);
       };
       const leave = () => {
         leak.style.transition = 'none';
@@ -1534,6 +1546,7 @@ class Component {
         zoom.style.transition = 'none';
         zoom.style.transform = 'scale(1)';
         posterOpen = false;
+        window.__vgBusy = false;
         full.style.transition = 'none';
         full.style.opacity = '0';
         full.style.clipPath = 'none';
@@ -1595,7 +1608,7 @@ class Component {
     this._syncHover = () => { setHover(rowAt(this._pt), this._pt); };
     let hoverRafPending = false;
     const queueSync = () => {
-      if (hoverRafPending) return;
+      if (window.__vgBusy || hoverRafPending) return;
       hoverRafPending = true;
       requestAnimationFrame(() => { hoverRafPending = false; this._syncHover(); });
     };
