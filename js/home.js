@@ -1325,9 +1325,24 @@ class Component {
           return;
         }
         const total = 1800;
+        // strokes are vector-effect: non-scaling-stroke, which dashes in screen px, not viewBox units:
+        // scale each dash to the path's on-screen length or zoomed-in traces draw only part of each line
+        // dash in normalised units (pathLength) so every element — path, line, polyline, ellipse,
+        // transformed or not — hides and reveals fully whatever the zoom or vector-effect handling
+        // non-scaling-stroke dashes are unreliable across browsers (lines stall part-drawn, then pop).
+        // Drop it and set the width in viewBox units instead: same 1.5px on screen, and dashes are exact.
+        const sw = 1.5 / k;
         scored.forEach((s) => {
-          s.p.style.cssText += ';stroke-dasharray:' + s.L + ';stroke-dashoffset:' + s.L + ';opacity:0;transition:none';
+          const Lu = s.L + 2;
+          s.L = s.L * k; // on-screen length, drives duration
+          s.p.style.cssText += ';vector-effect:none;stroke-width:' + sw + 'px;stroke-dasharray:' + Lu + ' ' + Lu + ';stroke-dashoffset:' + Lu + ';opacity:0;transition:none';
         });
+        // once every stroke has landed, drop the dashes so nothing can stay partly hidden
+        clearTimeout(this._dashClear);
+        this._dashClear = setTimeout(() => {
+          if (!host.contains(svg)) return;
+          scored.forEach((s) => { s.p.style.transition = 'none'; s.p.style.strokeDasharray = 'none'; s.p.style.strokeDashoffset = '0'; s.p.style.opacity = ''; });
+        }, total + 50 + 560 + 80);
         void svg.getBoundingClientRect(); // one flush for the whole set, then release them
         scored.forEach((s) => {
           // ^0.62 -> the ink front races away fast, then eases as it reaches the edges

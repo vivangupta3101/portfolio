@@ -39,6 +39,45 @@
   var navMark = null;
   var done = false;
 
+  // The traced mark has to land exactly on the logo the reel leaves behind; the reel's logo is not
+  // perfectly centred in the frame, so the still is nudged off centre. dx/dy in px, sc a scale
+  // multiplier. Tunable live with the I bar (js/intro-align-dev.js) — bake settled numbers here.
+  var ADJ = { dx: 0, dy: 0, sc: 1 };
+  try {
+    var savedAdj = JSON.parse(localStorage.getItem('vg-intro-mark-adj') || 'null');
+    if (savedAdj) { ADJ.dx = savedAdj.dx || 0; ADJ.dy = savedAdj.dy || 0; ADJ.sc = savedAdj.sc || 1; }
+  } catch (e) {}
+  var freeze = false;
+  try { freeze = sessionStorage.getItem('vg-intro-freeze') === '1'; } catch (e) {}
+  // Where the reel's logo actually sits in its last frame, measured off the file (1080x1080,
+  // frame at 4.0s) and normalised to the frame. The still is registered to this rect, not to the
+  // middle of the screen — the logo the reel leaves behind is low and right of frame centre.
+  var REEL = { u: 0.3481, v: 0.3769, w: 0.3361, h: 0.2935 };
+  var placeMark = function () {
+    if (!mark) return;
+    var box = vid ? vid.getBoundingClientRect() : null;
+    var w, h, left, top;
+    if (box && box.width) {
+      // the reel is object-fit: contain in a square box, so its frame fills the shorter side
+      var side = Math.min(box.width, box.height);
+      var fx = box.left + (box.width - side) / 2, fy = box.top + (box.height - side) / 2;
+      w = side * REEL.w * ADJ.sc;
+      h = w * (mark.naturalHeight || 168) / (mark.naturalWidth || 194);
+      left = fx + side * REEL.u - (w - side * REEL.w) / 2 + ADJ.dx;
+      top = fy + side * REEL.v - (h - side * REEL.h) / 2 + ADJ.dy;
+    } else {
+      w = (mark.naturalWidth || 194) * ADJ.sc;
+      h = (mark.naturalHeight || 168) * ADJ.sc;
+      left = (window.innerWidth - w) / 2 + ADJ.dx;
+      top = (window.innerHeight - h) / 2 + ADJ.dy;
+    }
+    mark.style.width = w.toFixed(1) + 'px';
+    mark.style.height = h.toFixed(1) + 'px';
+    mark.style.left = left.toFixed(1) + 'px';
+    mark.style.top = top.toFixed(1) + 'px';
+  };
+  window.__vgIntroMark = { adj: ADJ, apply: placeMark, frozen: freeze };
+
   // ---- HUD: the same chrome vocabulary as the hero overlay, assembled while the mark plays ----
   var MONO = "font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:0.18em;font-weight:500";
   var HAIR = 'rgba(255,255,255,0.45)';
@@ -175,11 +214,14 @@
       vid.style.transition = 'opacity 0.55s ease';
       vid.style.opacity = '0';
     }
-    var mw = mark.offsetWidth || mark.naturalWidth, mh = mark.offsetHeight || mark.naturalHeight;
-    mark.style.left = Math.round((window.innerWidth - mw) / 2) + 'px';
-    mark.style.top = Math.round((window.innerHeight - mh) / 2) + 'px';
+    placeMark();
     mark.style.transition = 'opacity 0.55s ease';
     mark.style.opacity = '1';
+    if (freeze) {
+      // alignment mode: hold the last video frame under the still so the two can be matched
+      if (vid) { vid.style.transition = 'none'; vid.style.opacity = '0.75'; }
+      return;
+    }
     setTimeout(function () { if (vid) vid.style.display = 'none'; }, 580);
 
     // 2. it travels to the nav position

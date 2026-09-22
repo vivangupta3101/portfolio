@@ -6,7 +6,7 @@
 <title>Blind Watchmaker — Vivan Gupta</title>
   
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Poppins:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="css/watchmaker.css">
 <link rel="preload" as="image" href="assets/images/watchmaker/cover.png" fetchpriority="high">
 <link rel="preload" as="image" href="assets/images/watchmaker/p00.png" fetchpriority="high">
@@ -64,16 +64,186 @@
       <img src="assets/images/watchmaker/p03.png" alt="" width="2880" height="1632" loading="eager" fetchpriority="high" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
       <img src="assets/images/watchmaker/p04.png" alt="" width="2880" height="1632" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
       <img src="assets/images/watchmaker/p05.png" alt="" width="2880" height="1632" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
-      <img src="assets/images/watchmaker/p06.png" alt="" width="2880" height="1632" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
-      <img src="assets/images/watchmaker/p07.png" alt="" width="2880" height="1632" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
-      <img src="assets/images/watchmaker/p08.png" alt="" width="2880" height="1632" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
-      <img src="assets/images/watchmaker/p09.png" alt="" width="2880" height="1632" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
-      <img src="assets/images/watchmaker/p10.png" alt="" width="2880" height="1632" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
-      <img src="assets/images/watchmaker/p11.png" alt="" width="2880" height="1622" loading="lazy" style="display: block; width: 100%; height: auto; margin-bottom: -2px">
   </div>
 
-  <footer style="padding: 64px 40px 72px; background: #eaeaea; display: flex; align-items: center; justify-content: space-between; gap: 24px; font-size: 11px; letter-spacing: 0.16em; color: rgba(19,19,19,0.5)">
-    <a href="index.html">&#8592; BACK TO PROJECTS</a>
+
+
+
+  <section data-screen-label="Watchmaker process board" id="wm-adi" style="background: #ffffff; color: #131313; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; overflow: hidden">
+    <style>
+      /* only "will solve" animates: it rises from below and fades in, like the problem statement */
+      #wm-adi [data-morph-src] { opacity: 0; transform: translateY(42px); will-change: transform, opacity;
+        transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) }
+      #wm-adi.wm-bub-in [data-morph-src] { opacity: 1; transform: translateY(0) }
+      @media (prefers-reduced-motion: reduce) {
+        #wm-adi [data-morph-src] { opacity: 1; transform: none; transition: none }
+      }
+    </style>
+    <div id="wm-board-scale" style="width: 1920px; transform-origin: top left">
+      <div data-board-canvas style="position: relative; width: 1920px; height: 4982px">
+      <div style="position: absolute; left: 91px; top: 97px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 57px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #303030; white-space: nowrap">Defining scope &amp; Prospects</div>
+      <div style="position: absolute; left: 90px; top: 167px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #a3a3a3; white-space: nowrap">After careful analysis of empathy excersize and problem statement, I defined the 3 primary aspects to tackle</div>
+      <div style="position: absolute; left: 90px; top: 353px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #a3a3a3; white-space: nowrap"><span style="font-weight: 700">&bull; Part identification &mdash;</span> what is what.</div>
+      <div style="position: absolute; left: 90px; top: 388px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #a3a3a3; white-space: nowrap"><span style="font-weight: 700">&bull; Spatial orientation &mdash;</span> what is placed where.</div>
+      <div style="position: absolute; left: 90px; top: 424px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #a3a3a3; white-space: nowrap"><span style="font-weight: 700">&bull; Precision in placing &mdash;</span> accurately placing items into the mechanism</div>
+      <div data-bub style="--o: 1.05; animation-delay: 0ms; position: absolute; left: 97px; top: 837px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 38px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #969696; white-space: nowrap">These</div>
+      <div data-bub style="--o: 1.07; animation-delay: 95ms; position: absolute; left: 209px; top: 835px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 40px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #969696; white-space: nowrap">are</div>
+      <div data-bub style="--o: 1.09; animation-delay: 190ms; position: absolute; left: 276px; top: 831px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 45px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #969696; white-space: nowrap">all</div>
+      <div data-bub style="--o: 1.11; animation-delay: 285ms; position: absolute; left: 331px; top: 827px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 50px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #969696; white-space: nowrap">the</div>
+      <div data-bub style="--o: 1.13; animation-delay: 380ms; position: absolute; left: 410px; top: 821px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 57px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #969696; white-space: nowrap">Core</div>
+      <div data-bub style="--o: 1.16; animation-delay: 475ms; position: absolute; left: 540px; top: 809px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 72px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #969696; white-space: nowrap">elements</div>
+      <div data-bub style="--o: 1.19; animation-delay: 570ms; position: absolute; left: 836px; top: 800px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 84px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #969696; white-space: nowrap">that</div>
+      <div data-bub style="--o: 1.23; animation-delay: 665ms; position: absolute; left: 985px; top: 779px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 110px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #969696; white-space: nowrap">we</div>
+      <div data-bub data-morph-src style="--o: 1.3; animation-delay: 760ms; position: absolute; left: 1144px; top: 760px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 134px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #303030; white-space: nowrap">will</div>
+      <div data-bub data-morph-src style="transition-delay: 0.12s; position: absolute; left: 1357px; top: 729px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 173px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #303030; white-space: nowrap">solve</div>
+      <div data-morph-dst style="position: absolute; left: 91px; top: 1662px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 134px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #303030; white-space: nowrap">Prototype</div>
+      <div data-morph-dst style="position: absolute; left: 677px; top: 1581px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 235px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #303030; white-space: nowrap">1</div>
+      <div data-morph-dst style="position: absolute; left: 794px; top: 1631px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 173px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #303030; white-space: nowrap">-</div>
+      <img src="assets/images/adi/board-01.png" alt="Low fidelity proof of concept on the work tray" style="position: absolute; left: 980px; top: 1602px; width: 860px; height: 519px; object-fit: cover; display: block">
+      <div style="position: absolute; left: 531px; top: 1818px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 22px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #a3a3a3; white-space: nowrap">(Hover on images for user feedback)</div>
+      <div style="position: absolute; left: 310px; top: 2069px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #a3a3a3; white-space: nowrap; transform: scaleX(0.93); transform-origin: left center">Here is my first low fidelity model as a proof of concept</div>
+      <img src="assets/images/adi/board-02.png" alt="Dedicated workspace mini braille map" style="position: absolute; left: 101px; top: 2224px; width: 859px; height: 520px; object-fit: cover; display: block">
+      <div style="position: absolute; left: 987px; top: 2251px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #a3a3a3; white-space: nowrap">1 ) A dedicated workspace mini braille map to oreint the user to the</div>
+      <div style="position: absolute; left: 987px; top: 2286px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #a3a3a3; white-space: nowrap">relevant tools that are placed on the work tray</div>
+      <div style="position: absolute; left: 994px; top: 2399px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 94px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #303030; white-space: nowrap">Solves</div>
+      <div style="position: absolute; left: 1289px; top: 2389px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 106px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #303030; white-space: nowrap">-</div>
+      <div style="position: absolute; left: 981px; top: 2496px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #303030; white-space: nowrap"><span style="font-weight: 700">&bull; Spatial orientation &mdash;</span> what is placed where.</div>
+      <div style="position: absolute; left: 981px; top: 2532px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #303030; white-space: nowrap"><span style="font-weight: 700">&bull; Part identification</span> &mdash; what is what.</div>
+      <div data-media-slot="prototype-2" style="position: absolute; left: 980px; top: 2827px; width: 860px; height: 520px; background: #303030; display: flex; align-items: center; justify-content: center; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 22px; font-weight: 400; letter-spacing: 0.16em; color: rgba(255,255,255,0.5); text-transform: uppercase">Finger attachment &mdash; media to come</div>
+      <div style="position: absolute; left: 248px; top: 2855px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #a3a3a3; white-space: nowrap; transform: scaleX(0.9); transform-origin: left center">2) A finger attatchment to easily manuver and handle drivers</div>
+      <div style="position: absolute; left: 602px; top: 2987px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 94px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #303030; white-space: nowrap">Solves</div>
+      <div style="position: absolute; left: 898px; top: 2977px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 106px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #303030; white-space: nowrap">-</div>
+      <div style="position: absolute; left: 133px; top: 3084px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #303030; white-space: nowrap; transform: scaleX(0.9); transform-origin: left center"><span style="font-weight: 700">&bull; Precision in placing &mdash;</span> accurately placing items into the mechanism.</div>
+      <div data-media-slot="prototype-3" style="position: absolute; left: 101px; top: 3434px; width: 859px; height: 520px; background: #303030; display: flex; align-items: center; justify-content: center; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 22px; font-weight: 400; letter-spacing: 0.16em; color: rgba(255,255,255,0.5); text-transform: uppercase">Work tray tracks &mdash; media to come</div>
+      <div style="position: absolute; left: 987px; top: 3472px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #a3a3a3; white-space: nowrap">3) Tracks on work tray to guide the user to the respective tools</div>
+      <div style="position: absolute; left: 1000px; top: 3603px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 94px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #303030; white-space: nowrap">Solves</div>
+      <div style="position: absolute; left: 1296px; top: 3593px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 106px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #303030; white-space: nowrap">-</div>
+      <div style="position: absolute; left: 988px; top: 3700px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #303030; white-space: nowrap"><span style="font-weight: 700">&bull; Precision in placing &mdash;</span> accurately placing items into the mechanism</div>
+      <div style="position: absolute; left: 0; top: 4234px; width: 1920px; padding: 0 240px; box-sizing: border-box; text-align: center; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1.2; letter-spacing: -0.02em; color: #a3a3a3">After all valuable feedbacks from my mentor and fellow user, I improved many aspects of the design to better cater the habits and intuition of a visually impaired individual .</div>
+      <div style="position: absolute; left: 91px; top: 4809px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 46px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #000000; white-space: nowrap">Designed for the hands ,not the eye</div>
+      <div style="position: absolute; left: 90px; top: 4878px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 400; line-height: 1; letter-spacing: -0.02em; color: #a3a3a3; white-space: nowrap">Every element is carefully curated to maximise abilities of a visually impaired individual</div>
+      </div>
+
+      <div data-screen-label="Referenced project" style="width: 100%; margin: 0; box-sizing: border-box; padding: 72px 0 80px">
+        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 57px; font-weight: 700; letter-spacing: -0.045em; line-height: 1; color: #000000; margin: 0 111px 56px">referenced project</div>
+        <div style="max-width: none; margin: 0; font-family: Poppins, sans-serif">
+      <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: rgba(19,19,19,0.07); border-top: 1px solid rgba(19,19,19,0.07); border-bottom: 1px solid rgba(19,19,19,0.07)">
+
+        <figure style="margin: 0; background: #ffffff; padding: 22px; display: flex; flex-direction: column; gap: 14px; grid-column: 1 / 5">
+          <span style="font-family: Outfit, sans-serif; font-size: 12px; color: rgba(19,19,19,0.34); letter-spacing: 0.16em">01</span>
+          <img src="assets/images/adi/p03.png" alt="Modular base tray" style="width: 100%; height: auto; display: block">
+          <figcaption style="font-size: 15px; line-height: 1.45; color: #6f6f6f; text-wrap: pretty">Fully modular base tray with magnetic attachments &amp; raised corners to prevent tiny objects rolling off.</figcaption>
+        </figure>
+
+        <div style="grid-column: 5 / 7; display: grid; gap: 1px; background: rgba(19,19,19,0.07); align-content: start">
+          <figure style="margin: 0; background: #ffffff; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+            <span style="font-family: Outfit, sans-serif; font-size: 12px; color: rgba(19,19,19,0.34); letter-spacing: 0.16em">02</span>
+            <img src="assets/images/adi/p01.png" alt="Spring loaded holder dock" style="width: 100%; height: auto; display: block">
+            <figcaption style="font-size: 15px; line-height: 1.45; color: #6f6f6f; text-wrap: pretty">Spring-loaded mechanical movement holder dock.</figcaption>
+          </figure>
+          <figure style="margin: 0; background: #ffffff; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+            <span style="font-family: Outfit, sans-serif; font-size: 12px; color: rgba(19,19,19,0.34); letter-spacing: 0.16em">03</span>
+            <img src="assets/images/adi/p02.png" alt="Tactile screw sorter" style="width: 100%; height: auto; display: block">
+            <figcaption style="font-size: 15px; line-height: 1.45; color: #6f6f6f; text-wrap: pretty">Automatic tactile screw sorter and braille-marked storage drawer.</figcaption>
+          </figure>
+        </div>
+
+        <figure style="margin: 0; background: #ffffff; padding: 22px; display: flex; flex-direction: column; gap: 14px; grid-column: 1 / 3">
+          <span style="font-family: Outfit, sans-serif; font-size: 12px; color: rgba(19,19,19,0.34); letter-spacing: 0.16em">04</span>
+          <img src="assets/images/adi/p04.png" alt="Funnel screwdriver holder" style="width: 100%; height: auto; display: block">
+          <figcaption style="font-size: 15px; line-height: 1.45; color: #6f6f6f; text-wrap: pretty">Increased-funnel screwdriver holder with braille markings to easily pick and place drivers.</figcaption>
+        </figure>
+
+        <figure style="margin: 0; background: #ffffff; padding: 22px; display: flex; flex-direction: column; gap: 14px; grid-column: 3 / 5">
+          <span style="font-family: Outfit, sans-serif; font-size: 12px; color: rgba(19,19,19,0.34); letter-spacing: 0.16em">05</span>
+          <img src="assets/images/adi/p05.png" alt="Parts assortment tray" style="width: 100%; height: auto; display: block">
+          <figcaption style="font-size: 15px; line-height: 1.45; color: #6f6f6f; text-wrap: pretty">Parts assortment tray with braille markings and slide door to accurately identify and pick parts.</figcaption>
+        </figure>
+
+        <figure style="margin: 0; background: #ffffff; padding: 22px; display: flex; flex-direction: column; gap: 14px; grid-column: 5 / 7">
+          <span style="font-family: Outfit, sans-serif; font-size: 12px; color: rgba(19,19,19,0.34); letter-spacing: 0.16em">06</span>
+          <img src="assets/images/adi/p06.png" alt="Pick and place docking" style="width: 100%; height: auto; display: block">
+          <figcaption style="font-size: 15px; line-height: 1.45; color: #6f6f6f; text-wrap: pretty">Easy pick-and-place mechanical docking &mdash; spring loaded, as magnets near a mechanical movement are not suggested.</figcaption>
+        </figure>
+
+        <div style="grid-column: 1 / 3; background: #131313; color: #ffffff; padding: 32px 26px; display: flex; flex-direction: column; justify-content: space-between; gap: 28px">
+          <span style="font-family: Outfit, sans-serif; font-size: 12px; color: rgba(255,255,255,0.58); letter-spacing: 0.24em">VALIDATION</span>
+          <p style="margin: 0; font-family: Outfit, sans-serif; font-size: clamp(20px, 1.9vw, 27px); font-weight: 500; line-height: 1.26; letter-spacing: -0.01em; text-wrap: pretty">A 4-part custom mechanism, assembled entirely by touch.</p>
+        </div>
+
+        <figure style="margin: 0; background: #ffffff; padding: 22px; display: flex; flex-direction: column; gap: 14px; grid-column: 3 / 5">
+          <span style="font-family: Outfit, sans-serif; font-size: 12px; color: rgba(19,19,19,0.34); letter-spacing: 0.16em">07</span>
+          <div style="display: flex; gap: 6px; aspect-ratio: 268/151">
+            <img src="assets/images/adi/p08a.png" alt="Placing a part on the mechanism" style="flex: 1.9; min-width: 0; height: 100%; object-fit: cover; display: block">
+            <img src="assets/images/adi/p08b.png" alt="Assembled mechanism" style="flex: 1.1; min-width: 0; height: 100%; object-fit: cover; display: block">
+          </div>
+          <figcaption style="font-size: 15px; line-height: 1.45; color: #6f6f6f; text-wrap: pretty">Visually impaired participant successfully placed and assembled a 4-part custom mechanism.</figcaption>
+        </figure>
+
+        <figure style="margin: 0; background: #ffffff; padding: 22px; display: flex; flex-direction: column; gap: 14px; grid-column: 5 / 7">
+          <span style="font-family: Outfit, sans-serif; font-size: 12px; color: rgba(19,19,19,0.34); letter-spacing: 0.16em">08</span>
+          <img src="assets/images/adi/p07.png" alt="Participant smiling while assembling" style="width: 100%; height: auto; display: block">
+          <figcaption style="font-size: 15px; line-height: 1.45; color: #6f6f6f; text-wrap: pretty">Enjoying the art.</figcaption>
+        </figure>
+
+        <figure style="margin: 0; grid-column: 1 / 7; background: #ffffff; padding: 22px; display: flex; gap: 28px; align-items: flex-end; flex-wrap: wrap">
+          <img src="assets/images/adi/p10.png" alt="Feedback session" style="width: 46%; min-width: 280px; height: auto; display: block">
+          <div style="display: flex; flex-direction: column; gap: 14px; flex: 1; min-width: 240px">
+            <span style="font-family: Outfit, sans-serif; font-size: 12px; color: rgba(19,19,19,0.34); letter-spacing: 0.16em">09</span>
+            <figcaption style="font-size: 15px; line-height: 1.45; color: #6f6f6f; text-wrap: pretty">Valuable feedback session from industry professionals.</figcaption>
+          </div>
+        </figure>
+
+      </div>
+        </div>
+      </div>
+
+      <div style="height: 140px"></div>
+    </div>
+    <script>
+      (function () {
+        var sec = document.getElementById('wm-adi');
+        var first = sec && sec.querySelector('[data-morph-src]');
+        if (!first) return;
+        var fire = function () { sec.classList.add('wm-bub-in'); };
+        if ('IntersectionObserver' in window) {
+          var io = new IntersectionObserver(function (es) {
+            es.forEach(function (e) { if (e.isIntersecting) { fire(); io.disconnect(); } });
+          }, { threshold: 0.9 });
+          io.observe(first);
+        } else fire();
+      })();
+    </script>
+    <script>
+      (function () {
+        var wrap = document.getElementById('wm-board-scale');
+        if (!wrap) return;
+        var sec = wrap.parentNode;
+        var pending = false, lastH = -1;
+        var run = function () {
+          pending = false;
+          var s = sec.clientWidth / 1920;
+          var h = Math.round(wrap.offsetHeight * s);
+          wrap.style.transform = 'scale(' + s + ')';
+          if (h !== lastH) { lastH = h; sec.style.height = h + 'px'; }
+        };
+        var fit = function () { if (!pending) { pending = true; requestAnimationFrame(run); } };
+        run();
+        window.addEventListener('resize', fit);
+        window.addEventListener('load', fit);
+        if (window.ResizeObserver) new ResizeObserver(fit).observe(wrap);
+      })();
+    </script>
+  </section>
+
+  <section data-screen-label="Coming soon" id="wm-soon" style="background: #ffffff; min-height: 108vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; padding: 120px 40px">
+    <svg id="wm-soon-svg" viewBox="0 0 760 130" style="width: min(70vw, 760px); height: auto; overflow: visible" aria-label="Coming soon" role="img">
+      <text x="380" y="98" text-anchor="middle" style="font-family: Poppins, sans-serif; font-weight: 600; font-size: 112px; letter-spacing: -0.03em; fill: none; stroke: #131313; stroke-width: 1.2">Coming soon</text>
+    </svg>
+    <a id="wm-soon-back" href="index.html" style="display: inline-flex; align-items: center; gap: 12px; font-family: Outfit, sans-serif; font-size: 12px; letter-spacing: 0.16em; font-weight: 500; color: rgba(19,19,19,0.62); opacity: 0; transform: translateY(10px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22,1,0.36,1), color 0.35s ease">
+      <span class="wm-soon-arrow" style="display: inline-block; transition: transform 0.35s cubic-bezier(0.22,1,0.36,1)">&#8592;</span>
+      <span>BACK TO PROJECTS</span>
+    </a>
     <script>
       // any exit from this page back to the grid — the back link, the logo, or the browser's own
       // back button — hands the grid the flag it needs to shrink the cover onto the tile
@@ -83,8 +253,8 @@
       });
       window.addEventListener('pagehide', markReturn);
     </script>
-    <span>BLIND WATCHMAKER</span>
-  </footer>
+  </section>
+
 </div>
 
 
@@ -126,6 +296,40 @@
 <script src="js/stickers.js"></script>
 <script src="js/hmw.js"></script>
 <script src="js/watchmaker.js"></script>
+<script src="js/wm-morph.js"></script>
+
+<script>
+  (function () {
+    var sec = document.getElementById('wm-soon');
+    if (!sec) return;
+    var svg = document.getElementById('wm-soon-svg');
+    var t = svg.querySelector('text');
+    var back = document.getElementById('wm-soon-back');
+    var arrow = back.querySelector('.wm-soon-arrow');
+    var len = 2600;
+    try { len = t.getComputedTextLength() * 3.2; } catch (e) {}
+    t.style.strokeDasharray = len;
+    t.style.strokeDashoffset = len;
+    t.style.transition = 'stroke-dashoffset 2.4s cubic-bezier(0.33,0,0.16,1), fill 0.9s ease 1.7s';
+    var played = false;
+    var play = function () {
+      if (played) return;
+      played = true;
+      requestAnimationFrame(function () {
+        t.style.strokeDashoffset = '0';
+        t.style.fill = '#131313';
+        setTimeout(function () { back.style.opacity = '1'; back.style.transform = 'translateY(0)'; }, 1400);
+      });
+    };
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) play(); });
+      }, { threshold: 0.4 }).observe(sec);
+    } else play();
+    back.addEventListener('mouseenter', function () { back.style.color = '#131313'; arrow.style.transform = 'translateX(-6px)'; });
+    back.addEventListener('mouseleave', function () { back.style.color = 'rgba(19,19,19,0.62)'; arrow.style.transform = 'translateX(0)'; });
+  })();
+</script>
 <script src="js/eye-cursor.js"></script>
 </body>
 </html>

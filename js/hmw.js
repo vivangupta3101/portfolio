@@ -14,13 +14,6 @@
     holder.style.cssText = 'position:relative;width:100%;line-height:0;font-size:0;margin-bottom:-1px';
     page.parentNode.insertBefore(holder, page);
 
-    var tail = document.createElement('img');
-    tail.src = page.getAttribute('src');
-    tail.alt = '';
-    tail.loading = 'lazy';
-    tail.style.cssText = 'display:block;width:100%;height:auto;margin-top:' +
-      (-SPLIT / PAGE_W * 100).toFixed(4) + '%';
-
     var top = document.createElement('div');
     top.style.cssText = 'position:relative;width:100%;overflow:hidden;line-height:0;font-size:0;' +
       'aspect-ratio:' + PAGE_W + '/' + SPLIT;
@@ -58,19 +51,12 @@
     // the shift: whitespace with the rule drawing down inside it
     var gap = document.createElement('div');
     gap.style.cssText = 'position:relative;width:100%;background:#ffffff;display:flex;' +
-      'justify-content:center;padding:min(5vw,132px) 0 min(7vw,190px)';
+      'justify-content:center;padding:min(6vw,150px) 0 min(9vw,240px)';
     var rule = document.createElement('div');
-    rule.style.cssText = 'width:1px;height:min(9vw,250px);background:rgba(19,19,19,0.42);' +
-      'transform:scaleY(0);transform-origin:50% 0;' +
-      'transition:transform 1.1s cubic-bezier(0.22,1,0.36,1)';
+    rule.style.cssText = 'width:1px;height:min(30vw,760px);background:rgba(19,19,19,0.42);' +
+      'transform:scaleY(0);transform-origin:50% 0;will-change:transform';
     gap.appendChild(rule);
     holder.appendChild(gap);
-
-    var bottom = document.createElement('div');
-    bottom.style.cssText = 'position:relative;width:100%;overflow:hidden;line-height:0;font-size:0;' +
-      'margin-top:-1px;aspect-ratio:' + PAGE_W + '/' + (PAGE_H - SPLIT);
-    bottom.appendChild(tail);
-    holder.appendChild(bottom);
 
     var shown = { line: false, rule: false };
     var inView = function (n) {
@@ -83,9 +69,12 @@
         line.style.transition = 'transform 1.25s cubic-bezier(0.19,1,0.22,1)';
         line.style.transform = 'translateY(0)';
       }
-      if (!shown.rule && inView(gap)) {
-        shown.rule = true;
-        rule.style.transform = 'scaleY(1)';
+      var g = gap.getBoundingClientRect();
+      if (g.height) {
+        // the rule draws in step with the scroll: empty as the gap enters, full as its foot lands
+        var span = g.height + window.innerHeight * 0.34;
+        var p = (window.innerHeight * 0.84 - g.top) / span;
+        rule.style.transform = 'scaleY(' + Math.max(0, Math.min(1, p)).toFixed(4) + ')';
       }
     };
     window.addEventListener('scroll', check, { passive: true });

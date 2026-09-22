@@ -9,6 +9,19 @@ const STATEMENT = "\u201CWhat if 90's design language had access to modern manuf
 
 const el = (tag, css) => { const n = document.createElement(tag); if (css) n.style.cssText = css; return n; };
 
+// Alignment of each blurred grid copy over its flat page, in % of the frame (dy positive = down),
+// plus a scale multiplier. glow.png is rendered at a different aspect than p00, so page 1 needs a
+// nudge down; page 2's glow is keyed from its own page and starts at zero. Tunable live with the
+// G bar (js/grid-glow-dev.js) — bake settled numbers here.
+const ADJ = { p1: { dx: 0, dy: 2.8, sc: 1 }, p2: { dx: 0, dy: 0, sc: 1 } };
+try {
+  const saved = JSON.parse(localStorage.getItem('vg-glow-adj') || 'null');
+  if (saved) { Object.assign(ADJ.p1, saved.p1 || {}); Object.assign(ADJ.p2, saved.p2 || {}); }
+} catch (e) {}
+const place = (node, a) => {
+  node.style.transform = 'translate(' + a.dx + '%,' + a.dy + '%) scale(' + a.sc + ')';
+};
+
 window.mountBitlHero = function () {
   const wrap = el('div', 'position:relative;width:100%;line-height:0;font-size:0');
 
@@ -28,19 +41,26 @@ window.mountBitlHero = function () {
     '-webkit-mask-image:url(' + BASE + 'console-knockout.png);mask-image:url(' + BASE + 'console-knockout.png);' +
     '-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat');
   const glow = el('img', 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;' +
-    'opacity:0.85;mix-blend-mode:screen;pointer-events:none');
+    'opacity:1;mix-blend-mode:screen;pointer-events:none;filter:brightness(1.6) saturate(1.15)');
   glow.src = BASE + 'glow.png'; glow.alt = ''; glow.decoding = 'async';
+  place(glow, ADJ.p1);
   const trail = el('canvas', 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;' +
     'mix-blend-mode:screen;opacity:0.9');
   clip.appendChild(glow); clip.appendChild(trail);
   stage.appendChild(page); stage.appendChild(clip);
   wrap.appendChild(stage);
 
-  // page 2, flat
+  // page 2 carries the same floor grid off the bottom of page 1, so it lights up the same way
+  const stage2 = el('div', 'position:relative;width:100%;line-height:0;font-size:0');
   const two = el('img', 'display:block;width:100%;height:auto;margin-bottom:-1px');
   two.src = 'assets/images/bitl/p01e.png'; two.alt = '';
   two.width = 2745; two.height = 1839; two.decoding = 'async';
-  wrap.appendChild(two);
+  const glow2 = el('img', 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;' +
+    'opacity:1;mix-blend-mode:screen;pointer-events:none;filter:brightness(1.6) saturate(1.15)');
+  glow2.src = BASE + 'glow2.png'; glow2.alt = ''; glow2.decoding = 'async';
+  place(glow2, ADJ.p2);
+  stage2.appendChild(two); stage2.appendChild(glow2);
+  wrap.appendChild(stage2);
 
   // the statement, rising into place
   const brk = el('section', 'position:relative;width:100%;background:#000;display:flex;align-items:center;' +
@@ -104,13 +124,21 @@ window.mountBitlHero = function () {
     if (r.width) {
       const gx = ((px - r.left) / r.width) * 100, gy = ((py - r.top) / r.height) * 100;
       const m = 'radial-gradient(34vw 34vw at ' + gx.toFixed(2) + '% ' + gy.toFixed(2) +
-        '%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 42%, rgba(0,0,0,0) 72%)';
+        '%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.72) 42%, rgba(0,0,0,0) 74%)';
       glow.style.webkitMaskImage = m; glow.style.maskImage = m;
 
       const w = Math.round(r.width * 0.5), hgt = Math.round(r.height * 0.5);
       if (trail.width !== w) { trail.width = w; trail.height = hgt; }
       stroke(ctx, w, hgt, (p) => ({ x: ((p.x - r.left) / r.width) * w, y: ((p.y - r.top) / r.height) * hgt }),
         (p, h) => Math.max(0, Math.min(1, (p.y / h - 0.52) / 0.22))); // only over the grid
+    }
+
+    const r2 = stage2.getBoundingClientRect();
+    if (r2.width && r2.bottom > 0 && r2.top < innerHeight) {
+      const gx = ((px - r2.left) / r2.width) * 100, gy = ((py - r2.top) / r2.height) * 100;
+      const m2 = 'radial-gradient(34vw 34vw at ' + gx.toFixed(2) + '% ' + gy.toFixed(2) +
+        '%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.72) 42%, rgba(0,0,0,0) 74%)';
+      glow2.style.webkitMaskImage = m2; glow2.style.maskImage = m2;
     }
 
     roam.style.opacity = onCover ? '0' : '1';
@@ -140,8 +168,11 @@ window.mountBitlHero = function () {
     }
   };
 
+  // handle for the dev bar
+  window.__vgGlow = { adj: ADJ, apply() { place(glow, ADJ.p1); place(glow2, ADJ.p2); } };
+
   if (lite) {
-    glow.style.display = 'none'; trail.style.display = 'none';
+    glow.style.display = 'none'; glow2.style.display = 'none'; trail.style.display = 'none';
     line.style.transform = 'translateY(0)'; started = true;
   } else {
     document.body.appendChild(roam);

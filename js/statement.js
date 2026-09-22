@@ -10,7 +10,7 @@
     const opt = cfg || {};
     const outer = document.createElement('section');
     outer.setAttribute('data-screen-label', 'Watchmaker statement');
-    outer.style.cssText = 'position:relative;width:100%;height:74vh;background:#ffffff;line-height:0;font-size:0';
+    outer.style.cssText = 'position:relative;width:100%;height:92vh;background:#ffffff;line-height:0;font-size:0';
 
     const frame = document.createElement('div');
     frame.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;' +
@@ -32,7 +32,7 @@
     frame.appendChild(line);
 
     const rule = document.createElement('div');
-    rule.style.cssText = 'width:1px;height:min(5.3vw,154px);margin:min(1.3vw,37px) 0 min(2.7vw,79px);' +
+    rule.style.cssText = 'width:1px;height:min(9.4vw,272px);margin:min(1.3vw,37px) 0 min(5.4vw,158px);' +
       'background:rgba(19,19,19,0.45);transform:scaleY(0);transform-origin:50% 0;' +
       'transition:transform 0.55s cubic-bezier(0.22,1,0.36,1)';
     frame.appendChild(rule);

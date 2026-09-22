@@ -65,9 +65,9 @@
   .vg-idx-item:hover .vg-icR { transform: translate(0, 0) scale(1) rotate(8deg); }
   .vg-idx-item:hover .vg-icT { transform: translateY(0) scale(1) rotate(-6deg); }
   .vg-idx-item:hover .vg-icB { transform: translateY(0) scale(1) rotate(6deg); }
-  #vg-sketch svg { fill: none; stroke: rgba(236, 126, 65, 0.26); stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; }
+  #vg-sketch svg { fill: none; stroke: rgba(19, 19, 19, 0.16); stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; }
   #vg-sketch svg { fill: none; }
-  #vg-sketch svg path, #vg-sketch svg ellipse, #vg-sketch svg circle, #vg-sketch svg rect, #vg-sketch svg polyline, #vg-sketch svg polygon, #vg-sketch svg line { stroke: rgba(236, 126, 65, 0.26); stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; opacity: 1; vector-effect: non-scaling-stroke; }
+  #vg-sketch svg path, #vg-sketch svg ellipse, #vg-sketch svg circle, #vg-sketch svg rect, #vg-sketch svg polyline, #vg-sketch svg polygon, #vg-sketch svg line { stroke: rgba(19, 19, 19, 0.16); stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; opacity: 1; vector-effect: non-scaling-stroke; }
   #vg-leak { position: fixed; inset: 0; pointer-events: none; z-index: 0; clip-path: circle(0% at 50% 50%); transition: clip-path 0.9s cubic-bezier(0.45, 0, 0.35, 1); will-change: clip-path; }
   html, body, a { cursor: none; }
   #vg-ball { position: fixed; left: 0; top: 0; width: 22px; height: 22px; mix-blend-mode: difference; pointer-events: none; z-index: 2147483000; transition: width 0.25s ease, height 0.25s ease; }
