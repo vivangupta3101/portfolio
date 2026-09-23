@@ -29,7 +29,7 @@ window.mountBitlHero = function () {
   const stage = el('div', 'position:relative;width:100%;line-height:0;font-size:0');
   stage.setAttribute('data-screen-label', 'BitL cover');
   // reuse the already-decoded copy the home page parked on load, if it is there
-  const P0 = 'assets/images/bitl/p00.png';
+  const P0 = 'assets/images/bitl/p00.webp';
   const page = (window.__vgWarm && window.__vgWarm[P0]) || el('img');
   page.style.cssText = 'display:block;width:100%;height:auto;margin-bottom:-1px';
   if (!page.src) page.src = P0;
@@ -53,7 +53,7 @@ window.mountBitlHero = function () {
   // page 2 carries the same floor grid off the bottom of page 1, so it lights up the same way
   const stage2 = el('div', 'position:relative;width:100%;line-height:0;font-size:0');
   const two = el('img', 'display:block;width:100%;height:auto;margin-bottom:-1px');
-  two.src = 'assets/images/bitl/p01e.png'; two.alt = '';
+  two.src = 'assets/images/bitl/p01e.webp'; two.alt = '';
   two.width = 2745; two.height = 1839; two.decoding = 'async';
   const glow2 = el('img', 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;' +
     'opacity:1;mix-blend-mode:screen;pointer-events:none;filter:brightness(1.6) saturate(1.15)');

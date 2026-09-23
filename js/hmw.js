@@ -88,7 +88,7 @@
   }
 
   function boot() {
-    var page = document.querySelector('img[src$="watchmaker/p05.png"]');
+    var page = document.querySelector('img[src$="watchmaker/p05.webp"]');
     if (page) mount(page);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();

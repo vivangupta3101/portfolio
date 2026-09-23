@@ -6,9 +6,9 @@
 
   // rects measured against the p03 page box (2880 x 1632); zoom1 straddles the p02/p03 seam
   var SPOTS = [
-    { src: 'assets/images/watchmaker/zoom1.png', left: 42.708, top: -39.338, width: 55.556, pad: 38.19, tilt: -1.6, rise: 4.4 },
-    { src: 'assets/images/watchmaker/zoom2.png', left: 18.056, top: 29.902, width: 31.250, pad: 25.87, tilt: 1.9, rise: 5.2 },
-    { src: 'assets/images/watchmaker/zoom3.png', left: 52.951, top: 33.578, width: 45.139, pad: 23.96, tilt: -1.3, rise: 4.6 }
+    { src: 'assets/images/watchmaker/zoom1.webp', left: 42.708, top: -39.338, width: 55.556, pad: 38.19, tilt: -1.6, rise: 4.4 },
+    { src: 'assets/images/watchmaker/zoom2.webp', left: 18.056, top: 29.902, width: 31.250, pad: 25.87, tilt: 1.9, rise: 5.2 },
+    { src: 'assets/images/watchmaker/zoom3.webp', left: 52.951, top: 33.578, width: 45.139, pad: 23.96, tilt: -1.3, rise: 4.6 }
   ];
 
   var SPOTS_LIVE = [];
@@ -132,7 +132,7 @@
   window.addEventListener('resize', queueTests);
 
   function boot() {
-    var page = document.querySelector('img[src$="watchmaker/p03.png"]');
+    var page = document.querySelector('img[src$="watchmaker/p03.webp"]');
     if (page) mount(page);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();

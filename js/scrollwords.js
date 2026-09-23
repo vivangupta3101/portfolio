@@ -135,7 +135,7 @@
     return outer;
   };
 
-  // the watchmaker opening statement, measured off assets/images/watchmaker/p00.png (2880x1632)
+  // the watchmaker opening statement, measured off assets/images/watchmaker/p00.webp (2880x1632)
   window.VG_WATCHMAKER_WORDS = {
     imgW: 2880, imgH: 1632, x: 130, y: 105, size: 67, lh: 1.209, coverW: 1440, coverH: 600, textBottom: 540,
     bg: '#ffffff', ink: '#131313', dim: 0.16,

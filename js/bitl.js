@@ -46,7 +46,7 @@ class Component {
 
   renderVals() {
     const pages = [];
-    for (let i = 0; i < 16; i++) pages.push({ src: 'assets/images/bitl/p' + String(i).padStart(2, '0') + '.png', load: i < 2 ? 'eager' : 'lazy', prio: i === 0 ? 'high' : 'auto' });
+    for (let i = 0; i < 16; i++) pages.push({ src: 'assets/images/bitl/p' + String(i).padStart(2, '0') + '.webp', load: i < 2 ? 'eager' : 'lazy', prio: i === 0 ? 'high' : 'auto' });
     return { pages };
   }
 }

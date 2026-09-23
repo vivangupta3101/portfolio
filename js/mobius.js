@@ -47,7 +47,7 @@ class Component {
   renderVals() {
     const n = 12;
     const pages = [];
-    for (let i = 0; i < n; i++) pages.push({ src: 'assets/images/mobius/p' + String(i).padStart(2, '0') + '.png' });
+    for (let i = 0; i < n; i++) pages.push({ src: 'assets/images/mobius/p' + String(i).padStart(2, '0') + '.webp' });
     return { pages };
   }
 }

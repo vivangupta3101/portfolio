@@ -99,7 +99,7 @@ class Component {
     document.querySelectorAll('.vg-rise > span').forEach((l, i) => { l.style.animationDelay = (0.35 + i * 0.13) + 's'; });
     // fetch silhouettes at top priority before the video hogs bandwidth
     ['bitl', 'mobius', 'strahl', 'watchmaker'].forEach((k) => {
-      const im = new Image(); im.fetchPriority = 'high'; im.src = 'assets/images/' + k + '-silhouette.png';
+      const im = new Image(); im.fetchPriority = 'high'; im.src = 'assets/images/' + k + '-silhouette.webp';
     });
     // flowing contour lines behind the hero video (fills the letterbox bars)
     const flow = document.getElementById('vg-hero-flow');
@@ -149,7 +149,7 @@ class Component {
       w.id = 'vg-ball-warm-' + k;
       w.className = 'vg-ball-' + k;
       w.style.cssText = 'position:fixed;left:-500px;top:-500px;width:150px;height:80px;z-index:-1;opacity:0.01;transition:none';
-      const m = "url('assets/images/" + k + "-silhouette.png') center / contain no-repeat";
+      const m = "url('assets/images/" + k + "-silhouette.webp') center / contain no-repeat";
       w.innerHTML = '<div class="vg-ball-inner" style="transition:none;width:100%;height:100%;background:#fff;-webkit-mask:' + m + ';mask:' + m + '"></div>';
       document.body.appendChild(w);
     });
@@ -644,8 +644,8 @@ class Component {
       Promise.resolve(ready).then(() => setTimeout(start, 180));
     }
     const warmPages = () => {
-      [['mobius.html', 'assets/images/mobius/cover.png'], ['bitl.html', 'assets/images/bitl/p00.png'],
-       ['watchmaker.html', 'assets/images/watchmaker/cover.png']].forEach(([page, first]) => {
+      [['mobius.html', 'assets/images/mobius/cover.webp'], ['bitl.html', 'assets/images/bitl/p00.webp'],
+       ['watchmaker.html', 'assets/images/watchmaker/cover.webp']].forEach(([page, first]) => {
         const l = document.createElement('link');
         l.rel = 'prefetch'; l.href = page; l.as = 'document';
         document.head.appendChild(l);
@@ -660,24 +660,24 @@ class Component {
     };
     if (window.requestIdleCallback) window.requestIdleCallback(warmPages, { timeout: 4000 }); else setTimeout(warmPages, 800);
     const PROJECTS = {
-      '#mobius': { bg: '#f6e9d2', ink: '#131313', label: 'M\u00d6BIUS', first: 'assets/images/mobius/cover.png',
-        imgs: [{ src: 'assets/images/mobius/cover.png', w: 1680, h: 1127 }].concat(Array.from({ length: 12 }, (_, i) => ({
-          src: 'assets/images/mobius/p' + String(i).padStart(2, '0') + '.png', w: 1680, h: i === 11 ? 1885 : 1893 }))) },
+      '#mobius': { bg: '#f6e9d2', ink: '#131313', label: 'M\u00d6BIUS', first: 'assets/images/mobius/cover.webp',
+        imgs: [{ src: 'assets/images/mobius/cover.webp', w: 1680, h: 1127 }].concat(Array.from({ length: 12 }, (_, i) => ({
+          src: 'assets/images/mobius/p' + String(i).padStart(2, '0') + '.webp', w: 1680, h: i === 11 ? 1885 : 1893 }))) },
       // StrahL: 29 pages sliced from the lighting PDF with pdfslice-strahl.html, stacked flush
-      '#strahl': { bg: '#f6e2c6', ink: '#131313', label: 'STRAHL', first: 'assets/images/strahl/p00.png',
+      '#strahl': { bg: '#f6e2c6', ink: '#131313', label: 'STRAHL', first: 'assets/images/strahl/p00.webp',
         imgs: [{ spread: {
           bg: '#f6e2c6',
-          pages: [{ src: 'assets/images/strahl/p00s.png', w: 2382, h: 1802 },
-                  { src: 'assets/images/strahl/p01s.png', w: 2382, h: 1684 }],
+          pages: [{ src: 'assets/images/strahl/p00s.webp', w: 2382, h: 1802 },
+                  { src: 'assets/images/strahl/p01s.webp', w: 2382, h: 1684 }],
           mask: null,
-          ring: { src: 'assets/images/strahl/ring.png', left: 22.4, top: 21.01, w: 148.07, origin: '53.72% 46.28%' },
-          products: [{ src: 'assets/images/strahl/prod-a.png', left: 35.89, top: 18.27, w: 64.69 },
-                     { src: 'assets/images/strahl/prod-b.png', left: 25.27, top: 52.18, w: 62.47 },
-                     { src: 'assets/images/strahl/prod-c.png', left: 54.28, top: 76.25, w: 64.99 }]
+          ring: { src: 'assets/images/strahl/ring.webp', left: 22.4, top: 21.01, w: 148.07, origin: '53.72% 46.28%' },
+          products: [{ src: 'assets/images/strahl/prod-a.webp', left: 35.89, top: 18.27, w: 64.69 },
+                     { src: 'assets/images/strahl/prod-b.webp', left: 25.27, top: 52.18, w: 62.47 },
+                     { src: 'assets/images/strahl/prod-c.webp', left: 54.28, top: 76.25, w: 64.99 }]
         } }].concat(Array.from({ length: 27 }, (_, k) => { const i = k + 2;
           // p02 carries the tail of the printed lamp that the live overlay redraws; p03's question mark
           // and grey rule are lifted off the plate and drawn live (cleaned plates carry the 's' suffix)
-          const it = { src: 'assets/images/strahl/p' + String(i).padStart(2, '0') + ([2, 3, 4, 5, 14].indexOf(i) >= 0 ? 's' : '') + '.png',
+          const it = { src: 'assets/images/strahl/p' + String(i).padStart(2, '0') + ([2, 3, 4, 5, 14].indexOf(i) >= 0 ? 's' : '') + '.webp',
             w: 2382, h: [4, 6, 8, 10, 11, 12].indexOf(i) >= 0 ? 1802 : 1684 };
           if (i === 3) it.draw = {
             // measured off the printed page, in per cent of the page box
@@ -691,18 +691,18 @@ class Component {
           // the skyline is three depth planes in the artwork: they are lifted off the plate and pop
           // up in order, nearest first, when the band arrives on screen
           if (i === 14) it.pop = { top: 77.019, layers: [
-            { src: 'assets/images/strahl/p14-l2.png', dy: 7, z: 4, delay: 0 },
-            { src: 'assets/images/strahl/p14-l1.png', dy: 5, z: 3, delay: 0.2 },
-            { src: 'assets/images/strahl/p14-l0.png', dy: 3.5, z: 2, delay: 0.4 }
+            { src: 'assets/images/strahl/p14-l2.webp', dy: 7, z: 4, delay: 0 },
+            { src: 'assets/images/strahl/p14-l1.webp', dy: 5, z: 3, delay: 0.2 },
+            { src: 'assets/images/strahl/p14-l0.webp', dy: 3.5, z: 2, delay: 0.4 }
           ] };
           return it; })) },
       // pages 1-2 come from js/bitl-live.js: the same flat artwork plus the cursor glow and the
       // statement break. The strip picks up at p02.
-      '#blind-watchmaker': { bg: '#eaeaea', ink: '#131313', label: 'BLIND WATCHMAKER', first: 'assets/images/watchmaker/cover.png',
-        imgs: [{ src: 'assets/images/watchmaker/cover.png', w: 2880, h: 1620 }].concat(Array.from({ length: 12 }, (_, i) => ({
-          src: 'assets/images/watchmaker/p' + String(i).padStart(2, '0') + '.png', w: 2880, h: i === 11 ? 1622 : 1632 }))) },
-      '#bitl': { bg: '#000000', ink: '#f4f4f4', label: 'BITL', first: 'assets/images/bitl/p00.png', hero: 'bitl',
-        imgs: Array.from({ length: 14 }, (_, k) => { const i = k + 2; const it = { src: 'assets/images/bitl/p' + String(i).padStart(2, '0') + '.png', w: 2745,
+      '#blind-watchmaker': { bg: '#eaeaea', ink: '#131313', label: 'BLIND WATCHMAKER', first: 'assets/images/watchmaker/cover.webp',
+        imgs: [{ src: 'assets/images/watchmaker/cover.webp', w: 2880, h: 1620 }].concat(Array.from({ length: 12 }, (_, i) => ({
+          src: 'assets/images/watchmaker/p' + String(i).padStart(2, '0') + '.webp', w: 2880, h: i === 11 ? 1622 : 1632 }))) },
+      '#bitl': { bg: '#000000', ink: '#f4f4f4', label: 'BITL', first: 'assets/images/bitl/p00.webp', hero: 'bitl',
+        imgs: Array.from({ length: 14 }, (_, k) => { const i = k + 2; const it = { src: 'assets/images/bitl/p' + String(i).padStart(2, '0') + '.webp', w: 2745,
           h: i < 7 ? 1839 : i === 7 ? 1830 : i < 15 ? 1930 : 1922 };
           // the mood-board page leaves an empty column under its first image: the caption sits there,
           // and the line that turns the argument follows the page before the re-mood board
@@ -712,29 +712,29 @@ class Component {
           }
           // p03 carries the re-mood board and the top of the timeline in one page: it is split so the
           // note about the new board can sit between them with room to breathe
-          if (i === 3) return [{ src: 'assets/images/bitl/p03a.png', w: 2745, h: 1460,
+          if (i === 3) return [{ src: 'assets/images/bitl/p03a.webp', w: 2745, h: 1460,
               body: ['Being my second year in design and a **passion project**. I knew this is the time i can play a lot more with **my designs**. I wanted to express myself as a designer and take **design decisions** to extents that would be difficult to bring in the **real world**.',
                 'The challenge with this project was to do so while being **industry level** and **manufacturable**.'] },
-            { src: 'assets/images/bitl/p03b.png', w: 2745, h: 379 }];
+            { src: 'assets/images/bitl/p03b.webp', w: 2745, h: 379 }];
           // p04 carries the tail of the timeline and the first sketch slide; p04-p07 hold the four
           // sketch slides, which run as one auto-playing carousel instead of four scrolled pages
-          if (i === 4) return [{ src: 'assets/images/bitl/p04top.png', w: 2745, h: 1164 },
-            { carousel: [1, 2, 3, 4].map((k) => 'assets/images/bitl/sketch' + k + '.png'), w: 2745, h: 1545 },
+          if (i === 4) return [{ src: 'assets/images/bitl/p04top.webp', w: 2745, h: 1164 },
+            { carousel: [1, 2, 3, 4].map((k) => 'assets/images/bitl/sketch' + k + '.webp'), w: 2745, h: 1545 },
             { gap: true }];
           if (i === 5 || i === 6 || i === 7) return [];
           return it; }).flat() },
       // Sun Pharma dispenser: not a printed deck — a render, the brief, and the sketch/CAD sheets
       // laid on the grey paper as plates. Same expand/close as the other readers.
-      '#sun-pharma': { bg: '#eaeaea', ink: '#131313', label: 'SUN PHARMA', first: 'assets/images/vending/hero.png',
+      '#sun-pharma': { bg: '#eaeaea', ink: '#131313', label: 'SUN PHARMA', first: 'assets/images/vending/hero.webp',
         copyInk: 'rgba(19,19,19,0.78)', strongInk: '#131313',
         imgs: [
-          { src: 'assets/images/vending/hero.png', w: 2880, h: 1226, body: [
+          { src: 'assets/images/vending/hero.webp', w: 2880, h: 1226, body: [
             'Client — **Sun pharma, Laser Innovative technologies**',
             'A unique requirement for a medicine dispenser in pharmacies to reduce touch points of a consumer and easing the process of buying non prescription medicines.',
             'An instant connection and inspiration from capsules, I sketched out some forms that I believed stood out while still blending in.'] },
-          { plate: [{ src: 'assets/images/vending/sketch-form1.jpg', w: 900, h: 1600, cap: 'Form 1 — vending machine' },
-                    { src: 'assets/images/vending/sketch-form2.jpg', w: 900, h: 1600, cap: 'Form 2 — capsule inspired' }] },
-          { plate: [{ src: 'assets/images/vending/cad.jpg', w: 422, h: 887 }] }
+          { plate: [{ src: 'assets/images/vending/sketch-form1.webp', w: 900, h: 1600, cap: 'Form 1 — vending machine' },
+                    { src: 'assets/images/vending/sketch-form2.webp', w: 900, h: 1600, cap: 'Form 2 — capsule inspired' }] },
+          { plate: [{ src: 'assets/images/vending/cad.webp', w: 422, h: 887 }] }
         ] }
     };
     this._projects = PROJECTS;

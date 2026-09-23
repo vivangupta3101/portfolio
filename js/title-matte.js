@@ -10,11 +10,11 @@
 
   var GROUPS = [[0, 1], [2, 3], [4, 5, 6], [7, 8], [9, 10]];
   var PHOTOS = [
-    'assets/images/aeron-collage.png',
-    'assets/images/mobius-poster.png',
-    'assets/images/Website Pics_20.jpg',
-    'assets/images/Website Pics1_07.jpg',
-    'assets/images/aeron-collage.png'
+    'assets/images/aeron-collage.webp',
+    'assets/images/mobius-poster.webp',
+    'assets/images/Website Pics_20.webp',
+    'assets/images/Website Pics1_07.webp',
+    'assets/images/aeron-collage.webp'
   ];
   // per-group framing. out: <1 pulls the photo back to show more. shift x/y: nudge in
   // fractions of the crop size. Tune live with the photo editor (press P) and bake the
