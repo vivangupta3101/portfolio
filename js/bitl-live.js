@@ -25,9 +25,9 @@ const place = (node, a) => { node._adj = a; };
 // what made the trail and cursor stutter.
 const SPOT_MASK = 'radial-gradient(circle closest-side at 50% 50%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.72) 42%, rgba(0,0,0,0) 74%)';
 const spotlight = (img) => {
-  const spot = el('div', 'position:absolute;left:0;top:0;overflow:hidden;pointer-events:none;mix-blend-mode:screen;will-change:transform;' +
-    '-webkit-mask-image:' + SPOT_MASK + ';mask-image:' + SPOT_MASK);
-  const box = el('div', 'position:absolute;left:0;top:0;will-change:transform');
+  const spot = el('div', 'position:absolute;left:0;top:0;pointer-events:none;mix-blend-mode:screen;will-change:transform;' +
+    '-webkit-mask-image:' + SPOT_MASK + ';mask-image:' + SPOT_MASK + ';-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:100% 100%;mask-size:100% 100%');
+  const box = el('div', 'position:absolute;left:0;top:0');
   img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-width:none;pointer-events:none;' +
     'filter:brightness(1.6) saturate(1.15)';
   box.appendChild(img); spot.appendChild(box);

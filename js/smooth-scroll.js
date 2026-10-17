@@ -86,12 +86,14 @@
   }
 
   window.addEventListener('wheel', function (e) {
-    if (window.__vgScrollLocked) return;              // page-level scroll lock owns the gesture
     if (e.ctrlKey || e.metaKey) return;               // pinch-zoom
-    if (e.defaultPrevented) return;
     var dir = e.deltaY >= 0 ? 1 : -1;
     var el = scrollableAncestor(e.target, dir);
     if (!el) return;
+    // the page-level lock only holds the page itself: an open project reader (its own scroller)
+    // still glides, which is what the lock was silently switching off
+    if (window.__vgScrollLocked && el === docEl) return;
+    if (e.defaultPrevented && el === docEl) return;
     var delta = e.deltaY;
     if (e.deltaMode === 1) delta *= 16;               // lines
     else if (e.deltaMode === 2) delta *= window.innerHeight;
@@ -102,11 +104,12 @@
   }, { passive: false });
 
   window.addEventListener('keydown', function (e) {
-    if (window.__vgScrollLocked) return;
     if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
     var t = e.target;
     if (t && (t.isContentEditable || /^(input|textarea|select)$/i.test(t.tagName || ''))) return;
-    var el = scrollableAncestor(t, 1) || docEl;
+    var rd = document.getElementById('vg-reader');
+    var el = (rd && (!t || t === document.body || t === docEl)) ? rd : (scrollableAncestor(t, 1) || docEl);
+    if (window.__vgScrollLocked && el === docEl) return;
     var vh = el === docEl ? window.innerHeight : el.clientHeight;
     var d = 0;
     switch (e.key) {

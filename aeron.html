@@ -114,7 +114,7 @@
       </div>
       <div class="sh-spec sh-fade" style="transition-delay:.6s">Engineered for airflow.</div>
       <div class="sh-line sh-fade" style="transition-delay:.7s"><div id="sh-lineIn">One lens, edge to edge.<br><span>Fresh air throughout.</span></div></div>
-      <div class="sh-meter sh-fade" style="transition-delay:.9s" id="sh-meter"><span>Scroll</span><i></i><span id="sh-mnum">01</span></div>
+      <div class="sh-meter sh-fade" style="transition-delay:.9s;display:none" id="sh-meter"><span>Scroll</span><i></i><span id="sh-mnum">01</span></div>
       <div class="sh-call" id="sh-call">
         <svg width="1" height="1"><circle id="sh-cdot" r="3.5" fill="#0e0e0d"></circle><path id="sh-cline" fill="none" stroke="#0e0e0d" stroke-width="1"></path></svg>
         <div class="sh-t" id="sh-ctext"><b>Shield <em>01</em></b>One lens. No nose gap.<br><span>Smoke · Lime</span></div>
@@ -271,8 +271,8 @@
     addEventListener('scroll', function () { if (state !== 'done' && scrollY > 0) { scrollTo(0, 0); open(); } }, { passive: true });
   })();
 </script>
-<script src="js/aeron-shield.js"></script>
-<script src="js/aeron-live.js?v=8"></script>
+<script src="js/aeron-shield.js?v=20261017b"></script>
+<script src="js/aeron-live.js?v=20261017b"></script>
 <div id="pg-ball"></div>
 <script>
   (function () {

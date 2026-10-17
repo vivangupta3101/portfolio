@@ -127,7 +127,7 @@
     flip(rk);
     // look frames fade in once decoded instead of popping over the opening frame
     const lookIn = lookAt ? (reduce ? 1 : clamp((now() - lookAt) / 900, 0, 1)) : 0;
-    const key = lookIn.toFixed(3) + '|' + (lookN ? lookC.toFixed(3) : '-') + '|' + rk.toFixed(4) + '|' + fi.toFixed(3) + '|' + px.toFixed(2) + '|' + py.toFixed(2) + '|' + W + 'x' + H + '|' + fl.toFixed(3);
+    const key = lookIn.toFixed(3) + '|' + (lookN ? lookC.toFixed(4) : '-') + '|' + rk.toFixed(4) + '|' + fi.toFixed(3) + '|' + px.toFixed(2) + '|' + py.toFixed(2) + '|' + W + 'x' + H + '|' + fl.toFixed(3);
     if (key === lastKey) return; lastKey = key;
     const g = fit(p), near = i => { for (let d = 0; d < 40; d++) { if (frames[i - d]) return frames[i - d]; if (frames[i + d]) return frames[i + d]; } return frames[0]; };
     const a = frames[i0] || near(i0), b = frames[i1];
@@ -142,7 +142,7 @@
     }
     if (a && a.width) ctx.drawImage(a, L, T, FW, FH);
     if (b && b.width && k > .02 && b !== a) { ctx.globalAlpha = k; ctx.drawImage(b, L, T, FW, FH); ctx.globalAlpha = 1; }
-    const la = M.look && lookN === M.look.n ? Math.max(1 - sstep(.0, .035, p), clamp(Math.abs(lookC) / .06, 0, 1)) * lookIn : 0;
+    const la = M.look && lookN === M.look.n ? (1 - sstep(.0, .035, p)) * lookIn : 0;
     if (la > .002) {
       const C = M.look.center, lf = clamp(C + lookC * (lookC < 0 ? C : M.look.n - 1 - C), 0, M.look.n - 1);
       const j0 = Math.floor(lf), j1 = Math.min(M.look.n - 1, j0 + 1), u = lf - j0;
@@ -204,14 +204,10 @@
     if (Math.abs(target - cur) < .00005) cur = target;
     const pk = 1 - Math.exp(-dt * 3.6); px += (mx - px) * pk; py += (my - py) * pk;
     // following the cursor eases continuously; once scrolling starts she turns back to centre on a timed ease-in-out
-    if (cur > .004 && !reduce) {
-      if (!lookBack) lookBack = { from: lookC, t0: t, dur: 650 + 700 * Math.abs(lookC) };
-      const u = clamp((t - lookBack.t0) / lookBack.dur, 0, 1), e = u * u * u * (u * (6 * u - 15) + 10);
-      lookC = lookBack.from * (1 - e); if (u >= 1) lookC = 0;
-    } else {
-      lookBack = null;
-      const lt = reduce && cur > .004 ? 0 : lookT;
-      lookC += (lt - lookC) * (reduce ? 1 : 1 - Math.exp(-dt * 5.5)); if (Math.abs(lt - lookC) < .002) lookC = lt;
+    // as in the original v7 scrub: a plain per-frame ease toward the cursor, scrolling hands her back to centre
+    {
+      const lt = cur > .004 ? 0 : lookT;
+      lookC += (lt - lookC) * (reduce ? 1 : 1 - Math.pow(1 - .07, dt * 60)); if (Math.abs(lt - lookC) < .0005) lookC = lt;
     }
     draw(toFrame(cur), cur);
     extend(now() / 1000);
@@ -222,10 +218,10 @@
   addEventListener('pointermove', e => {
     if (reduce || e.pointerType !== 'mouse') return;
     mx = (e.clientX / innerWidth - .5) * -10; my = (e.clientY / innerHeight - .5) * -6;
-    lookT = clamp((e.clientX / innerWidth - .5) * 2, -1, 1) * .45;
+    lookT = clamp((e.clientX / innerWidth - .5) * 2, -1, 1) * .8;
   }, { passive: true });
   document.addEventListener('mouseleave', () => { lookT = 0; });
-  addEventListener('deviceorientation', e => { if (e.gamma == null || reduce) return; lookT = clamp(e.gamma / 25, -1, 1) * .45; }, { passive: true });
+  addEventListener('deviceorientation', e => { if (e.gamma == null || reduce) return; lookT = clamp(e.gamma / 25, -1, 1) * .8; }, { passive: true });
   window.__shLook = v => { lookT = v; };
 
   window.__shReady = (async () => {

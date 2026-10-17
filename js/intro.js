@@ -36,40 +36,46 @@
   host.style.display = 'flex';
   // the name waits under its mask until the reel is done, then rises in VIVAN orange / GUPTA white
   document.documentElement.classList.add('vg-intro-hold');
-  // one sound element for the whole intro, never restarted once it has played; it is stopped when
-  // the intro ends, when the page hides, and when another open copy of the site starts its own
-  var sfx = window.__vgIntroSfx || (window.__vgIntroSfx = new Audio('assets/audio/logo-intro-v7-sfx-ext.wav'));
-  sfx.preload = 'auto';
-  var sfxOn = false, sfxDead = false;
-  var bc = null;
-  try { bc = new BroadcastChannel('vg-intro-sfx'); bc.onmessage = function () { stopSfx(true); }; } catch (e) {}
+  // The SFX runs on Web Audio: the context is created and resumed inside the "Play with sound" click,
+  // which is the one moment every browser (Safari and iOS included) allows sound to start. The file
+  // is fetched and decoded while the gate is up, then started on the same tick as the reel.
+  var SFX_URL = 'assets/audio/logo-intro-v7-sfx-ext.wav';
+  var AC = window.AudioContext || window.webkitAudioContext;
+  var actx = null, sfxBuf = null, sfxRaw = null, sfxSrc = null, sfxGain = null;
+  var sfxOn = false, sfxDead = false, wantSound = false;
+  var rawP = fetch(SFX_URL).then(function (r) { return r.arrayBuffer(); }).then(function (b) { sfxRaw = b; return b; }, function () { return null; });
+  var decode = function () {
+    if (!actx || sfxBuf) return Promise.resolve(sfxBuf);
+    return rawP.then(function (b) {
+      if (!b || sfxBuf) return sfxBuf;
+      return new Promise(function (res) {
+        try { actx.decodeAudioData(b.slice(0), function (d) { sfxBuf = d; res(d); }, function () { res(null); }); } catch (e) { res(null); }
+      });
+    });
+  };
   var startSfx = function () {
-    if (sfxOn || sfxDead || done || !started) return;
+    if (sfxOn || sfxDead || done || !started || !wantSound || !actx || !sfxBuf) return;
     var at = vid ? vid.currentTime : 0;
     if (at > CUT - 0.5) return;
     sfxOn = true;
-    // only seek when the start was blocked and it comes in late on a click; otherwise it plays from 0
-    try { sfx.currentTime = at > 0.04 ? at : 0; } catch (e) {}
-    var pr = sfx.play();
-    if (pr && pr.then) pr.then(function () { if (bc) bc.postMessage(1); }, function () { if (!sfxDead) sfxOn = false; });
-    else if (bc) bc.postMessage(1);
+    try { if (actx.state !== 'running') actx.resume(); } catch (e) {}
+    sfxGain = actx.createGain(); sfxGain.gain.value = 1; sfxGain.connect(actx.destination);
+    sfxSrc = actx.createBufferSource(); sfxSrc.buffer = sfxBuf; sfxSrc.connect(sfxGain);
+    sfxSrc.start(0, at > 0.04 ? at : 0);
   };
   var stopSfx = function (now) {
     if (sfxDead) return;
     sfxDead = true;
-    if (now === true) { try { sfx.pause(); } catch (e) {} return; }
-    var v0 = sfx.volume, t1 = performance.now(), dur = typeof now === 'number' ? now : 600;
-    (function f() {
-      var k = Math.min(1, (performance.now() - t1) / dur);
-      try { sfx.volume = v0 * Math.pow(1 - k, 2); } catch (e) {}
-      if (k < 1) requestAnimationFrame(f); else { try { sfx.pause(); } catch (e) {} }
-    })();
+    if (!sfxSrc || !actx) return;
+    var dur = now === true ? 0.03 : (typeof now === 'number' ? now : 600) / 1000, t = actx.currentTime;
+    try {
+      sfxGain.gain.cancelScheduledValues(t);
+      sfxGain.gain.setValueAtTime(sfxGain.gain.value, t);
+      sfxGain.gain.linearRampToValueAtTime(0, t + dur);
+      sfxSrc.stop(t + dur + 0.05);
+    } catch (e) {}
   };
   window.addEventListener('pagehide', function () { stopSfx(true); });
-  // browsers can refuse sound before any interaction; the first click / key / tap brings it in, in sync
-  ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
-    window.addEventListener(ev, function g() { startSfx(); if (sfxOn || done) window.removeEventListener(ev, g, true); }, true);
-  });
 
   var vid = host.querySelector('video');
   var mark = document.getElementById('vg-intro-mark');
@@ -252,7 +258,6 @@
 
   var clear = function () {
     cancelAnimationFrame(hudRaf);
-    if (bc) { try { bc.close(); } catch (e) {} bc = null; }
     document.documentElement.classList.remove('vg-intro-hold');
     lock(false);
     if (navMark) navMark.style.opacity = '';
@@ -389,9 +394,12 @@
     var FACE = "font-family:'Archivo','Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;font-size:clamp(15px,1.25vw,19px);line-height:1";
     var BTN = 'appearance:none;border:0;cursor:pointer;padding:20px 34px;width:340px;max-width:calc(100vw - 48px);display:flex;align-items:center;justify-content:center;transition:filter 0.35s ease,background-color 0.35s ease,color 0.35s ease;' + FACE + ';' + CUT_CORNERS;
     gate.style.gap = '16px';
-    // filter runs before clip-path on one element, so the glow lives on a wrapper around the clipped button
-    var WRAP = 'display:block;transition:filter 0.35s ease';
-    gate.innerHTML = '<span style="' + WRAP + '"><button type="button" data-snd="1" style="' + BTN + ';background:#ec7e41;color:#000000">Play with sound</button></span>' +
+    // the glow is a pre-blurred copy of the chamfered shape sitting behind the button; hover only fades
+    // its opacity, which every browser animates smoothly (an animated drop-shadow on a clipped shape
+    // stutters or renders square in Safari)
+    var GLOW = '<span data-glow style="position:absolute;inset:-6px;pointer-events:none;filter:blur(18px);opacity:0;transform:scale(0.96);transition:opacity 0.4s ease,transform 0.5s cubic-bezier(0.22,1,0.36,1)">' +
+      '<span style="position:absolute;inset:0;background:#ec7e41;' + CUT_CORNERS + '"></span></span>';
+    gate.innerHTML = '<span style="position:relative;display:block">' + GLOW + '<button type="button" data-snd="1" style="' + BTN + ';position:relative;background:#ec7e41;color:#000000">Play with sound</button></span>' +
       '<button type="button" data-snd="0" style="appearance:none;border:0;background:none;cursor:pointer;padding:10px 6px;color:rgba(255,255,255,0.6);transition:color 0.3s ease,text-shadow 0.3s ease;' + FACE + ';font-size:clamp(12px,0.95vw,14px);letter-spacing:0.12em">Continue without sound</button>';
     host.appendChild(gate);
     [].slice.call(gate.querySelectorAll('button')).forEach(function (b) {
@@ -402,15 +410,25 @@
         b.addEventListener('mouseleave', function () { b.style.color = 'rgba(255,255,255,0.6)'; b.style.textShadow = ''; });
         return;
       }
-      b.addEventListener('mouseenter', function () { w.style.filter = 'drop-shadow(0 0 14px rgba(' + c + ',0.75)) drop-shadow(0 0 34px rgba(' + c + ',0.45))'; });
-      b.addEventListener('mouseleave', function () { w.style.filter = ''; });
+      var g = w.querySelector('[data-glow]');
+      var on = function () { g.style.opacity = '0.95'; g.style.transform = 'scale(1.06)'; b.style.backgroundColor = '#f39a63'; };
+      var off = function () { g.style.opacity = '0'; g.style.transform = 'scale(0.96)'; b.style.backgroundColor = '#ec7e41'; };
+      b.addEventListener('mouseenter', on); b.addEventListener('mouseleave', off);
+      b.addEventListener('focus', on); b.addEventListener('blur', off);
     });
     var answer = function (withSound) {
       if (answered) return;
       answered = true;
-      if (withSound) {
-        // unlock the element inside the click so the later in-sync start is allowed
-        try { var u = sfx.play(); if (u && u.then) u.then(function () { if (!started) { sfx.pause(); sfx.currentTime = 0; } }, function () {}); } catch (e) {}
+      if (withSound && AC) {
+        wantSound = true;
+        try {
+          actx = new AC();
+          // a one-sample silent buffer played inside the gesture unlocks output on iOS
+          var b0 = actx.createBuffer(1, 1, 22050), s0 = actx.createBufferSource(); s0.buffer = b0; s0.connect(actx.destination); s0.start(0);
+          actx.resume();
+        } catch (e) { actx = null; }
+        aReady = false;
+        decode().then(function () { aReady = true; check(); });
       } else sfxDead = true;
       gate.style.opacity = '0';
       gate.style.pointerEvents = 'none';
@@ -424,25 +442,19 @@
       started = true;
       t0 = performance.now();
       setTimeout(function () { if (!done && (!vid.duration || vid.currentTime < 0.05)) fade(); }, 8000);
-      startSfx();
       var p = vid.play();
-      if (p && p.catch) p.catch(fade);
+      if (p && p.then) p.then(startSfx, fade); else startSfx();
     };
     var check = function () { if (answered && vReady && aReady) go(); };
     if (vid.readyState >= 4) vReady = true; else vid.addEventListener('canplaythrough', function () { vReady = true; check(); }, { once: true });
-    if (sfx.readyState >= 4) aReady = true; else {
-      sfx.addEventListener('canplaythrough', function () { aReady = true; check(); }, { once: true });
-      sfx.addEventListener('error', function () { aReady = true; check(); }, { once: true });
-    }
-    try { sfx.load(); } catch (e) {}
+    aReady = true; // until sound is chosen; then it waits for the decode
     check();
-    setTimeout(function () { aReady = vReady = true; check(); }, 3000);
-    (function sync() {
+    // never hang on a slow network: start anyway after 6s, the sound joins in sync once decoded
+    setTimeout(function () { vReady = true; aReady = true; check(); }, 6000);
+    (function late() {
       if (done) return;
-      requestAnimationFrame(sync);
-      if (!sfxOn || sfx.paused || vid.paused) return;
-      var d = sfx.currentTime - vid.currentTime;
-      if (Math.abs(d) > 0.06) { try { sfx.currentTime = vid.currentTime; } catch (e) {} }
+      requestAnimationFrame(late);
+      if (started && wantSound && !sfxOn && sfxBuf && !vid.paused) startSfx();
     })();
   } else handoff();
 
