@@ -21,3 +21,10 @@ html, body, a, [data-bs-tile] { cursor: none; }
   #bs-grid[data-crop="landscape"] img { aspect-ratio: 3 / 2; object-fit: cover; }
   @media (max-width: 900px) { #bs-grid { columns: 2 !important; } }
   @media (max-width: 560px) { #bs-grid { columns: 1 !important; } }
+
+/* ---------- responsive: shared chrome on narrow screens ---------- */
+@media (max-width: 700px) {
+  nav[style*="padding: 20px 40px"] { padding: 16px 20px !important; }
+  a[aria-label="Home"][style*="left: 40px"] { left: 20px !important; top: 16px !important; }
+}
+@media (max-width: 700px) { [style*="padding: 90px 40px"] { padding-left: 20px !important; padding-right: 20px !important; } [style*="width: 900px"], [style*="width: 560px"] { width: auto !important; max-width: 100% !important; } }

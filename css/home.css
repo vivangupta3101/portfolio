@@ -75,6 +75,8 @@
   #vg-ball.vg-ball-big { width: 34px; height: 34px; }
   #vg-ball.vg-ball-bitl { width: 129px; height: 60px; border-radius: 0; background: transparent; transition: width 0.8s cubic-bezier(0.34, 1.2, 0.44, 1), height 0.8s cubic-bezier(0.34, 1.2, 0.44, 1); }
   #vg-ball.vg-ball-bitl .vg-ball-inner { border-radius: 0; transform: rotate(360deg); -webkit-mask: url('../assets/images/bitl-silhouette.webp') center / contain no-repeat; mask: url('../assets/images/bitl-silhouette.webp') center / contain no-repeat; }
+  #vg-ball.vg-ball-aeron { width: 117px; height: 80px; border-radius: 0; background: transparent; transition: width 0.8s cubic-bezier(0.34, 1.2, 0.44, 1), height 0.8s cubic-bezier(0.34, 1.2, 0.44, 1); }
+  #vg-ball.vg-ball-aeron .vg-ball-inner { border-radius: 0; transform: rotate(360deg); -webkit-mask: url('../assets/images/aeron-silhouette.webp') center / contain no-repeat; mask: url('../assets/images/aeron-silhouette.webp') center / contain no-repeat; }
   #vg-ball.vg-ball-mobius { width: 150px; height: 40px; border-radius: 0; background: transparent; transition: width 0.8s cubic-bezier(0.34, 1.2, 0.44, 1), height 0.8s cubic-bezier(0.34, 1.2, 0.44, 1); }
   #vg-ball.vg-ball-mobius .vg-ball-inner { border-radius: 0; transform: rotate(360deg); -webkit-mask: url('../assets/images/mobius-silhouette.webp') center / contain no-repeat; mask: url('../assets/images/mobius-silhouette.webp') center / contain no-repeat; }
   #vg-ball.vg-ball-watchmaker { width: 143px; height: 70px; border-radius: 0; background: transparent; transition: width 0.8s cubic-bezier(0.34, 1.2, 0.44, 1), height 0.8s cubic-bezier(0.34, 1.2, 0.44, 1); }
@@ -117,8 +119,46 @@
 #vg-hero-title .vg-l { display: inline-block; transform-style: preserve-3d; transform-origin: 50% 50%; backface-visibility: visible; will-change: transform; }
 #vg-hero-title .vg-rise { display: inline-block; transform-style: preserve-3d; will-change: transform; }
 #vg-hero-title .vg-rise > span { transform-style: preserve-3d; }
+/* logo intro holds the name below its mask until the reel finishes (js/intro.js) */
+html.vg-intro-hold #vg-hero-title .vg-rise > span { animation: none; transform: translateY(112%); }
+html.vg-intro-lit #vg-hero-title { opacity: 1 !important; }
+html.vg-intro-lit #vg-hero-title .vg-rise:first-child > span { color: #ec7e41; }
+html.vg-intro-settle #vg-hero-title { transition: opacity 0.9s ease !important; }
+html.vg-intro-settle #vg-hero-title .vg-rise > span { transition: color 0.9s ease; }
 
 /* the expanded tile's glass sits under the growing rectangle and the tile itself is faded to
    nothing, so its 26px backdrop blur is invisible — and blurring a large box while a clip-path
    animates is the most expensive thing on the page. Drop it for the duration. */
 body.vg-focus .vg-row.vg-expand { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
+/* ---------- responsive (phone → tablet → desktop) ---------- */
+/* portrait / narrow: the hero fills the whole first screen; the video is cover-cropped at the edges */
+@media (max-width: 900px), (max-aspect-ratio: 1/1) {
+  #top > div > div { aspect-ratio: auto !important; height: 100vh !important; height: 100svh !important; max-height: none !important; }
+  #top > div { max-height: none !important; }
+}
+@media (max-width: 900px) {
+  nav { padding: 16px 24px !important; }
+  section[data-screen-label="Partnership statement"] { padding: 88px 28px 32px !important; }
+  section[data-screen-label="Category tabs"] { padding: 56px 0 0 !important; }
+  #vg-tabs { max-width: 100%; overflow-x: auto; flex-wrap: nowrap !important; justify-content: flex-start !important; scrollbar-width: none; -webkit-overflow-scrolling: touch; margin: 0 16px; }
+  #vg-tabs::-webkit-scrollbar { display: none; }
+  #vg-tabs .vg-tab { flex: 0 0 auto; white-space: nowrap; }
+  #vg-work { padding: 64px 20px 72px !important; gap: 72px !important; }
+  .vg-proj { flex-direction: column !important; align-items: stretch !important; gap: 20px !important; }
+  .vg-proj > .vg-row { flex: none !important; width: 100% !important; }
+  .vg-proj > div.vg-reveal { text-align: left !important; flex: none !important; }
+  .vg-cap { padding: 20px 22px !important; }
+  footer#contact { padding: 56px 24px 44px !important; }
+  #vg-index .vg-ic { display: none; }
+}
+@media (max-width: 600px) {
+  .vg-proj > .vg-row { aspect-ratio: 4 / 3 !important; border-radius: 14px !important; }
+  .vg-cap .vg-t { font-size: clamp(30px, 9vw, 40px) !important; }
+  .vg-cap .vg-arrow { font-size: 22px !important; }
+  section[data-screen-label="Partnership statement"] p { font-size: clamp(22px, 6.2vw, 30px) !important; }
+  #vg-index .vg-idx-item { font-size: clamp(28px, 8.4vw, 40px) !important; }
+  .vg-hud-count { display: none !important; }
+  .vg-hud-l { left: 40px !important; }
+  .vg-hud-r { right: 40px !important; }
+}

@@ -98,7 +98,7 @@ class Component {
     };
     document.querySelectorAll('.vg-rise > span').forEach((l, i) => { l.style.animationDelay = (0.35 + i * 0.13) + 's'; });
     // fetch silhouettes at top priority before the video hogs bandwidth
-    ['bitl', 'mobius', 'strahl', 'watchmaker'].forEach((k) => {
+    ['aeron', 'bitl', 'mobius', 'strahl', 'watchmaker'].forEach((k) => {
       const im = new Image(); im.fetchPriority = 'high'; im.src = 'assets/images/' + k + '-silhouette.webp';
     });
     // flowing contour lines behind the hero video (fills the letterbox bars)
@@ -144,7 +144,7 @@ class Component {
       this._flowFit = fit;
     }
     // warm mask images: render each morph state off-screen so the first real hover is instant
-    ['bitl', 'mobius', 'strahl', 'watchmaker'].forEach((k) => {
+    ['aeron', 'bitl', 'mobius', 'strahl', 'watchmaker'].forEach((k) => {
       const w = document.createElement('div');
       w.id = 'vg-ball-warm-' + k;
       w.className = 'vg-ball-' + k;
@@ -1373,6 +1373,10 @@ class Component {
     };
     const HOVER = new Map();
     let hoverRow = null;
+    // touch screens have no hover: the first tap on a tile plays its sketch-out (the hover state),
+    // the second tap on the same tile opens it. A tap anywhere else puts the sketch away.
+    const TOUCH = !!(window.matchMedia && matchMedia('(hover: none)').matches);
+    let armed = null;
     document.querySelectorAll('.vg-row').forEach((row) => {
       let posterOpen = false;
       let lastPt = null;
@@ -1438,6 +1442,13 @@ class Component {
         // as the in-page projects, then navigates once the rectangle has filled the screen
         const pageNav = href.slice(0, 1) !== '#' ? href : null;
         if (posterOpen || this._locked || !srcFor(row)) return;
+        if (TOUCH && armed !== row) {
+          if (e) e.preventDefault();
+          armed = row;
+          setHover(row, e && e.clientX != null ? { x: e.clientX, y: e.clientY } : null);
+          return;
+        }
+        armed = null;
         e.preventDefault();
         posterOpen = true;
         // hold the page still: no hover teardown, no scroll fighting the growing rectangle
@@ -1458,6 +1469,12 @@ class Component {
         if (deck) {
           full.style.backgroundColor = deck.bg || '#131313';
           full.style.backgroundImage = 'url("' + deck.first + '")';
+        } else if (pageNav) {
+          // pages without a deck (aeron.html) grow their own cover, framed exactly as the tile shows it
+          full.style.backgroundColor = row.dataset.leak || '#131313';
+          full.style.backgroundImage = 'url("' + srcFor(row) + '")';
+          const win = row.querySelector('.vg-win');
+          if (win) full.style.backgroundPosition = getComputedStyle(win).backgroundPosition;
         }
         full.style.transition = 'none';
         full.style.clipPath = insetFrom;
@@ -1575,8 +1592,10 @@ class Component {
       // every hover path funnels through one hover-state setter, so a trackpad scroll that slides a
       // tile under a stationary cursor reads exactly like the cursor moving onto it
       HOVER.set(row, { enter, leave });
-      row.addEventListener('mouseenter', (e) => { setHover(row, { x: e.clientX, y: e.clientY }); });
-      row.addEventListener('mouseleave', () => { if (hoverRow === row) setHover(null, null); });
+      if (!TOUCH) {
+        row.addEventListener('mouseenter', (e) => { setHover(row, { x: e.clientX, y: e.clientY }); });
+        row.addEventListener('mouseleave', () => { if (hoverRow === row) setHover(null, null); });
+      }
       row.addEventListener('click', reveal);
       this._handlers.push([row, enter, leave]);
     });
@@ -1585,7 +1604,7 @@ class Component {
     // A trackpad/inertia scroll moves content under a cursor that never fires a mousemove, and the
     // browser's own mouseenter on scroll is unreliable — so we hit-test the last known cursor point
     // against the tile rects on every scroll frame and drive the same enter/leave.
-    const BALL_CLS = { 'BitL': 'vg-ball-bitl', 'Mobius': 'vg-ball-mobius', 'StrahL': 'vg-ball-strahl', 'Blind Watchmaker': 'vg-ball-watchmaker' };
+    const BALL_CLS = { 'Aeron': 'vg-ball-aeron', 'BitL': 'vg-ball-bitl', 'Mobius': 'vg-ball-mobius', 'StrahL': 'vg-ball-strahl', 'Blind Watchmaker': 'vg-ball-watchmaker' };
     const rowAt = (pt) => {
       if (!pt) return null;
       let found = null;
@@ -1620,7 +1639,17 @@ class Component {
         if (c1 && ball) ball.classList.add(c1);
       }
     };
-    this._syncHover = () => { setHover(rowAt(this._pt), this._pt); };
+    this._syncHover = () => {
+      if (TOUCH) {
+        // the armed tile's sketch goes away once it has scrolled off screen
+        if (armed) { const r = armed.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) { armed = null; setHover(null, null); } }
+        return;
+      }
+      setHover(rowAt(this._pt), this._pt);
+    };
+    if (TOUCH) document.addEventListener('click', (e) => {
+      if (armed && !e.target.closest('.vg-row')) { armed = null; setHover(null, null); }
+    }, true);
     let hoverRafPending = false;
     const queueSync = () => {
       if (window.__vgBusy || hoverRafPending) return;

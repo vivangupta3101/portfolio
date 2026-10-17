@@ -79,3 +79,14 @@ html, body, a { cursor: none; }
     100% { transform: translate(0, 0); }
   }
   @media (prefers-reduced-motion: reduce) { #ab-sketch img { animation-name: abFlip; animation-duration: 3.3s; } }
+
+/* ---------- responsive: shared chrome on narrow screens ---------- */
+@media (max-width: 700px) {
+  nav[style*="padding: 20px 40px"] { padding: 16px 20px !important; }
+  a[aria-label="Home"][style*="left: 40px"] { left: 20px !important; top: 16px !important; }
+}
+@media (max-width: 860px) {
+  section[data-screen-label="Bio"] { grid-template-columns: 1fr !important; gap: 40px !important; padding: 48px 20px 0 !important; }
+  header[data-screen-label="About intro"] { padding: 120px 20px 90px !important; }
+  section[style*="padding: 60px 40px"], section[style*="padding: 96px 40px"], section[style*="padding: 110px 40px"] { padding-left: 20px !important; padding-right: 20px !important; }
+}

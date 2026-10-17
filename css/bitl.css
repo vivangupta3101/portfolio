@@ -7,3 +7,10 @@ html { scrollbar-width: none; }
   body { margin: 0; background: #0b0406; color: #f4f4f4; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
   a { color: #f4f4f4; text-decoration: none; }
   a:hover { color: #ff3b52; }
+
+/* ---------- responsive: shared chrome on narrow screens ---------- */
+@media (max-width: 700px) {
+  nav[style*="padding: 20px 40px"] { padding: 16px 20px !important; }
+  a[aria-label="Home"][style*="left: 40px"] { left: 20px !important; top: 16px !important; }
+}
+@media (max-width: 700px) { [style*="padding: 64px 40px 72px"] { padding: 48px 20px 56px !important; } }

@@ -12,3 +12,15 @@ html { scrollbar-width: none; }
   .wm-rise > span { display: block; transform: translateY(112%); animation: wmRise 1.25s cubic-bezier(0.19, 1, 0.22, 1) both; }
 
   @keyframes wmStickerSway { 0% { transform: translate3d(0,0,0) rotate(-0.35deg); } 50% { transform: translate3d(0.35%,-0.5%,0) rotate(0.3deg); } 100% { transform: translate3d(-0.25%,0.35%,0) rotate(-0.2deg); } }
+
+/* ---------- responsive: shared chrome on narrow screens ---------- */
+@media (max-width: 700px) {
+  nav[style*="padding: 20px 40px"] { padding: 16px 20px !important; }
+  a[aria-label="Home"][style*="left: 40px"] { left: 20px !important; top: 16px !important; }
+}
+@media (max-width: 760px) {
+  [style*="grid-template-columns: repeat(6, 1fr)"] { grid-template-columns: 1fr !important; }
+  [style*="grid-template-columns: repeat(6, 1fr)"] > * { grid-column: 1 / -1 !important; }
+  [style*="margin: 0 111px 56px"] { margin: 0 20px 32px !important; font-size: clamp(32px, 9vw, 57px) !important; }
+  section[style*="padding: 120px 40px"] { padding: 72px 20px !important; }
+}

@@ -10,3 +10,10 @@ html { scrollbar-width: none; }
   @keyframes mbRise { from { transform: translateY(112%); } to { transform: translateY(0); } }
   .mb-rise { display: block; overflow: hidden; padding-bottom: 0.08em; }
   .mb-rise > span { display: block; transform: translateY(112%); animation: mbRise 1.25s cubic-bezier(0.19, 1, 0.22, 1) both; }
+
+/* ---------- responsive: shared chrome on narrow screens ---------- */
+@media (max-width: 700px) {
+  nav[style*="padding: 20px 40px"] { padding: 16px 20px !important; }
+  a[aria-label="Home"][style*="left: 40px"] { left: 20px !important; top: 16px !important; }
+}
+@media (max-width: 700px) { [style*="padding: 64px 40px 72px"] { padding: 48px 20px 56px !important; } }

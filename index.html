@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vivan Gupta — Industrial Designer</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;700&amp;family=Press+Start+2P&amp;display=swap" rel="stylesheet">
@@ -15,7 +21,7 @@
 </head>
 <body>
 <div id="vg-intro" style="display: none; position: fixed; inset: 0; z-index: 9999; background: #000000; align-items: center; justify-content: center">
-  <video muted playsinline preload="auto" src="assets/videos/logo-intro.mp4" style="width: min(62vmin, 620px); height: min(62vmin, 620px); object-fit: contain"></video>
+  <video muted playsinline preload="auto" src="assets/videos/logo-intro-v7.mp4" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover"></video>
   <img id="vg-intro-mark" src="assets/images/logo-mark-light.webp" alt="" width="194" height="168" style="position: absolute; width: 194px; height: 168px; opacity: 0; transform-origin: left top; will-change: transform, opacity">
 
 </div>
@@ -30,13 +36,13 @@
     var k = sessionStorage.getItem('vgReturnFrom');
     if (!k) return;
     sessionStorage.removeItem('vgReturnFrom');
-    var covers = { watchmaker: { src: 'assets/images/watchmaker/cover.webp', bg: '#eaeaea', href: 'watchmaker.html' } };
+    var covers = { watchmaker: { src: 'assets/images/watchmaker/cover.webp', bg: '#eaeaea', href: 'watchmaker.html' }, aeron: { src: 'assets/images/aeron/cover-shield-v4.webp', bg: '#efefec', href: 'aeron.html', pos: 'center 30%' } };
     var c = covers[k];
     if (!c) return;
     var d = document.createElement('div');
     d.id = 'vg-return-cover';
     d.style.cssText = 'position:fixed;inset:0;z-index:9999;clip-path:inset(0px 0px 0px 0px round 0px);' +
-      "background:" + c.bg + " url('" + c.src + "') center/cover no-repeat;";
+      "background:" + c.bg + " url('" + c.src + "') " + (c.pos || 'center') + "/cover no-repeat;";
     document.documentElement.style.background = c.bg;
     document.documentElement.appendChild(d);
     // hold the shrink until the cover bitmap is actually decoded: starting the clip-path against an
@@ -48,7 +54,7 @@
 })();
 </script>
 
-<link rel="preload" as="image" href="assets/images/pasted-1784884557335-0-x.webp"><link rel="preload" as="image" href="assets/images/pasted-1784891319683-0-x.webp"><link rel="preload" as="image" href="assets/images/pasted-1784891346988-0-x.webp"><link rel="preload" as="image" href="assets/images/watchmaker/cover.webp"><link rel="preload" as="image" href="assets/images/watchmaker-silhouette.webp"><link rel="preload" as="image" href="assets/images/bitl-silhouette.webp"><link rel="preload" as="image" href="assets/images/mobius-silhouette.webp"><link rel="preload" as="image" href="assets/images/strahl-silhouette.webp">
+<link rel="preload" as="image" href="assets/images/pasted-1784884557335-0-x.webp"><link rel="preload" as="image" href="assets/images/pasted-1784891319683-0-x.webp"><link rel="preload" as="image" href="assets/images/pasted-1784891346988-0-x.webp"><link rel="preload" as="image" href="assets/images/watchmaker/cover.webp"><link rel="preload" as="image" href="assets/images/aeron/cover-shield-v4.webp"><link rel="preload" as="image" href="assets/images/watchmaker-silhouette.webp"><link rel="preload" as="image" href="assets/images/bitl-silhouette.webp"><link rel="preload" as="image" href="assets/images/mobius-silhouette.webp"><link rel="preload" as="image" href="assets/images/strahl-silhouette.webp">
 <svg width="0" height="0" style="position: absolute" aria-hidden="true">
   <filter id="vg-edge" color-interpolation-filters="sRGB">
     <feColorMatrix type="saturate" values="0"></feColorMatrix>
@@ -204,6 +210,25 @@
 
 <main id="vg-work" style="position: relative; max-width: 1720px; margin: 0 auto; padding: 96px clamp(32px, 3.5vw, 64px) 96px; display: flex; flex-direction: column; gap: 120px">
 
+  <div class="vg-proj" data-cat="complex" style="display: flex; flex-direction: row-reverse; align-items: center; gap: 56px" data-ink="dark">
+    <a href="aeron.html" class="vg-row vg-reveal" data-leak="#efefec" data-leak-img="assets/images/aeron/cover-shield-v4.webp" data-screen-label="Aeron" style="position: relative; display: block; flex: 0 0 68%; overflow: hidden; aspect-ratio: 1.9 / 1; border-radius: 20px; background: #04090c">
+    <div class="vg-win" style="position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background: #efefec url('assets/images/aeron/cover-shield-v4.webp') center 30% / cover no-repeat"></div>
+    <div class="vg-scrim" style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 38%)"></div>
+    <div class="vg-cap" style="position: absolute; left: 0; right: 0; bottom: 0; padding: 32px 40px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; color: #ffffff">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span class="vg-t" style="font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(40px, 4.6vw, 68px); font-weight: 600; letter-spacing: 0.01em; line-height: 1.05; color: #ffffff">AERON</span>
+        <span class="vg-tag" style="font-size: clamp(15px, 1.3vw, 19px); color: rgba(255,255,255,0.75)">Run fresh.</span>
+      </div>
+      <span class="vg-arrow" style="font-size: 26px; color: #ffffff">→</span>
+    </div>
+  </a>
+    <div class="vg-reveal" style="flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: right">
+      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">01 - 2026 (2 months)</span>
+      <p style="margin: 0; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(20px, 2vw, 28px); line-height: 1.35; color: #131313; text-wrap: pretty">AERON - run fresh</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #8a8a8a; text-wrap: pretty">Active sportswear against pollution.</p>
+    </div>
+  </div>
+
   <div class="vg-proj" data-cat="complex" style="display: flex; flex-direction: row-reverse; align-items: center; gap: 56px" data-ink="light">
     <a href="#bitl" class="vg-row vg-reveal" data-leak="#160406" data-wire="assets/images/wire-bitl-line.webp" data-trace="assets/icons/round 7 bitl.svg" data-leak-img="assets/images/pasted-1784891319683-0-x.webp" data-leak-res="leakBitl" data-screen-label="BitL" style="position: relative; display: block; flex: 0 0 68%; overflow: hidden; aspect-ratio: 1.9 / 1; border-radius: 20px; background: #efefec">
     <div class="vg-win" style="position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background: url('assets/images/pasted-1784891319683-0-x.webp') center / cover no-repeat"></div>
@@ -217,7 +242,7 @@
     </div>
   </a>
     <div class="vg-reveal" style="flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: right">
-      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">01 - 2024</span>
+      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">02 - 2024</span>
       <p style="margin: 0; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(20px, 2vw, 28px); line-height: 1.35; color: #131313; text-wrap: pretty">BitL - A 90's style console with a modern take</p>
       <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #8a8a8a; text-wrap: pretty">Here's my take on a hand held console, this project includes electronics, DFM and understanding design features.</p>
     </div>
@@ -236,7 +261,7 @@
     </div>
   </a>
     <div class="vg-reveal" style="flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: right">
-      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">02 - 2026</span>
+      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">03 - 2026</span>
       <p style="margin: 0; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(20px, 2vw, 28px); line-height: 1.35; color: #131313; text-wrap: pretty">Watchmaking made accesible</p>
       <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #8a8a8a; text-wrap: pretty">Making the art of watchmaking accesible for the visually impaired</p>
     </div>
@@ -254,7 +279,7 @@
     </div>
   </a>
     <div class="vg-reveal" style="flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: left">
-      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">03 - 2024 (2 months)</span>
+      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">04 - 2024 (2 months)</span>
       <p style="margin: 0; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(20px, 2vw, 28px); line-height: 1.35; color: #131313; text-wrap: pretty">Mobius - A contemporary take on an Indian concept</p>
       <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #8a8a8a; text-wrap: pretty">Furniture design is an amazing domain to potray the tru-est expression as a designer. Here's my expression on the same</p>
     </div>
@@ -273,7 +298,7 @@
     </div>
   </a>
     <div class="vg-reveal" style="flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: left">
-      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">04 - 2025 (2 months)</span>
+      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">05 - 2025 (2 months)</span>
       <p style="margin: 0; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(20px, 2vw, 28px); line-height: 1.35; color: #131313; text-wrap: pretty">StrahL - A light hydrant</p>
       <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #8a8a8a; text-wrap: pretty">"You're not a industrial designer till you have designed your own light"</p>
       <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #8a8a8a; text-wrap: pretty">Here's my take on lighting design</p>
@@ -293,7 +318,7 @@
     </div>
   </a>
     <div class="vg-reveal" style="flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: right">
-      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">05 - 2024</span>
+      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">06 - 2024</span>
       <p style="margin: 0; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(20px, 2vw, 28px); line-height: 1.35; color: #131313; text-wrap: pretty">Wear it like you mean it.</p>
       <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #8a8a8a; text-wrap: pretty">A nike campaign designed to get the shoes out of the damn cabinets,</p>
     </div>
@@ -312,7 +337,7 @@
     </div>
   </a>
     <div class="vg-reveal" style="flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: left">
-      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">06 — PROJECT</span>
+      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">07 — PROJECT</span>
       <p style="margin: 0; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(20px, 2vw, 28px); line-height: 1.35; color: #131313; text-wrap: pretty">Medicine strip dispenser for pharmacies</p>
       <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #8a8a8a; text-wrap: pretty">A unique requirement for a medicine dispenser in pharmacies to reduce touch points of a consumer and easing the process of buying non prescription medicines.</p>
     </div>
@@ -331,7 +356,7 @@
     </div>
   </a>
     <div class="vg-reveal" style="flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: right">
-      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">07 - 2024</span>
+      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">08 - 2024</span>
       <p style="margin: 0; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(20px, 2vw, 28px); line-height: 1.35; color: #131313; text-wrap: pretty">Musicon - live your music</p>
       <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #8a8a8a; text-wrap: pretty">An interaction design mini project exploring new methods to interact with tunes</p>
     </div>
@@ -350,7 +375,7 @@
     </div>
   </a>
     <div class="vg-reveal" style="flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: left">
-      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">08 - 2024</span>
+      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">09 - 2024</span>
       <p style="margin: 0; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(20px, 2vw, 28px); line-height: 1.35; color: #131313; text-wrap: pretty">HearMe - enabling all</p>
       <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #8a8a8a; text-wrap: pretty">MIni project exploring ways to enable deaf individuals to communivate better.</p>
     </div>
@@ -369,7 +394,7 @@
     </div>
   </a>
     <div class="vg-reveal" style="flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: right">
-      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">09 - 2023(over the year)</span>
+      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">10 - 2023(over the year)</span>
       <p style="margin: 0; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(20px, 2vw, 28px); line-height: 1.35; color: #131313; text-wrap: pretty">DFM/DFA</p>
       <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #8a8a8a; text-wrap: pretty">&quot;A great ideas that cannot be executed was never a great idea&quot;Creating beautiful designs comes with the task of MANUFACTURING the design.</p>
     </div>
@@ -388,7 +413,7 @@
     </div>
   </a>
     <div class="vg-reveal" style="flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: left">
-      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">10 - 2023()</span>
+      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">11 - 2023()</span>
       <p style="margin: 0; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(20px, 2vw, 28px); line-height: 1.35; color: #131313; text-wrap: pretty">Caustics lamp</p>
       <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #8a8a8a; text-wrap: pretty">exploring a common but un noticed phenonomenon, caustics.</p>
     </div>
@@ -407,7 +432,7 @@
     </div>
   </a>
     <div class="vg-reveal" style="flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: left">
-      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">11 - 2023</span>
+      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">12 - 2023</span>
       <p style="margin: 0; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(20px, 2vw, 28px); line-height: 1.35; color: #131313; text-wrap: pretty">Spider-man intro sequence reimagined</p>
       <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #8a8a8a; text-wrap: pretty">Intro sequences are the beginning seed of a movie, heres my take while i explore stop motion</p>
     </div>

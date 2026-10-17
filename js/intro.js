@@ -18,6 +18,7 @@
   try {
     var nav = performance.getEntriesByType('navigation')[0];
     backfwd = nav ? nav.type === 'back_forward' : performance.navigation && performance.navigation.type === 2;
+    if (nav ? nav.type === 'reload' : performance.navigation && performance.navigation.type === 1) internal = backfwd = false;
   } catch (e) {}
   var seen = internal || backfwd;
   if (/[?&]intro\b/.test(location.search) || location.hash === '#intro') seen = false;
@@ -33,6 +34,42 @@
 
   lock(true);
   host.style.display = 'flex';
+  // the name waits under its mask until the reel is done, then rises in VIVAN orange / GUPTA white
+  document.documentElement.classList.add('vg-intro-hold');
+  // one sound element for the whole intro, never restarted once it has played; it is stopped when
+  // the intro ends, when the page hides, and when another open copy of the site starts its own
+  var sfx = window.__vgIntroSfx || (window.__vgIntroSfx = new Audio('assets/audio/logo-intro-v7-sfx-ext.wav'));
+  sfx.preload = 'auto';
+  var sfxOn = false, sfxDead = false;
+  var bc = null;
+  try { bc = new BroadcastChannel('vg-intro-sfx'); bc.onmessage = function () { stopSfx(true); }; } catch (e) {}
+  var startSfx = function () {
+    if (sfxOn || sfxDead || done || !started) return;
+    var at = vid ? vid.currentTime : 0;
+    if (at > CUT - 0.5) return;
+    sfxOn = true;
+    // only seek when the start was blocked and it comes in late on a click; otherwise it plays from 0
+    try { sfx.currentTime = at > 0.04 ? at : 0; } catch (e) {}
+    var pr = sfx.play();
+    if (pr && pr.then) pr.then(function () { if (bc) bc.postMessage(1); }, function () { if (!sfxDead) sfxOn = false; });
+    else if (bc) bc.postMessage(1);
+  };
+  var stopSfx = function (now) {
+    if (sfxDead) return;
+    sfxDead = true;
+    if (now === true) { try { sfx.pause(); } catch (e) {} return; }
+    var v0 = sfx.volume, t1 = performance.now(), dur = typeof now === 'number' ? now : 600;
+    (function f() {
+      var k = Math.min(1, (performance.now() - t1) / dur);
+      try { sfx.volume = v0 * Math.pow(1 - k, 2); } catch (e) {}
+      if (k < 1) requestAnimationFrame(f); else { try { sfx.pause(); } catch (e) {} }
+    })();
+  };
+  window.addEventListener('pagehide', function () { stopSfx(true); });
+  // browsers can refuse sound before any interaction; the first click / key / tap brings it in, in sync
+  ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
+    window.addEventListener(ev, function g() { startSfx(); if (sfxOn || done) window.removeEventListener(ev, g, true); }, true);
+  });
 
   var vid = host.querySelector('video');
   var mark = document.getElementById('vg-intro-mark');
@@ -44,27 +81,26 @@
   // multiplier. Tunable live with the I bar (js/intro-align-dev.js) — bake settled numbers here.
   var ADJ = { dx: 0, dy: 0, sc: 1 };
   try {
-    var savedAdj = JSON.parse(localStorage.getItem('vg-intro-mark-adj') || 'null');
+    var savedAdj = JSON.parse(localStorage.getItem('vg-intro-mark-adj-v7') || 'null');
     if (savedAdj) { ADJ.dx = savedAdj.dx || 0; ADJ.dy = savedAdj.dy || 0; ADJ.sc = savedAdj.sc || 1; }
   } catch (e) {}
   var freeze = false;
   try { freeze = sessionStorage.getItem('vg-intro-freeze') === '1'; } catch (e) {}
-  // Where the reel's logo actually sits in its last frame, measured off the file (1080x1080,
-  // frame at 4.0s) and normalised to the frame. The still is registered to this rect, not to the
-  // middle of the screen — the logo the reel leaves behind is low and right of frame centre.
-  var REEL = { u: 0.3481, v: 0.3769, w: 0.3361, h: 0.2935 };
+  // Where the reel's logo sits in its last frame, measured off logo-intro-v7.mp4 (1920x1080,
+  // settled from 10.2s) and normalised to the frame. The reel is full-bleed object-fit: cover.
+  var REEL = { u: 861 / 1920, v: 453 / 1080, w: 199 / 1920, h: 174 / 1080, fw: 1920, fh: 1080 };
   var placeMark = function () {
     if (!mark) return;
     var box = vid ? vid.getBoundingClientRect() : null;
     var w, h, left, top;
     if (box && box.width) {
-      // the reel is object-fit: contain in a square box, so its frame fills the shorter side
-      var side = Math.min(box.width, box.height);
-      var fx = box.left + (box.width - side) / 2, fy = box.top + (box.height - side) / 2;
-      w = side * REEL.w * ADJ.sc;
+      var k = Math.max(box.width / REEL.fw, box.height / REEL.fh);
+      var fW = REEL.fw * k, fH = REEL.fh * k;
+      var fx = box.left + (box.width - fW) / 2, fy = box.top + (box.height - fH) / 2;
+      w = fW * REEL.w * ADJ.sc;
       h = w * (mark.naturalHeight || 168) / (mark.naturalWidth || 194);
-      left = fx + side * REEL.u - (w - side * REEL.w) / 2 + ADJ.dx;
-      top = fy + side * REEL.v - (h - side * REEL.h) / 2 + ADJ.dy;
+      left = fx + fW * REEL.u - (w - fW * REEL.w) / 2 + ADJ.dx;
+      top = fy + fH * REEL.v - (h - fH * REEL.h) / 2 + ADJ.dy;
     } else {
       w = (mark.naturalWidth || 194) * ADJ.sc;
       h = (mark.naturalHeight || 168) * ADJ.sc;
@@ -124,42 +160,100 @@
     railWrap.appendChild(tick);
   }
 
-  piece('position:absolute;left:60px;top:96px;' + MONO, 'SKETCH \u2192 CAD \u2192 CUT \u2192 TEST', 1.25);
+  piece('position:absolute;left:60px;top:96px;' + MONO, 'SKETCH \u2192 CAD \u2192 CUT \u2192 TEST', 1.25).classList.add('vg-hud-l');
   var count = piece('position:absolute;right:60px;top:96px;text-align:right;' + MONO, '10 SHOTS / 00:28', 1.45);
+  count.classList.add('vg-hud-count');
   piece('position:absolute;right:30px;top:50%;' + MONO +
     ';white-space:nowrap;writing-mode:vertical-rl;transform:translateY(-50%);letter-spacing:0.22em', 'DESIGN REDESIGN REPEAT', 1.8);
 
   var foot = piece('position:absolute;left:60px;bottom:26px;display:flex;align-items:baseline;gap:12px;' + MONO,
     '<span style="width:5px;height:5px;background:#ec7e41;display:inline-block"></span><span data-cap>INITIALISING</span>', 2.1);
   var clock = piece('position:absolute;right:60px;bottom:26px;' + MONO, '00:00.0 / SHOT 01', 2.3);
+  foot.classList.add('vg-hud-l'); clock.classList.add('vg-hud-r');
 
   // a hairline that fills as the reel plays — the only piece that reads as loading
   var barWrap = piece('position:absolute;left:60px;right:60px;bottom:58px;height:1px;background:rgba(255,255,255,0.18)', '', 2.5);
+  barWrap.classList.add('vg-hud-l', 'vg-hud-r');
   var bar = document.createElement('div');
   bar.style.cssText = 'position:absolute;left:0;top:0;height:100%;width:0%;background:#ec7e41';
   barWrap.appendChild(bar);
 
-  var t0 = performance.now();
-  var CUT = 4.0;
-  var CAPS = [[0, 'INITIALISING'], [1.4, 'LOADING ASSETS'], [2.6, 'DEFINING GEOMETRY'], [3.4, 'READY']];
+  var t0 = 0;
+  // loading is mapped to the reel: the bar, clock and captions follow its playhead
+  var CUT = 10.3;
+  var CAPS = [[0, 'INITIALISING'], [2.5, 'LOADING ASSETS'], [5.5, 'DEFINING GEOMETRY'], [8.5, 'ASSEMBLING'], [9.9, 'READY']];
   var hudRaf = requestAnimationFrame(function step(now) {
     hudRaf = requestAnimationFrame(step);
+    if (!t0) return;
     var s = (now - t0) / 1000;
+    var rt = vid && vid.currentTime > 0 ? vid.currentTime : 0;
     for (var i = 0; i < pieces.length; i++) {
       if (!pieces[i].done && s >= pieces[i].at) { pieces[i].done = true; pieces[i].el.style.opacity = '1'; }
     }
-    var p = Math.max(0, Math.min(1, s / CUT));
+    var p = Math.max(0, Math.min(1, rt / CUT));
     bar.style.width = (p * 100).toFixed(1) + '%';
-    var secs = Math.min(CUT, s);
-    clock.textContent = '00:0' + Math.floor(secs) + '.' + Math.floor((secs % 1) * 10) + ' / SHOT 01';
+    var secs = Math.min(CUT, rt);
+    clock.textContent = '00:' + (secs < 10 ? '0' : '') + Math.floor(secs) + '.' + Math.floor((secs % 1) * 10) + ' / SHOT 01';
     var cap = foot.querySelector('[data-cap]');
     for (var c = CAPS.length - 1; c >= 0; c--) {
-      if (s >= CAPS[c][0]) { if (cap.textContent !== CAPS[c][1]) cap.textContent = CAPS[c][1]; break; }
+      if (rt >= CAPS[c][0]) { if (cap.textContent !== CAPS[c][1]) cap.textContent = CAPS[c][1]; break; }
     }
   });
 
+  // release the name: it rises from below its mask at full strength, VIVAN in orange. Classes on
+  // <html> (home.css) so heroTick's inline opacity can't override it, and the title is looked up
+  // lazily because this script runs before the hero markup exists.
+  var root = document.documentElement;
+  var riseTitle = function () {
+    var title = document.getElementById('vg-hero-title');
+    if (!title) return root.classList.remove('vg-intro-hold');
+    [].slice.call(title.querySelectorAll('.vg-rise > span')).forEach(function (w, i) { w.style.animationDelay = (0.05 + i * 0.13) + 's'; });
+    root.classList.add('vg-intro-lit');
+    root.classList.remove('vg-intro-hold');
+  };
+  var ghost = null;
+  var riseOnBlack = function () {
+    if (ghost) return;
+    var title = document.getElementById('vg-hero-title');
+    var box = document.querySelector('#top > div > div');
+    if (!title || !box) return;
+    var r = box.getBoundingClientRect();
+    var cs = getComputedStyle(box);
+    ghost = document.createElement('div');
+    ghost.style.cssText = 'position:absolute;pointer-events:none;left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + r.height +
+      'px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:' + cs.rowGap;
+    var t = title.cloneNode(true);
+    t.removeAttribute('id');
+    t.style.opacity = '1';
+    t.style.transition = 'none';
+    t.style.transform = title.style.transform;
+    var ws = [].slice.call(t.querySelectorAll('.vg-rise > span'));
+    ws.forEach(function (w, i) { w.style.animationDelay = (0.05 + i * 0.13) + 's'; });
+    if (ws[0]) ws[0].style.color = '#ec7e41';
+    ghost.appendChild(t);
+    var sub = document.getElementById('vg-hero-sub');
+    if (sub) { var sc = sub.cloneNode(true); sc.removeAttribute('id'); sc.style.visibility = 'hidden'; ghost.appendChild(sc); }
+    host.insertBefore(ghost, mark);
+  };
+  // the real title takes over exactly where the copy sits (already risen, lit), then the copy goes
+  var swapToReal = function () {
+    var title = document.getElementById('vg-hero-title');
+    if (title) [].slice.call(title.querySelectorAll('.vg-rise > span')).forEach(function (w) { w.style.animation = 'none'; w.style.transform = 'none'; });
+    root.classList.add('vg-intro-lit');
+    root.classList.remove('vg-intro-hold');
+    if (ghost) { ghost.remove(); ghost = null; }
+  };
+  // and settles back to the resting hero state (white, 0.4) as the mark leaves for the nav
+  var settleTitle = function () {
+    root.classList.add('vg-intro-settle');
+    root.classList.remove('vg-intro-lit');
+    setTimeout(function () { root.classList.remove('vg-intro-settle'); }, 1000);
+  };
+
   var clear = function () {
     cancelAnimationFrame(hudRaf);
+    if (bc) { try { bc.close(); } catch (e) {} bc = null; }
+    document.documentElement.classList.remove('vg-intro-hold');
     lock(false);
     if (navMark) navMark.style.opacity = '';
     host.remove();
@@ -171,6 +265,8 @@
     host.style.transition = 'opacity 0.85s cubic-bezier(0.4,0,0.2,1)';
     host.style.opacity = '0';
     lock(false);
+    riseTitle();
+    setTimeout(settleTitle, 1500);
     setTimeout(clear, 900);
   };
 
@@ -179,7 +275,7 @@
   function popPage() {
     var heroBox = document.querySelector('#top > div > div');
     var navEl = document.querySelector('nav');
-    if (heroBox) {
+    if (heroBox && false) {
       heroBox.style.transition = 'none';
       heroBox.style.transform = 'scale(1.045)';
       heroBox.style.opacity = '0.4';
@@ -210,6 +306,7 @@
 
     // 1. the HUD stays exactly where it is — the real overlay sits under it in the same place, so
     //    it is handed over rather than faded out and back in. Only the reel dissolves.
+    riseOnBlack();
     if (vid) {
       vid.style.transition = 'opacity 0.55s ease';
       vid.style.opacity = '0';
@@ -224,31 +321,45 @@
     }
     setTimeout(function () { if (vid) vid.style.display = 'none'; }, 580);
 
-    // 2. it travels to the nav position
+    // 2. the name has risen on the black over the reel's last frame; then the mark travels to the nav
     setTimeout(function () {
       var from = mark.getBoundingClientRect();
       var to = navMark.getBoundingClientRect();
-      if (!from.width || !to.width) return setTimeout(function () { fade(); done = false; }, 0);
-      navMark.style.opacity = '0';
+      if (!from.width || !to.width) { done = false; return fade(); }
       var s = to.width / from.width;
       mark.style.transition = 'transform 0.85s cubic-bezier(0.5,0.02,0.24,1)';
       mark.style.transform = 'translate(' + (to.left - from.left) + 'px,' + (to.top - from.top) + 'px) scale(' + s + ')';
 
-      // 3. the black lifts while the mark is still travelling and the page pops in behind it
+      // 3. once it has landed the black lifts onto the header, the name stays put, then drops to 0.4
       setTimeout(function () {
-        host.style.transition = 'background-color 0.55s cubic-bezier(0.4,0,0.3,1)';
+        hud.remove();
+        host.style.transition = 'background-color 0.6s cubic-bezier(0.4,0,0.3,1)';
         host.style.backgroundColor = 'rgba(0,0,0,0)';
-        lock(false);
         popPage();
+        // the real title sits already risen, white, at its resting 0.4 exactly under the copy
+        var realT = document.getElementById('vg-hero-title');
+        if (realT) [].slice.call(realT.querySelectorAll('.vg-rise > span')).forEach(function (w) { w.style.animation = 'none'; w.style.transform = 'none'; });
+        root.classList.remove('vg-intro-hold');
         setTimeout(function () {
-          hud.remove();
-          if (navMark) navMark.style.opacity = '1';
+          navMark.style.opacity = '1';
           mark.style.transition = 'opacity 0.14s linear';
           mark.style.opacity = '0';
-          setTimeout(clear, 160);
-        }, 520);
-      }, 260);
-    }, 900);
+          lock(false);
+          host.style.pointerEvents = 'none';
+          // one continuous dissolve: the copy fades off the real title while VIVAN turns white, so
+          // the name eases from orange / full to white / 0.4 with no swap frame
+          if (ghost) {
+            var gw = ghost.querySelector('.vg-rise > span');
+            ghost.style.transition = 'opacity 1.4s cubic-bezier(0.4,0,0.2,1)';
+            if (gw) { gw.style.transition = 'color 1.1s ease'; gw.style.color = '#ffffff'; }
+            requestAnimationFrame(function () { if (ghost) ghost.style.opacity = '0'; });
+          }
+          setTimeout(function () { if (ghost) { ghost.remove(); ghost = null; } clear(); }, 1500);
+          // the extended glow holds under the hand-off, then slowly fades once the name has dimmed
+          setTimeout(function () { stopSfx(3200); }, 1500);
+        }, 650);
+      }, 900);
+    }, 1300);
   };
 
   var hold = function () {
@@ -258,14 +369,81 @@
 
   if (vid) {
     vid.addEventListener('ended', hold);
-    // the file is 9.3s but the mark stops moving at 3.75s; hand off just after it lands
+    // the file is 11.1s; the logo settles at ~10.2s — hand off just after it lands
+    vid.muted = true;
+
     vid.addEventListener('timeupdate', function () {
+      if (vid.currentTime >= 9.9) riseOnBlack();
       if (vid.currentTime >= CUT || (vid.duration && vid.duration - vid.currentTime < 0.3)) hold();
     });
     vid.addEventListener('error', fade);
-    var p = vid.play();
-    if (p && p.catch) p.catch(fade);
-    setTimeout(function () { if (!done && (!vid.duration || vid.currentTime < 0.05)) fade(); }, 4000);
+    // start the reel and the sound on the same tick, only once BOTH are buffered, then keep the
+    // sound locked to the reel's playhead so the two can't drift apart
+    var vReady = false, aReady = false, started = false;
+    // sound gate: asked on the black before anything boots — the click is what lets the browser play the SFX
+    var answered = false;
+    var gate = document.createElement('div');
+    gate.style.cssText = 'position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#fff;transition:opacity 0.5s ease;' + MONO;
+    // same face as the hero name (Archivo 700), chamfered corners, a soft glow on hover
+    var CUT_CORNERS = 'clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px)';
+    var FACE = "font-family:'Archivo','Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;font-size:clamp(15px,1.25vw,19px);line-height:1";
+    var BTN = 'appearance:none;border:0;cursor:pointer;padding:20px 34px;width:340px;max-width:calc(100vw - 48px);display:flex;align-items:center;justify-content:center;transition:filter 0.35s ease,background-color 0.35s ease,color 0.35s ease;' + FACE + ';' + CUT_CORNERS;
+    gate.style.gap = '16px';
+    // filter runs before clip-path on one element, so the glow lives on a wrapper around the clipped button
+    var WRAP = 'display:block;transition:filter 0.35s ease';
+    gate.innerHTML = '<span style="' + WRAP + '"><button type="button" data-snd="1" style="' + BTN + ';background:#ec7e41;color:#000000">Play with sound</button></span>' +
+      '<button type="button" data-snd="0" style="appearance:none;border:0;background:none;cursor:pointer;padding:10px 6px;color:rgba(255,255,255,0.6);transition:color 0.3s ease,text-shadow 0.3s ease;' + FACE + ';font-size:clamp(12px,0.95vw,14px);letter-spacing:0.12em">Continue without sound</button>';
+    host.appendChild(gate);
+    [].slice.call(gate.querySelectorAll('button')).forEach(function (b) {
+      var c = b.dataset.snd === '1' ? '236,126,65' : '255,255,255';
+      var w = b.parentNode;
+      if (b.dataset.snd === '0') {
+        b.addEventListener('mouseenter', function () { b.style.color = '#ffffff'; b.style.textShadow = '0 0 14px rgba(255,255,255,0.6)'; });
+        b.addEventListener('mouseleave', function () { b.style.color = 'rgba(255,255,255,0.6)'; b.style.textShadow = ''; });
+        return;
+      }
+      b.addEventListener('mouseenter', function () { w.style.filter = 'drop-shadow(0 0 14px rgba(' + c + ',0.75)) drop-shadow(0 0 34px rgba(' + c + ',0.45))'; });
+      b.addEventListener('mouseleave', function () { w.style.filter = ''; });
+    });
+    var answer = function (withSound) {
+      if (answered) return;
+      answered = true;
+      if (withSound) {
+        // unlock the element inside the click so the later in-sync start is allowed
+        try { var u = sfx.play(); if (u && u.then) u.then(function () { if (!started) { sfx.pause(); sfx.currentTime = 0; } }, function () {}); } catch (e) {}
+      } else sfxDead = true;
+      gate.style.opacity = '0';
+      gate.style.pointerEvents = 'none';
+      setTimeout(function () { gate.remove(); }, 520);
+      setTimeout(check, 380);
+    };
+    gate.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) answer(b.dataset.snd === '1'); });
+    window.addEventListener('keydown', function k(e) { if (answered) return window.removeEventListener('keydown', k); if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); answer(true); } else if (e.key === 'Escape') answer(false); });
+    var go = function () {
+      if (started || done) return;
+      started = true;
+      t0 = performance.now();
+      setTimeout(function () { if (!done && (!vid.duration || vid.currentTime < 0.05)) fade(); }, 8000);
+      startSfx();
+      var p = vid.play();
+      if (p && p.catch) p.catch(fade);
+    };
+    var check = function () { if (answered && vReady && aReady) go(); };
+    if (vid.readyState >= 4) vReady = true; else vid.addEventListener('canplaythrough', function () { vReady = true; check(); }, { once: true });
+    if (sfx.readyState >= 4) aReady = true; else {
+      sfx.addEventListener('canplaythrough', function () { aReady = true; check(); }, { once: true });
+      sfx.addEventListener('error', function () { aReady = true; check(); }, { once: true });
+    }
+    try { sfx.load(); } catch (e) {}
+    check();
+    setTimeout(function () { aReady = vReady = true; check(); }, 3000);
+    (function sync() {
+      if (done) return;
+      requestAnimationFrame(sync);
+      if (!sfxOn || sfx.paused || vid.paused) return;
+      var d = sfx.currentTime - vid.currentTime;
+      if (Math.abs(d) > 0.06) { try { sfx.currentTime = vid.currentTime; } catch (e) {} }
+    })();
   } else handoff();
 
   ['wheel', 'touchmove'].forEach(function (t2) {
