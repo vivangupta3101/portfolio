@@ -95,7 +95,9 @@
       // bottom edge, whatever sits above it inside the pinned group
       const textBottom = frame.offsetTop + p.offsetTop + p.offsetHeight;
       holder.style.position = 'sticky';
-      holder.style.top = Math.round(vh - textBottom - 14) + 'px';
+      // on short (phone) screens the group is shorter than the viewport: a positive top would push
+      // the artwork down the page, so it pins at the top instead
+      holder.style.top = Math.min(0, Math.round(vh - textBottom - 14)) + 'px';
       range = Math.round(vh * PIN);
       outer.style.height = (h + range) + 'px';
     };

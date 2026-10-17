@@ -182,6 +182,11 @@
   barWrap.classList.add('vg-hud-l', 'vg-hud-r');
   var bar = document.createElement('div');
   bar.style.cssText = 'position:absolute;left:0;top:0;height:100%;width:0%;background:#ec7e41';
+  // phones: the loading bar is the whole HUD during the intro; the captions belong to the hero overlay
+  // underneath, which shows once the black lifts after the logo has gone
+  if (window.matchMedia && matchMedia('(max-width: 700px)').matches) {
+    pieces.forEach(function (p) { if (p.el !== barWrap) p.el.style.display = 'none'; });
+  }
   barWrap.appendChild(bar);
 
   var t0 = 0;

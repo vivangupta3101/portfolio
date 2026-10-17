@@ -67,6 +67,47 @@
   let target = 0, cur = 0, mx = 0, my = 0, px = 0, py = 0, lastDrawn = -1, lastKey = '';
 
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  // Phones / low-memory devices: decoding all 351 + 157 full-HD frames up front needs ~4GB of bitmaps,
+  // which makes iOS kill and reload the tab ("A problem repeatedly occurred"). There the packed files
+  // stay compressed in memory (~25MB) and only a small window of frames around the playhead is
+  // decoded, sized to the canvas, and released as the scrub moves on.
+  const LAZY = Q.has('lazy') || (matchMedia('(hover: none)').matches) || (navigator.deviceMemory && navigator.deviceMemory <= 4);
+  let decW = 0, decH = 0;
+  const lazySet = (blob, offs, arr, cap, pin) => {
+    const busy = new Set(); let inflight = 0;
+    const dec = (i) => {
+      busy.add(i); inflight++;
+      const [o, l] = offs[i], part = blob.slice(o, o + l, 'image/webp');
+      const opts = decW ? { resizeWidth: decW, resizeHeight: decH, resizeQuality: 'high' } : undefined;
+      const done = (bm) => { busy.delete(i); inflight--; if (bm) { bm.naturalWidth = bm.width; arr[i] = bm; lastKey = ''; } };
+      (opts ? createImageBitmap(part, opts).catch(() => createImageBitmap(part)) : createImageBitmap(part)).then(done, () => done(null));
+    };
+    return {
+      want(list) {
+        for (let k = 0; k < list.length && inflight < 2; k++) { const i = list[k]; if (i >= 0 && i < offs.length && !arr[i] && !busy.has(i)) dec(i); }
+        const keep = new Set(list.concat(pin || []));
+        let have = 0; for (let i = 0; i < arr.length; i++) if (arr[i]) have++;
+        if (have <= cap) return;
+        for (let i = 0; i < arr.length && have > cap; i++) if (arr[i] && !keep.has(i)) { try { arr[i].close && arr[i].close(); } catch (e) {} arr[i] = undefined; have--; }
+      },
+      ready: () => inflight === 0
+    };
+  };
+  let lazyMain = null, lazyLook = null, lastFi = 0;
+  const lazyTick = (fi) => {
+    if (lazyMain) {
+      const i0 = Math.floor(fi), dir = fi >= lastFi ? 1 : -1; lastFi = fi;
+      const list = [i0, i0 + 1];
+      for (let d = 1; d <= 6; d++) list.push(i0 + dir * (d + 1));
+      list.push(i0 - dir, i0 - dir * 2);
+      lazyMain.want(list);
+    }
+    if (lazyLook && M.look) {
+      const C = M.look.center, lf = clamp(C + lookC * (lookC < 0 ? C : M.look.n - 1 - C), 0, M.look.n - 1), j = Math.floor(lf);
+      const ld = lookT >= lookC ? 1 : -1;
+      lazyLook.want([j, j + 1, j + ld * 2, j + ld * 3, j + ld * 5, j - ld]);
+    }
+  };
   const sstep = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 
   function size() {
@@ -74,6 +115,12 @@
     W = cv.clientWidth; H = cv.clientHeight;
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
     lastKey = '';
+    if (LAZY && M) {
+      // decode no larger than the frame is ever drawn on this screen
+      let fw = 0; [0, .3, .5, .6, .74].forEach(p => { fw = Math.max(fw, fit(p).fw * 1.08); });
+      decW = Math.min(M.w, Math.ceil(fw * DPR)); decH = Math.round(decW * M.h / M.w);
+      if (decW >= M.w) decW = decH = 0;
+    }
   }
 
   // cover-fit with a focus point so the subject stays framed on any aspect
@@ -209,6 +256,7 @@
       const lt = cur > .004 ? 0 : lookT;
       lookC += (lt - lookC) * (reduce ? 1 : 1 - Math.pow(1 - .07, dt * 60)); if (Math.abs(lt - lookC) < .0005) lookC = lt;
     }
+    if (LAZY) lazyTick(toFrame(cur));
     draw(toFrame(cur), cur);
     extend(now() / 1000);
     requestAnimationFrame(tick);
@@ -226,34 +274,49 @@
 
   window.__shReady = (async () => {
     M = await (await fetch('assets/images/aeron/shield/meta.json')).json();
+    let rest = Promise.resolve();
     size();
-    // every frame lives in one packed file; first frame is fetched on its own range so the page can open fast
-    const mk = (buf, i) => { const [o, l] = M.off[i]; const bl = new Blob([buf.slice(o, o + l)], { type: 'image/webp' });
-      if (window.createImageBitmap) return createImageBitmap(bl).then(bm => { bm.naturalWidth = bm.width; frames[i] = bm; }, () => {});
-      return new Promise(res => { const im = new Image(); im.onload = im.onerror = () => (im.decode ? im.decode().catch(() => {}) : Promise.resolve()).then(res); im.src = URL.createObjectURL(bl); frames[i] = im; }); };
-    const all = fetch('assets/images/aeron/shield/frames.webp').then(r => r.arrayBuffer());
-    { const buf = await all; await mk(buf, 0); }
-    const rest = all.then(async buf => {
-      for (let i = 1; i < M.n; i += 8) {
-        await Promise.all(Array.from({ length: Math.min(8, M.n - i) }, (_, j) => mk(buf, i + j)));
-        if (FIXED == null) await new Promise(r => setTimeout(r, 0));
+    if (LAZY && window.createImageBitmap) {
+      const big = await fetch('assets/images/aeron/shield/frames.webp').then(r => r.blob());
+      lazyMain = lazySet(big, M.off, frames, 12, [0, M.n - 1]);
+      lazyMain.want([0, 1, 2, 3]);
+      await new Promise(res => { const w = () => frames[0] ? res() : setTimeout(w, 30); w(); });
+      if (M.look && !Q.has('nolook')) {
+        fetch('assets/images/aeron/shield/look.webp').then(r => r.blob()).then(lb => {
+          lazyLook = lazySet(lb, M.look.off, look, 8, [M.look.center]);
+          lazyLook.want([M.look.center, M.look.center - 1, M.look.center + 1]);
+          lookN = M.look.n; lookAt = now(); lastKey = '';
+        }, () => {});
       }
-    });
-    if (M.look && !Q.has('nolook')) {
-      // decoded after the main frames, a few at a time, so the main thread never stalls
-      const one = (buf, i) => { const [o, l] = M.look.off[i], bl = new Blob([buf.slice(o, o + l)], { type: 'image/webp' });
-        if (window.createImageBitmap) return createImageBitmap(bl).then(bm => { look[i] = bm; }, () => {});
-        return new Promise(res => { const im = new Image(); im.onload = im.onerror = res; im.src = URL.createObjectURL(bl); look[i] = im; }); };
-      const lb = Promise.all([fetch('assets/images/aeron/shield/look.webp').then(r => r.arrayBuffer()), rest]).then(async ([buf]) => {
-        for (let i = 0; i < M.look.n; i += 6) {
-          await Promise.all(Array.from({ length: Math.min(6, M.look.n - i) }, (_, j) => one(buf, i + j)));
+    } else {
+      // every frame lives in one packed file; first frame is fetched on its own range so the page can open fast
+      const mk = (buf, i) => { const [o, l] = M.off[i]; const bl = new Blob([buf.slice(o, o + l)], { type: 'image/webp' });
+        if (window.createImageBitmap) return createImageBitmap(bl).then(bm => { bm.naturalWidth = bm.width; frames[i] = bm; }, () => {});
+        return new Promise(res => { const im = new Image(); im.onload = im.onerror = () => (im.decode ? im.decode().catch(() => {}) : Promise.resolve()).then(res); im.src = URL.createObjectURL(bl); frames[i] = im; }); };
+      const all = fetch('assets/images/aeron/shield/frames.webp').then(r => r.arrayBuffer());
+      { const buf = await all; await mk(buf, 0); }
+      rest = all.then(async buf => {
+        for (let i = 1; i < M.n; i += 8) {
+          await Promise.all(Array.from({ length: Math.min(8, M.n - i) }, (_, j) => mk(buf, i + j)));
           if (FIXED == null) await new Promise(r => setTimeout(r, 0));
         }
-        lookN = M.look.n; lookAt = now();
       });
-      if (FIXED != null) await lb; else lb.then(() => { lastKey = ''; });
-    }
-    if (FIXED != null) await rest;
+      if (M.look && !Q.has('nolook')) {
+        // decoded after the main frames, a few at a time, so the main thread never stalls
+        const one = (buf, i) => { const [o, l] = M.look.off[i], bl = new Blob([buf.slice(o, o + l)], { type: 'image/webp' });
+          if (window.createImageBitmap) return createImageBitmap(bl).then(bm => { look[i] = bm; }, () => {});
+          return new Promise(res => { const im = new Image(); im.onload = im.onerror = res; im.src = URL.createObjectURL(bl); look[i] = im; }); };
+        const lb = Promise.all([fetch('assets/images/aeron/shield/look.webp').then(r => r.arrayBuffer()), rest]).then(async ([buf]) => {
+          for (let i = 0; i < M.look.n; i += 6) {
+            await Promise.all(Array.from({ length: Math.min(6, M.look.n - i) }, (_, j) => one(buf, i + j)));
+            if (FIXED == null) await new Promise(r => setTimeout(r, 0));
+          }
+          lookN = M.look.n; lookAt = now();
+        });
+        if (FIXED != null) await lb; else lb.then(() => { lastKey = ''; });
+      }
+      }
+    if (FIXED != null && !LAZY) await rest;
     requestAnimationFrame(() => {
       // from the home tile, the type waits until the cover has settled into the live frame
       const lag = window.__aeArrive ? 1.1 : 0;

@@ -69,12 +69,15 @@ class Component {
     const arrow = document.getElementById('vg-hero-arrow');
     const hero = document.getElementById('top');
     const smooth = (t) => t * t * (3 - 2 * t);
-    let heroSettled = false;
-    const heroTick = () => {
-      if (!title || !hero) return;
-      if (window.scrollY > hero.offsetHeight + 200) { if (heroSettled) return; heroSettled = true; } else heroSettled = false;
+    // the title follows the scroll through a short critically-damped glide rather than jumping
+    // to each scroll event's position: native touch scroll and coarse wheels deliver uneven steps,
+    // which read as a stutter on a large scaled headline
+    let heroP = null, heroRaf = 0, heroLast = 0;
+    const heroTarget = () => {
       const range = Math.max(1, hero.offsetHeight - window.innerHeight);
-      const p = Math.max(0, Math.min(1, window.scrollY / range));
+      return Math.max(0, Math.min(1, window.scrollY / range));
+    };
+    const heroApply = (p) => {
       const e = smooth(p);
       const box = title.closest('div');
       const boxH = box ? box.offsetHeight : window.innerHeight;
@@ -95,6 +98,22 @@ class Component {
         sub.style.letterSpacing = (0.55 - 0.27 * se).toFixed(3) + 'em';
       }
       if (arrow) arrow.style.opacity = (se * 0.75).toFixed(3);
+    };
+    const heroLoop = (now) => {
+      heroRaf = 0;
+      const t = heroTarget();
+      const dt = heroLast ? Math.min(0.05, (now - heroLast) / 1000) : 1 / 60;
+      heroLast = now;
+      heroP = heroP == null ? t : heroP + (t - heroP) * (1 - Math.exp(-dt * 11));
+      if (Math.abs(t - heroP) < 0.0006) heroP = t;
+      heroApply(heroP);
+      if (heroP !== t) heroRaf = requestAnimationFrame(heroLoop); else heroLast = 0;
+    };
+    const heroTick = (instant) => {
+      if (!title || !hero) return;
+      if (instant === true) { heroP = heroTarget(); heroApply(heroP); return; }
+      if (heroP === 1 && window.scrollY > hero.offsetHeight + 200) return;
+      if (!heroRaf) heroLoop(performance.now());
     };
     document.querySelectorAll('.vg-rise > span').forEach((l, i) => { l.style.animationDelay = (0.35 + i * 0.13) + 's'; });
     // fetch silhouettes at top priority before the video hogs bandwidth
@@ -156,14 +175,14 @@ class Component {
     // soft entrance on load, then direct 1:1 scroll control
     title.style.transition = 'none';
     if (sub) sub.style.transition = 'opacity 1.4s ease 0.2s, transform 1.4s ease 0.2s';
-    requestAnimationFrame(() => requestAnimationFrame(heroTick));
+    requestAnimationFrame(() => requestAnimationFrame(() => heroTick(true)));
     this._heroIntro = setTimeout(() => {
       title.style.transition = 'none';
       if (sub) sub.style.transition = 'none';
     }, 1700);
     scrollJobs.push(sync);
     scrollJobs.push(heroTick);
-    const onResize = () => { sizeWins(); sync(); heroTick(); };
+    const onResize = () => { sizeWins(); sync(); heroTick(true); };
     this._sync = onScrollShared;
     this._resize = onResize;
     window.addEventListener('scroll', onScrollShared, { passive: true });
@@ -1376,7 +1395,7 @@ class Component {
     // touch screens have no hover: the first tap on a tile plays its sketch-out (the hover state),
     // the second tap on the same tile opens it. A tap anywhere else puts the sketch away.
     const TOUCH = !!(window.matchMedia && matchMedia('(hover: none)').matches);
-    let armed = null;
+    let armed = null, tapPt = null;
     document.querySelectorAll('.vg-row').forEach((row) => {
       let posterOpen = false;
       let lastPt = null;
@@ -1445,7 +1464,8 @@ class Component {
         if (TOUCH && armed !== row) {
           if (e) e.preventDefault();
           armed = row;
-          setHover(row, e && e.clientX != null ? { x: e.clientX, y: e.clientY } : null);
+          tapPt = e && e.clientX != null ? { x: e.clientX, y: e.clientY } : null;
+          setHover(row, tapPt);
           return;
         }
         armed = null;
@@ -1641,14 +1661,24 @@ class Component {
     };
     this._syncHover = () => {
       if (TOUCH) {
-        // the armed tile's sketch goes away once it has scrolled off screen
-        if (armed) { const r = armed.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) { armed = null; setHover(null, null); } }
+        // after the first tap the finger's point acts as the cursor: scrolling slides tiles under it
+        // exactly like a mouse resting on a trackpad scroll, so the sketch follows (or clears) the
+        // same way it does on desktop
+        if (!armed) return;
+        if (tapPt) {
+          const r = rowAt(tapPt);
+          if (r !== armed) { armed = r; setHover(r, tapPt); }
+          if (!r) tapPt = null;
+        } else {
+          const b = armed.getBoundingClientRect();
+          if (b.bottom < 0 || b.top > innerHeight) { armed = null; setHover(null, null); }
+        }
         return;
       }
       setHover(rowAt(this._pt), this._pt);
     };
     if (TOUCH) document.addEventListener('click', (e) => {
-      if (armed && !e.target.closest('.vg-row')) { armed = null; setHover(null, null); }
+      if (armed && !e.target.closest('.vg-row')) { armed = null; tapPt = null; setHover(null, null); }
     }, true);
     let hoverRafPending = false;
     const queueSync = () => {
@@ -1658,6 +1688,7 @@ class Component {
     };
     window.addEventListener('scroll', queueSync, { passive: true });
     window.addEventListener('wheel', queueSync, { passive: true });
+    if (TOUCH) window.addEventListener('touchmove', queueSync, { passive: true });
     window.addEventListener('resize', queueSync);
   }
   componentWillUnmount() {

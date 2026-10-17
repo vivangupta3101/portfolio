@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&display=swap">
-<link rel="stylesheet" href="css/home.css?v=20261017b">
+<link rel="stylesheet" href="css/home.css?v=20261017d">
 </head>
 <body>
 <div id="vg-intro" style="display: none; position: fixed; inset: 0; z-index: 9999; background: #000000; align-items: center; justify-content: center">
@@ -25,8 +25,8 @@
   <img id="vg-intro-mark" src="assets/images/logo-mark-light.webp" alt="" width="194" height="168" style="position: absolute; width: 194px; height: 168px; opacity: 0; transform-origin: left top; will-change: transform, opacity">
 
 </div>
-<script src="js/smooth-scroll.js?v=20261017b"></script>
-<script src="js/intro.js?v=20261017b"></script>
+<script src="js/smooth-scroll.js?v=20261017d"></script>
+<script src="js/intro.js?v=20261017d"></script>
 <script>
 // returning from a project page that isn't the in-page reader (e.g. watchmaker.html): cover the
 // screen with its cover image immediately, before the grid paints, then home.js shrinks it down
@@ -78,15 +78,15 @@
 <div id="vg-full" style="position: fixed; inset: 0; z-index: 30; background-position: center; background-size: cover; background-repeat: no-repeat; opacity: 0; transition: opacity 0.9s ease; pointer-events: none"></div>
 <div id="vg-ball"><div class="vg-ball-inner"></div></div>
 <div id="vg-index">
-  <span class="vg-idx-head" style="font-size: 15px; letter-spacing: 0.42em; font-weight: 500; margin-bottom: 36px; background: linear-gradient(180deg, #f2a071, #ec7e41); -webkit-background-clip: text; background-clip: text; color: transparent">CATEGORIES</span>
+  <span class="vg-idx-head" style="font-size: 15px; letter-spacing: 0.42em; font-weight: 500; margin-bottom: 36px; color: #ec7e41">CATEGORIES</span>
   <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
-    <button class="vg-idx-item" data-cat="all" style="margin-bottom: -9px; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(34px, 4.4vw, 62px); font-weight: 600; line-height: 1.15; letter-spacing: 0.01em; position: relative; background: linear-gradient(180deg, #ffffff 40%, #a6a6a6); -webkit-background-clip: text; background-clip: text; color: transparent; border: none; padding: 0; cursor: none">All
+    <button class="vg-idx-item" data-cat="all" style="margin-bottom: -9px; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(34px, 4.4vw, 62px); font-weight: 600; line-height: 1.15; letter-spacing: 0.01em; position: relative; background: none; color: #ffffff; border: none; padding: 0; cursor: none">All
       <svg class="vg-ic vg-icL" style="left: -62px; top: 8px" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"></path></svg>
       <svg class="vg-ic vg-icR" style="right: -60px; top: 4px; transition-delay: 0.05s" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19L19 5M9 5h10v10"></path></svg>
       <svg class="vg-ic vg-icL" style="left: -108px; top: 44%; transition-delay: 0.09s" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4"></circle><rect x="13" y="13" width="8" height="8"></rect></svg>
       <svg class="vg-ic vg-icR" style="right: -104px; top: 46%; transition-delay: 0.12s" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2L12 2z"></path></svg>
     </button>
-    <button class="vg-idx-item" data-cat="complex" style="font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(34px, 4.4vw, 62px); font-weight: 600; line-height: 1.15; letter-spacing: 0.01em; position: relative; background: linear-gradient(180deg, #ffffff 40%, #a6a6a6); -webkit-background-clip: text; background-clip: text; color: transparent; border: none; padding: 0; cursor: none">Technically complex products
+    <button class="vg-idx-item" data-cat="complex" style="font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(34px, 4.4vw, 62px); font-weight: 600; line-height: 1.15; letter-spacing: 0.01em; position: relative; background: none; color: #ffffff; border: none; padding: 0; cursor: none">Technically complex products
       <svg class="vg-ic vg-icL" style="left: -62px; top: 2px" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"></path></svg>
       <svg class="vg-ic vg-icL" style="left: -112px; top: 48%; transition-delay: 0.06s" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"></circle><circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="5.5" r="1.1"></circle><circle cx="12" cy="18.5" r="1.1"></circle><circle cx="5.5" cy="12" r="1.1"></circle><circle cx="18.5" cy="12" r="1.1"></circle></svg>
       <svg class="vg-ic vg-icR" style="right: -62px; top: 0; transition-delay: 0.04s" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="4.5" width="15" height="15" rx="2"></rect><path d="M9 4.5v-2.5M15 4.5v-2.5M9 19.5v2.5M15 19.5v2.5M4.5 9h-2.5M4.5 15h-2.5M19.5 9h2.5M19.5 15h2.5"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
@@ -94,35 +94,35 @@
       <svg class="vg-ic vg-icT" style="left: 18%; top: -26px; transition-delay: 0.08s" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5v14M20 5v14M4 12h16"></path><path d="M7.5 9L4 12l3.5 3M16.5 9L20 12l-3.5 3"></path></svg>
       <svg class="vg-ic vg-icB" style="right: 16%; bottom: -24px; transition-delay: 0.12s" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h3.5l2.2-6 3.4 12 3.4-12 2.2 6H22"></path></svg>
     </button>
-    <button class="vg-idx-item" data-cat="furniture" style="font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(34px, 4.4vw, 62px); font-weight: 600; line-height: 1.15; letter-spacing: 0.01em; position: relative; background: linear-gradient(180deg, #ffffff 40%, #a6a6a6); -webkit-background-clip: text; background-clip: text; color: transparent; border: none; padding: 0; cursor: none">Furniture &amp; Lighting
+    <button class="vg-idx-item" data-cat="furniture" style="font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(34px, 4.4vw, 62px); font-weight: 600; line-height: 1.15; letter-spacing: 0.01em; position: relative; background: none; color: #ffffff; border: none; padding: 0; cursor: none">Furniture &amp; Lighting
       <svg class="vg-ic vg-icL" style="left: -60px; top: 4px" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"></path><path d="M6 14.5l6-6.5 6 6.5H6z"></path><path d="M9.5 18.5h5"></path></svg>
       <svg class="vg-ic vg-icL" style="left: -110px; top: 44%; transition-delay: 0.07s" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5v10M6.5 13.5h11"></path><path d="M17.5 13.5l1 7M6.5 13.5l-1 7"></path><path d="M8.5 8.5h8"></path></svg>
       <svg class="vg-ic vg-icR" style="right: -58px; top: 0; transition-delay: 0.04s" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="5.5"></circle><path d="M9.8 17.5h4.4M10.4 20.5h3.2"></path></svg>
       <svg class="vg-ic vg-icR" style="right: -110px; top: 46%; transition-delay: 0.1s" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5h18M6.5 9.5v10M17.5 9.5v10"></path></svg>
       <svg class="vg-ic vg-icB" style="left: 26%; bottom: -24px; transition-delay: 0.12s" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6l2.4 5.5H6.6L9 4z"></path><path d="M12 9.5v9.5M9 20.5h6"></path></svg>
     </button>
-    <button class="vg-idx-item" data-cat="systems" style="font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(34px, 4.4vw, 62px); font-weight: 600; line-height: 1.15; letter-spacing: 0.01em; position: relative; background: linear-gradient(180deg, #ffffff 40%, #a6a6a6); -webkit-background-clip: text; background-clip: text; color: transparent; border: none; padding: 0; cursor: none">Systems Design
+    <button class="vg-idx-item" data-cat="systems" style="font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(34px, 4.4vw, 62px); font-weight: 600; line-height: 1.15; letter-spacing: 0.01em; position: relative; background: none; color: #ffffff; border: none; padding: 0; cursor: none">Systems Design
       <svg class="vg-ic vg-icL" style="left: -62px; top: 6px" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2.5"></circle><circle cx="19" cy="6" r="2.5"></circle><circle cx="12" cy="18" r="2.5"></circle><path d="M6.5 8l4 8M17.5 8l-4 8M7.5 6h9"></path></svg>
       <svg class="vg-ic vg-icL" style="left: -110px; top: 46%; transition-delay: 0.07s" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"></path><path d="M3 13l9 5 9-5"></path></svg>
       <svg class="vg-ic vg-icR" style="right: -60px; top: 2px; transition-delay: 0.04s" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7"></path><path d="M20 3v4h-4"></path></svg>
       <svg class="vg-ic vg-icR" style="right: -108px; top: 48%; transition-delay: 0.1s" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="7" height="6" rx="1"></rect><rect x="15" y="14" width="7" height="6" rx="1"></rect><path d="M9 7h4a2 2 0 0 1 2 2v5"></path></svg>
       <svg class="vg-ic vg-icB" style="left: 24%; bottom: -24px; transition-delay: 0.12s" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M9 3v18"></path></svg>
     </button>
-    <button class="vg-idx-item" data-cat="accessibility" style="font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(34px, 4.4vw, 62px); font-weight: 600; line-height: 1.15; letter-spacing: 0.01em; position: relative; background: linear-gradient(180deg, #ffffff 40%, #a6a6a6); -webkit-background-clip: text; background-clip: text; color: transparent; border: none; padding: 0; cursor: none">Accessibility Design
+    <button class="vg-idx-item" data-cat="accessibility" style="font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(34px, 4.4vw, 62px); font-weight: 600; line-height: 1.15; letter-spacing: 0.01em; position: relative; background: none; color: #ffffff; border: none; padding: 0; cursor: none">Accessibility Design
       <svg class="vg-ic vg-icL" style="left: -62px; top: 6px" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6-10-6-10-6z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
       <svg class="vg-ic vg-icL" style="left: -106px; top: 46%; transition-delay: 0.07s" width="26" height="26" viewBox="0 0 24 24" fill="#e6e6e6" stroke="none"><circle cx="8" cy="4.5" r="1.7"></circle><circle cx="8" cy="12" r="1.7"></circle><circle cx="8" cy="19.5" r="1.7"></circle><circle cx="16" cy="4.5" r="1.7"></circle><circle cx="16" cy="12" r="1.7"></circle></svg>
       <svg class="vg-ic vg-icR" style="right: -60px; top: 2px; transition-delay: 0.04s" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2"></circle><path d="M4 9h16M12 9v6l-4 6M12 15l4 6"></path></svg>
       <svg class="vg-ic vg-icR" style="right: -108px; top: 48%; transition-delay: 0.1s" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10a8 8 0 0 1 16 0"></path><path d="M8 21v-4a4 4 0 0 1 8 0v4"></path></svg>
       <svg class="vg-ic vg-icT" style="right: 20%; top: -26px; transition-delay: 0.12s" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round"><path d="M4 9v6M9 5v14M14 8v8M19 3v18"></path></svg>
     </button>
-    <button class="vg-idx-item" data-cat="dfm" style="font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(34px, 4.4vw, 62px); font-weight: 600; line-height: 1.15; letter-spacing: 0.01em; position: relative; background: linear-gradient(180deg, #ffffff 40%, #a6a6a6); -webkit-background-clip: text; background-clip: text; color: transparent; border: none; padding: 0; cursor: none">Design for Manufacturing
+    <button class="vg-idx-item" data-cat="dfm" style="font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(34px, 4.4vw, 62px); font-weight: 600; line-height: 1.15; letter-spacing: 0.01em; position: relative; background: none; color: #ffffff; border: none; padding: 0; cursor: none">Design for Manufacturing
       <svg class="vg-ic vg-icL" style="left: -60px; top: 4px" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v14M21 5v14M3 12h18"></path><path d="M6.5 9L3 12l3.5 3M17.5 9L21 12l-3.5 3"></path></svg>
       <svg class="vg-ic vg-icL" style="left: -110px; top: 46%; transition-delay: 0.07s" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="14" width="16" height="6" rx="1"></rect><path d="M12 3v7.5M8.8 7.3L12 10.5l3.2-3.2"></path></svg>
       <svg class="vg-ic vg-icR" style="right: -58px; top: 2px; transition-delay: 0.04s" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M4.5 20L12 4l7.5 16"></path><path d="M9 20l3-6.5 3 6.5"></path></svg>
       <svg class="vg-ic vg-icR" style="right: -106px; top: 48%; transition-delay: 0.1s" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="17" height="10" rx="1"></rect><path d="M6.5 10.5h11M6.5 13.5h11"></path></svg>
       <svg class="vg-ic vg-icT" style="left: 22%; top: -26px; transition-delay: 0.12s" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5v10.5"></path><path d="M8.8 13h6.4L12 21.5 8.8 13z"></path></svg>
     </button>
-    <button class="vg-idx-item" data-cat="personal" style="font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(34px, 4.4vw, 62px); font-weight: 600; line-height: 1.15; letter-spacing: 0.01em; position: relative; background: linear-gradient(180deg, #ffffff 40%, #a6a6a6); -webkit-background-clip: text; background-clip: text; color: transparent; border: none; padding: 0; cursor: none">Personal projects
+    <button class="vg-idx-item" data-cat="personal" style="font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(34px, 4.4vw, 62px); font-weight: 600; line-height: 1.15; letter-spacing: 0.01em; position: relative; background: none; color: #ffffff; border: none; padding: 0; cursor: none">Personal projects
       <svg class="vg-ic vg-icL" style="left: -56px; top: 8px" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round"><path d="M12 4v16M4 12h16"></path></svg>
       <svg class="vg-ic vg-icR" style="right: -56px; top: 8px; transition-delay: 0.05s" width="26" height="26" viewBox="0 0 24 24" fill="#e6e6e6" stroke="none"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
       <svg class="vg-ic vg-icR" style="right: -100px; top: 40%; transition-delay: 0.09s" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2L12 2z"></path></svg>
@@ -449,15 +449,16 @@
   <span style="font-size: 12px; color: #999999">Vivan Gupta © 2026</span>
 </footer>
 
-<script src="js/bitl-live.js?v=20261017b"></script>
-<script src="js/scrollwords.js?v=20261017b"></script>
-<script src="js/statement.js?v=20261017b"></script>
-<script src="js/trace-baked.js?v=20261017b"></script>
-<script src="js/hero-overlay.js?v=20261017b"></script>
-<script src="js/proj-graphics.js?v=20261017b"></script>
-<script src="js/logo-flow.js?v=20261017b"></script>
-<script src="js/title-tilt.js?v=20261017b"></script>
-<script src="js/title-matte.js?v=20261017b"></script>
-<script src="js/home.js?v=20261017b"></script>
+<script src="js/bitl-live.js?v=20261017d"></script>
+<script src="js/scrollwords.js?v=20261017d"></script>
+<script src="js/statement.js?v=20261017d"></script>
+<script src="js/trace-baked.js?v=20261017d"></script>
+<script src="js/hero-overlay.js?v=20261017d"></script>
+<script src="js/proj-graphics.js?v=20261017d"></script>
+<script src="js/logo-flow.js?v=20261017d"></script>
+<script src="js/title-tilt.js?v=20261017d"></script>
+<script src="js/title-matte.js?v=20261017d"></script>
+<script src="js/home.js?v=20261017d"></script>
+<script src="js/phone.js?v=20261017d"></script>
 </body>
 </html>
