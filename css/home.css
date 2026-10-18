@@ -1,3 +1,4 @@
+@font-face { font-family: "VG Pixel"; src: url("../assets/fonts/minecraft.ttf") format("truetype"); font-display: swap; }
 @font-face { font-family: "neuzeit-grotesk"; src: url("https://use.typekit.net/af/c75852/000000000000000077359e98/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3") format("woff2"), url("https://use.typekit.net/af/c75852/000000000000000077359e98/31/d?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3") format("woff"); font-display: swap; font-style: normal; font-weight: 400; }
   html { scroll-behavior: smooth; scrollbar-width: none; }
   * { scrollbar-width: none; -ms-overflow-style: none; }

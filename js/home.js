@@ -721,7 +721,7 @@ class Component {
         imgs: [{ src: 'assets/images/watchmaker/cover.webp', w: 2880, h: 1620 }].concat(Array.from({ length: 12 }, (_, i) => ({
           src: 'assets/images/watchmaker/p' + String(i).padStart(2, '0') + '.webp', w: 2880, h: i === 11 ? 1622 : 1632 }))) },
       '#bitl': { bg: '#000000', ink: '#f4f4f4', label: 'BITL', first: 'assets/images/bitl/p00.webp', hero: 'bitl',
-        imgs: Array.from({ length: 14 }, (_, k) => { const i = k + 2; const it = { src: 'assets/images/bitl/p' + String(i).padStart(2, '0') + '.webp', w: 2745,
+        imgs: Array.from({ length: 14 }, (_, k) => { const i = k + 2; const it = { src: 'assets/images/bitl/p' + String(i).padStart(2, '0') + '.webp' + (i === 11 ? '?v=20261018a' : ''), w: 2745,
           h: i < 7 ? 1839 : i === 7 ? 1830 : i < 15 ? 1930 : 1922 };
           // the mood-board page leaves an empty column under its first image: the caption sits there,
           // and the line that turns the argument follows the page before the re-mood board
@@ -738,9 +738,24 @@ class Component {
           // p04 carries the tail of the timeline and the first sketch slide; p04-p07 hold the four
           // sketch slides, which run as one auto-playing carousel instead of four scrolled pages
           if (i === 4) return [{ src: 'assets/images/bitl/p04top.webp', w: 2745, h: 1164 },
-            { carousel: [1, 2, 3, 4].map((k) => 'assets/images/bitl/sketch' + k + '.webp'), w: 2745, h: 1545 },
+            { sketchStory: true },
             { gap: true }];
           if (i === 5 || i === 6 || i === 7) return [];
+          // p08: the final designs are rebuilt live (centred head, both sketches side by side);
+          // the prototypes band below them stays as the printed slice
+          if (i === 8) return [{ plate: [{ src: 'assets/images/bitl/final-a.webp', w: 1125, h: 580 },
+              { src: 'assets/images/bitl/final-b.webp', w: 1125, h: 580 }],
+              head: ['Final Designs', 'A sense of retro with a modern approach'] },
+            // prototypes: photos from p08's foot + p09's top joined into one plate; the title and
+            // sub are live, centred vertically in the black left column
+            { src: 'assets/images/bitl/proto-a.webp', w: 2000, h: 1132,
+              side: ['Prototypes', 'Simple flat cardboard protos to understand hand feel and sizing.'],
+              frames: [['proto-a.webp', 34.8, 0, 42.25, 99.56], ['proto-b.webp', 77.9, 0, 21.8, 52.03], ['proto-c.webp', 78.2, 53.98, 21.2, 45.58]] }];
+          if (i === 9) return { hatke: true };
+          if (i === 10) return { src: 'assets/images/bitl/p10b.webp', w: 2000, h: 836 };
+          // p13: the static logo under "WELCOME TO..." becomes the logo reel with its sound
+          if (i === 13) return [{ reel: 'assets/videos/bitl-logo.mp4', w: 2000, h: 820 },
+            { src: 'assets/images/bitl/p13b.webp', w: 2000, h: 586 }];
           return it; }).flat() },
       // Sun Pharma dispenser: not a printed deck — a render, the brief, and the sketch/CAD sheets
       // laid on the grey paper as plates. Same expand/close as the other readers.
@@ -782,8 +797,52 @@ class Component {
       // the right. Autoplay pauses on hover, where the arrows appear.
       const makeCarousel = (it) => {
         const root = document.createElement('div');
-        root.style.cssText = 'position:relative;width:100%;overflow:hidden;background:#000;line-height:0;' +
-          'font-size:0;aspect-ratio:' + it.w + '/' + it.h;
+        const cw = it.crop ? it.crop[1] - it.crop[0] : 1;
+        root.style.cssText = 'position:relative;width:100%;overflow:hidden;background:' + (it.crop ? '#fff' : '#000') +
+          ';line-height:0;font-size:0;aspect-ratio:' + Math.round(it.w * cw) + '/' + it.h;
+        let wrap = root, sub = null, notes = null, sheet = null, rootW = '';
+        if (it.heading) {
+          wrap = document.createElement('div');
+          wrap.style.cssText = 'width:100%;background:#000';
+          const head = document.createElement('div');
+          head.style.cssText = 'display:flex;flex-direction:column;flex-direction:row;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:1.6rem 4vw;padding:24vh 4vw 14vh;box-sizing:border-box';
+          const h = document.createElement('h2');
+          h.textContent = it.heading;
+          h.style.cssText = "margin:0;font-family:'VG Pixel','Press Start 2P',monospace;font-weight:400;color:#f3323f;" +
+            'font-size:clamp(28px,4vw,76px);line-height:1.1;letter-spacing:0.02em';
+          sub = document.createElement('h3');
+          sub.style.cssText = "margin:0;font-family:'VG Pixel','Press Start 2P',monospace;font-weight:400;color:#131313;" +
+            'font-size:clamp(20px,2.2vw,42px);line-height:1.15;letter-spacing:0.02em;transition:opacity 0.3s ease';
+          notes = document.createElement('p');
+          notes.style.cssText = "margin:0;max-width:900px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;" +
+            'font-weight:400;font-size:clamp(15px,1.35vw,28px);line-height:1.6;letter-spacing:0.005em;' +
+            'color:rgba(19,19,19,0.82);text-wrap:pretty;transition:opacity 0.3s ease';
+          const tag = document.createElement('p');
+          tag.textContent = 'Exploring design languages';
+          tag.style.cssText = "margin:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:400;" +
+            'font-size:clamp(15px,1.35vw,28px);line-height:1.4;letter-spacing:0.005em;color:rgba(244,244,244,0.86)';
+          head.appendChild(h); head.appendChild(tag);
+          // the slide's own title and notes sit on the sketch paper, above the drawings
+          const paper = document.createElement('div');
+          paper.style.cssText = 'display:flex;flex-direction:column;gap:1.4rem;background:#fff;padding:6vh 4vw 2vh;box-sizing:border-box';
+          paper.appendChild(sub); paper.appendChild(notes);
+          wrap.appendChild(head); wrap.appendChild(paper);
+          // the sketch is capped so its title, notes and the buttons at its foot fit on one screen
+          sheet = document.createElement('div');
+          sheet.style.cssText = 'position:relative;background:#fff;padding-bottom:3vh;line-height:0';
+          rootW = 'min(100%,calc(76vh * ' + (it.w * cw / it.h).toFixed(4) + '))';
+          root.style.width = rootW;
+          root.style.margin = '0 auto';
+          sheet.appendChild(root); wrap.appendChild(sheet);
+        }
+        const setLabel = (k, animate) => {
+          if (!sub) return;
+          const L = it.labels[k], apply = () => { sub.textContent = L[0]; notes.textContent = L.slice(1).join(' '); sub.style.opacity = notes.style.opacity = '1'; };
+          if (!animate) return apply();
+          sub.style.opacity = notes.style.opacity = '0';
+          setTimeout(apply, 300);
+        };
+        setLabel(0, false);
         // one sliding track instead of per-slide transforms: nothing is re-laid-out mid-move, so the
         // motion stays on the compositor. A clone of the first frame trails the last one, letting the
         // loop keep sliding forward and snap back invisibly once it lands.
@@ -797,8 +856,16 @@ class Component {
           im.src = src; im.alt = ''; im.width = it.w; im.height = it.h; im.decoding = 'async';
           if (idx > 1) im.loading = 'lazy';
           im.draggable = false;
-          im.style.cssText = 'flex:0 0 100%;width:100%;height:100%;display:block;object-fit:cover';
-          track.appendChild(im);
+          if (it.crop) {
+            const cell = document.createElement('div');
+            cell.style.cssText = 'flex:0 0 100%;width:100%;height:100%;overflow:hidden;position:relative';
+            im.style.cssText = 'position:absolute;top:0;height:100%;display:block;width:' + (100 / cw).toFixed(3) +
+              '%;left:' + (-it.crop[0] / cw * 100).toFixed(3) + '%';
+            cell.appendChild(im); track.appendChild(cell);
+          } else {
+            im.style.cssText = 'flex:0 0 100%;width:100%;height:100%;display:block;object-fit:cover';
+            track.appendChild(im);
+          }
         });
         root.appendChild(track);
         let pos = 0, cur = 0, hovering = false, moving = false;
@@ -808,7 +875,7 @@ class Component {
           if (!animate) void track.offsetWidth;
         };
         const paintDots = () => dots.forEach((d, k) => {
-          d.style.background = k === cur ? '#f3323f' : 'rgba(255,255,255,0.32)';
+          d.style.background = k === cur ? '#f3323f' : dotOff;
         });
         track.addEventListener('transitionend', (e) => {
           if (e.propertyName !== 'transform') return;
@@ -823,44 +890,586 @@ class Component {
           cur = next;
           place(pos, true);
           paintDots();
+          setLabel(cur, true);
         };
+        // chunky pixel buttons: stepped corners, a hard 4px drop and a pixel chevron. They sit at the
+        // sketch's centre and slide down to its bottom corners as the reader scrolls through it.
+        const STEP = 'polygon(4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,100% calc(100% - 4px),' +
+          'calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 4px),0 calc(100% - 4px),0 4px,4px 4px)';
+        const chev = [0, 1, 2, 3, 4, 3, 2, 1, 0].map((x, y) => '<rect x="' + x + '" y="' + y + '" width="2" height="1"/>').join('');
         const arrow = (side) => {
           const b = document.createElement('button');
           b.type = 'button';
           b.setAttribute('aria-label', side === 'left' ? 'Previous sketch' : 'Next sketch');
-          b.textContent = side === 'left' ? '\u2039' : '\u203a';
-          b.style.cssText = 'position:absolute;top:50%;' + side + ':2.2%;transform:translateY(-50%);width:56px;' +
-            'height:56px;border-radius:50%;border:1px solid rgba(255,255,255,0.28);background:rgba(0,0,0,0.55);' +
-            'color:#fff;font-size:30px;line-height:1;cursor:pointer;opacity:0;transition:opacity 0.25s ease;' +
-            'display:flex;align-items:center;justify-content:center;padding:0 0 4px;z-index:3;backdrop-filter:blur(4px)';
+          // on the capped sheet the buttons sit in the white margin beside the sketch, not over it
+          const at = sheet ? 'max(1.5%,calc((100% - ' + rootW + ') / 2 - 100px))' : '2.4%';
+          b.style.cssText = 'position:absolute;top:50%;' + side + ':' + at + ';width:64px;height:68px;padding:0;border:0;' +
+            'background:none;cursor:pointer;z-index:3;transform:translateY(-50%);line-height:0';
+          const base = document.createElement('span');
+          base.style.cssText = 'position:absolute;left:0;top:4px;width:64px;height:64px;background:#111;clip-path:' + STEP;
+          const face = document.createElement('span');
+          face.style.cssText = 'position:absolute;left:0;top:0;width:64px;height:64px;background:#111;clip-path:' + STEP +
+            ';transition:transform 0.08s steps(2)';
+          const fill = document.createElement('span');
+          fill.style.cssText = 'position:absolute;inset:4px;background:#f4f4f4;clip-path:' + STEP +
+            ';box-shadow:inset -4px -4px 0 #b9b9b9,inset 4px 4px 0 #ffffff;display:flex;align-items:center;justify-content:center';
+          fill.innerHTML = '<svg viewBox="0 0 6 9" width="18" height="27" shape-rendering="crispEdges" style="fill:#111;' +
+            (side === 'left' ? 'transform:scaleX(-1);' : '') + 'margin-' + (side === 'left' ? 'right' : 'left') + ':3px">' + chev + '</svg>';
+          face.appendChild(fill);
+          b.appendChild(base); b.appendChild(face);
+          const paint = (on) => {
+            fill.style.background = on ? '#f3323f' : '#f4f4f4';
+            fill.style.boxShadow = on ? 'inset -4px -4px 0 #a81f29,inset 4px 4px 0 #ff6b74' : 'inset -4px -4px 0 #b9b9b9,inset 4px 4px 0 #ffffff';
+            fill.firstChild.style.fill = on ? '#fff' : '#111';
+          };
+          b.addEventListener('mouseenter', () => paint(true));
+          b.addEventListener('mouseleave', () => { paint(false); face.style.transform = ''; });
+          b.addEventListener('pointerdown', () => { face.style.transform = 'translateY(4px)'; });
+          b.addEventListener('pointerup', () => { face.style.transform = ''; });
           b.addEventListener('click', (e) => { e.preventDefault(); go((cur + (side === 'left' ? -1 : 1) + N) % N); });
-          root.appendChild(b);
+          (sheet || root).appendChild(b);
           return b;
         };
         const prev = arrow('left'), next = arrow('right');
         const rail = document.createElement('div');
         rail.style.cssText = 'position:absolute;left:0;right:0;bottom:3.2%;display:flex;justify-content:center;' +
           'gap:10px;z-index:3';
+        const dotOff = it.crop ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.32)';
         const dots = it.carousel.map((_, k) => {
           const d = document.createElement('button');
           d.type = 'button'; d.setAttribute('aria-label', 'Sketch ' + (k + 1));
           d.style.cssText = 'width:9px;height:9px;padding:0;border:0;border-radius:50%;cursor:pointer;background:' +
-            (k ? 'rgba(255,255,255,0.32)' : '#f3323f');
+            (k ? dotOff : '#f3323f');
           d.addEventListener('click', () => go(k));
           rail.appendChild(d);
           return d;
         });
         root.appendChild(rail);
-        root.addEventListener('mouseenter', () => { hovering = true; prev.style.opacity = '1'; next.style.opacity = '1'; });
-        root.addEventListener('mouseleave', () => { hovering = false; prev.style.opacity = '0'; next.style.opacity = '0'; });
-        const timer = setInterval(() => {
-          if (!document.body.contains(root)) return clearInterval(timer);
-          if (hovering) return;
+        // no autoplay: the reader steps through with the buttons. Their drop is scrubbed by the scroll.
+        let bq = false;
+        const drop = () => {
+          bq = false;
           const r = root.getBoundingClientRect();
-          if (r.bottom < 0 || r.top > innerHeight) return; // only advance while it is on screen
-          go((cur + 1) % N);
-        }, 4200);
-        return root;
+          if (!r.height) return;
+          const t = Math.max(0, Math.min(1, (innerHeight * 0.75 - r.top) / (r.height * 0.6)));
+          const e = t * t * (3 - 2 * t);
+          const y = (50 + 50 * e).toFixed(2);
+          [prev, next].forEach((b) => { b.style.top = 'calc(' + y + '% - ' + (e * 96).toFixed(1) + 'px)'; b.style.transform = 'translateY(' + (-50 * (1 - e)).toFixed(1) + '%)'; });
+        };
+        const onDrop = () => { if (!bq) { bq = true; requestAnimationFrame(drop); } };
+        ov.addEventListener('scroll', onDrop, { passive: true });
+        addEventListener('resize', onDrop);
+        requestAnimationFrame(drop);
+        return wrap;
+      };
+
+
+      // "Kuch hatke": one pinned, scroll-driven chapter on black. The title rises into a header, the
+      // problem and the BUT play in turn, the everyday objects pop in, the camera settles on the Orbit
+      // tub, and the last screen frames the cardboard tests around the CAD grip.
+      const makeHatke = () => {
+        const B = 'assets/images/bitl/';
+        const PIX = "font-family:'VG Pixel','Press Start 2P',monospace;font-weight:400;";
+        const MONO = "font-family:'Courier New',ui-monospace,monospace;";
+        const N = 8;
+        const mk = (tag, css, txt) => { const e = document.createElement(tag); e.style.cssText = css; if (txt) e.textContent = txt; return e; };
+        const outer = mk('div', 'position:relative;width:100%;background:#000');
+        const pin = mk('div', 'position:sticky;top:0;height:100vh;overflow:hidden;background:#000;line-height:normal');
+        outer.appendChild(pin);
+        const C = 'position:absolute;left:50%;top:50%;width:min(84vw,1100px);display:flex;flex-direction:column;align-items:center;' +
+          'gap:2.2rem;text-align:center;will-change:transform,opacity';
+        const title = mk('h2', 'position:absolute;left:50%;top:50%;margin:0;white-space:nowrap;' + PIX + 'color:#f3323f;' +
+          'font-size:clamp(40px,7vw,132px);line-height:1;letter-spacing:0.02em;transform-origin:50% 0;will-change:transform', 'Kuch hatke');
+        const sub0 = mk('p', 'position:absolute;left:50%;top:50%;margin:0;' + MONO + 'color:#f4f4f4;font-size:clamp(16px,1.6vw,30px);white-space:nowrap', 'something different');
+        const b1 = mk('div', C);
+        const wtd = mk('h3', 'margin:0;' + PIX + 'color:#f4f4f4;font-size:clamp(28px,4vw,76px);line-height:1.1;letter-spacing:0.02em', 'WHAT TO DO...........');
+        b1.appendChild(mk('p', 'margin:0;max-width:52ch;' + MONO + 'color:#f4f4f4;font-size:clamp(16px,1.6vw,30px);line-height:1.4;text-wrap:balance',
+          'Since my design included an angled position. It was now very important to test the hand grips and not take existing ergonomic data, as they might not fit my new hand position'));
+        const b2 = mk('div', C);
+        const but = mk('div', "font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:700;color:#f3323f;font-size:clamp(64px,10vw,190px);line-height:0.9;letter-spacing:0.01em", 'BUT');
+        but.animate([{ opacity: 1 }, { opacity: 1, offset: 0.45 }, { opacity: 0.12, offset: 0.5 }, { opacity: 0.12, offset: 0.62 }, { opacity: 1, offset: 0.67 }, { opacity: 1 }],
+          { duration: 1100, iterations: Infinity });
+        b2.appendChild(but);
+        b2.appendChild(mk('p', 'margin:0;' + MONO + 'color:#f4f4f4;font-size:clamp(18px,2vw,38px);line-height:1.3', 'I had no access to a 3D printer.'));
+        b2.appendChild(wtd);
+        const l3 = mk('p', 'position:absolute;left:50%;top:21vh;width:90vw;margin:0;text-align:center;' + MONO + 'color:#f4f4f4;' +
+          'font-size:clamp(16px,1.6vw,30px);line-height:1.35;text-wrap:balance', 'So I started looking around me for the ideal grip.');
+        const row = mk('div', 'position:absolute;left:0;right:0;top:30vh;bottom:9vh;display:flex;align-items:flex-end;justify-content:center;' +
+          'gap:6vw;will-change:transform');
+        const OBJ = [['obj-dove.webp', 46, 'Dove shampoo bottle'], ['obj-dispenser.webp', 42, 'Soap dispenser'],
+          ['obj-bisleri.webp', 34, 'Bisleri bottle'], ['obj-orbit.webp', 36, 'Orbit gum tub']];
+        const objs = OBJ.map(([src, h, alt], j) => {
+          const w = mk('div', 'position:relative;height:' + h + 'vh;transform:scale(0) translateY(20%);opacity:0;transform-origin:50% 100%;' +
+            'transition:transform 0.7s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s ease,filter 0.6s ease');
+          const im = mk('img', 'display:block;height:100%;width:auto');
+          im.src = B + src; im.alt = alt; im.decoding = 'async';
+          w.appendChild(im); row.appendChild(w);
+          return w;
+        });
+        const orbit = objs[3];
+        const ring = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        ring.setAttribute('style', 'position:absolute;left:-7%;top:-4%;width:114%;height:108%;overflow:visible;pointer-events:none');
+        ring.innerHTML = '<rect fill="none" stroke="#f3323f" stroke-width="3" stroke-linecap="round"/>';
+        orbit.appendChild(ring);
+        const ringR = ring.firstChild;
+        // drawn in real pixels so the dash length is the true perimeter (no stretched viewBox)
+        let ringW = 0, ringL = 1;
+        const sizeRing = () => {
+          const w = ring.clientWidth, h = ring.clientHeight;
+          if (!w || w === ringW) return;
+          ringW = w;
+          ring.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+          const r = Math.min(w, h) * 0.22;
+          ['x', 'y'].forEach((a) => ringR.setAttribute(a, '2'));
+          ringR.setAttribute('width', w - 4); ringR.setAttribute('height', h - 4);
+          ringR.setAttribute('rx', r); ringR.setAttribute('ry', r);
+          ringL = ringR.getTotalLength ? ringR.getTotalLength() : 2 * (w + h);
+          ringR.setAttribute('stroke-dasharray', ringL + ' ' + ringL);
+        };
+        const aha = mk('div', 'position:absolute;left:8vw;top:50%;display:flex;flex-direction:column;gap:1.6rem;will-change:transform,opacity');
+        aha.appendChild(mk('div', PIX + 'color:#f3323f;font-size:clamp(48px,8vw,150px);line-height:1;letter-spacing:0.02em', 'ahaaaa.'));
+        aha.appendChild(mk('p', 'margin:0;' + MONO + 'color:#f4f4f4;font-size:clamp(18px,2vw,38px);line-height:1.3', 'That feels right.'));
+        const fin = mk('div', 'position:absolute;inset:0;pointer-events:none');
+        const cadBox = mk('div', 'position:absolute;right:4vw;top:50%;width:min(44vw,82vh);display:flex;flex-direction:column;gap:2.4vh;will-change:transform,opacity');
+        const cad = mk('img', 'display:block;width:100%;height:auto;' +
+          '-webkit-mask-image:linear-gradient(to bottom,transparent,#000 20%),linear-gradient(to left,transparent,#000 20%),linear-gradient(to top,transparent,#000 5%);-webkit-mask-composite:source-in;' +
+          'mask-image:linear-gradient(to bottom,transparent,#000 20%),linear-gradient(to left,transparent,#000 20%),linear-gradient(to top,transparent,#000 5%);mask-composite:intersect');
+        cad.src = B + 'hatke-cad-cut.webp'; cad.alt = 'CAD render of the grip'; cad.decoding = 'async';
+        // cardboard tests gathered on the left: the tall hand shot beside the two table shots
+        const grid = mk('div', 'position:absolute;left:4vw;top:50%;width:min(48vw,100vh);height:min(78vh,40vw);display:grid;' +
+          'grid-template-columns:0.72fr 1fr;grid-template-rows:1fr 1fr;gap:12px;will-change:transform,opacity');
+        const CORN = [['hatke-3.webp', 'grid-row:1 / span 2', 'Holding the Orbit grip'],
+          ['hatke-1.webp', '', 'Cardboard frame on Orbit tubs'],
+          ['hatke-2.webp', '', 'Cardboard frame standing on Orbit tubs']];
+        const corners = CORN.map(([src, pos, alt]) => {
+          const im = mk('img', pos + ';display:block;width:100%;height:100%;object-fit:cover;min-height:0;will-change:transform,opacity');
+          im.src = B + src; im.alt = alt; im.decoding = 'async'; im.loading = 'lazy';
+          grid.appendChild(im);
+          return { im };
+        });
+        fin.appendChild(grid);
+        cadBox.appendChild(cad);
+        cadBox.appendChild(mk('p', 'margin:0;' + MONO + 'color:#f4f4f4;font-size:clamp(15px,1.3vw,24px);line-height:1.45;text-wrap:pretty',
+          "The Orbit's ellipse felt like the perfect shape contour in the position, which I quickly tested and then replicated on the inner side of my design."));
+        fin.appendChild(cadBox);
+        [row, b1, b2, l3, aha, sub0, title, fin].forEach((e) => pin.appendChild(e));
+
+        const cl = (v) => Math.max(0, Math.min(1, v));
+        const ease = (t) => t * t * (3 - 2 * t);
+        const seg = (p, a, b) => ease(cl((p - a) / (b - a)));
+        let stepPx = 1, popped = -1;
+        const layout = () => { stepPx = Math.round(innerHeight * 0.8); outer.style.height = (innerHeight + N * stepPx) + 'px'; };
+        const frame = () => {
+          q = false;
+          const r = outer.getBoundingClientRect();
+          if (!r.height || r.bottom < -50 || r.top > innerHeight + 50) return;
+          const p = Math.max(0, -r.top) / stepPx;
+          // title: centre -> header
+          const up = seg(p, 0.3, 1.0), vh = innerHeight;
+          const tH = title.offsetHeight;
+          title.style.transform = 'translate(-50%,' + ((1 - up) * (-tH / 2 - vh * 0.03) + up * (-vh * 0.5 + vh * 0.07)).toFixed(1) + 'px) scale(' + (1 - up * 0.45).toFixed(3) + ')';
+          title.style.opacity = String(1 - seg(p, 6.4, 6.8));
+          sub0.style.transform = 'translate(-50%,' + (tH / 2 + vh * 0.02 - up * 40).toFixed(1) + 'px)';
+          sub0.style.opacity = String(1 - seg(p, 0.3, 0.6));
+          const in1 = seg(p, 0.7, 1.0), out1 = seg(p, 1.6, 1.9);
+          b1.style.opacity = String(in1 * (1 - out1));
+          b1.style.transform = 'translate(-50%,calc(-50% + ' + ((1 - in1) * 40 - out1 * 60).toFixed(1) + 'px))';
+          const in2 = seg(p, 1.8, 2.1), out2 = seg(p, 2.7, 3.1);
+          b2.style.opacity = String(in2 * (1 - out2));
+          b2.style.transform = 'translate(calc(-50% - ' + (out2 * 70).toFixed(2) + 'vw),-50%) scale(' + (1.25 - in2 * 0.25).toFixed(3) + ')';
+          const in3 = seg(p, 2.9, 3.2), zoom = seg(p, 4.4, 5.4), gone = seg(p, 6.6, 7.0);
+          l3.style.opacity = String(in3 * (1 - zoom));
+          l3.style.transform = 'translate(-50%,' + ((1 - in3) * 24).toFixed(1) + 'px)';
+          // objects pop one by one; reversible
+          // the four arrive together on the first scroll, a beat apart
+          const k = p < 3.05 ? -1 : 3;
+          if (k !== popped) {
+            popped = k;
+            objs.forEach((o, j) => {
+              o.style.transitionDelay = k >= 0 ? (j * 0.14) + 's' : '0s';
+              o.style.opacity = j <= k ? '1' : '0'; o.style.transform = j <= k ? 'scale(1)' : 'scale(0) translateY(20%)';
+            });
+          }
+          objs.forEach((o, j) => { if (j < 3) o.style.filter = 'brightness(' + (1 - zoom).toFixed(3) + ') blur(' + (zoom * 4).toFixed(2) + 'px)'; });
+          // soft zoom onto the Orbit tub
+          const ox = orbit.offsetLeft + orbit.offsetWidth / 2, oy = orbit.offsetTop + orbit.offsetHeight / 2;
+          const W = row.clientWidth, s = 1 + zoom * 0.45;
+          row.style.transformOrigin = ox + 'px ' + oy + 'px';
+          row.style.transform = 'translate(' + (zoom * (W * 0.5 - ox)).toFixed(1) + 'px,' + (zoom * (row.clientHeight * 0.5 - oy + vh * 0.04)).toFixed(1) + 'px) scale(' + s.toFixed(3) + ')';
+          row.style.opacity = String(1 - gone);
+          sizeRing();
+          const dr = seg(p, 4.4, 5.4);
+          ringR.style.opacity = dr > 0.001 ? '1' : '0';
+          ringR.setAttribute('stroke-dashoffset', ((1 - dr) * ringL).toFixed(1));
+          const ah = seg(p, 4.7, 5.4);
+          aha.style.opacity = String(ah * (1 - gone));
+          aha.style.transform = 'translateY(calc(-50% + ' + ((1 - ah) * 30).toFixed(1) + 'px))';
+          // last screen: cardboard tests slide in from the left, the CAD grip from the right
+          const f = seg(p, 6.8, 7.5);
+          corners.forEach((c, j) => {
+            const t = seg(p, 6.7 + j * 0.1, 7.3 + j * 0.1);
+            c.im.style.opacity = String(t);
+            c.im.style.transform = 'translateX(' + (-(1 - t) * 40).toFixed(2) + 'vw)';
+          });
+          grid.style.transform = 'translateY(-50%)';
+          cadBox.style.opacity = String(f);
+          cadBox.style.transform = 'translate(' + ((1 - f) * 30).toFixed(2) + 'vw,-50%)';
+        };
+        let q = false;
+        const onS = () => { if (!q) { q = true; requestAnimationFrame(frame); } };
+        ov.addEventListener('scroll', onS, { passive: true });
+        addEventListener('resize', () => { layout(); onS(); });
+        requestAnimationFrame(() => { layout(); frame(); });
+        return outer;
+      };
+
+      // BitL concept sketches as one pinned, scroll-driven sequence: each sheet arrives whole, the
+      // camera then zooms onto every design on it in turn before the next sheet slides in. After the
+      // second sheet a red ITERATIONS card holds the centre, is pushed up by the next scroll, and the
+      // iteration sheets follow. Geometry is in source pixels of the 2000x1126 sketch exports.
+      const makeSketchStory = () => {
+        const SW = 2000, SH = 1126, CX0 = 504, CX1 = 1988;
+        const R = (CX1 - CX0) / SH;
+        const B = 'assets/images/bitl/';
+        const PIX = "font-family:'VG Pixel','Press Start 2P',monospace;font-weight:400;";
+        const SANS = "font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:400;";
+        const PAGES = [
+          { src: B + 'sketch1.webp', label: ['Bionic forms', 'Unique console, callback to futurism. Bold design while being similar to console designs.'],
+            views: [null, [570, 370, 1270, 740], [1320, 170, 1600, 490], [1340, 750, 2000, 1110]] },
+          { src: B + 'sketch2.webp', label: ['Space tech', 'Space tech & aviation design inspired. fits well with the analog retro vibe.'],
+            views: [null, [580, 420, 1280, 990], [1460, 110, 2000, 950]] },
+          { title: 'Feedback' },
+          // notes: [quote, anchor x/y in % of the sketch], left to right so the leaders never cross
+          // three steps on the same view so the feedback holds for longer before the next card
+          { views: [null, null, null], feedback: [
+            [B + 'selected-spacetech.webp', 'Space tech', [
+              ['\u201CFeels more comfortable as well.\u201D', 9, 62],
+              ['\u201CScreen to body ratio is too off\u201D', 46, 52],
+              ['\u201CFeels more retro\u201D', 72, 8]]],
+            [B + 'selected-bionic.webp', 'Bionic forms', [
+              ['\u201CMore apocalyptic\u201D', 9, 48],
+              ['\u201CLooks insanely cool, like flesh being torn\u201D', 66, 58],
+              ['\u201CLooks like a Doom console\u201D', 88, 72]]]] },
+          { title: 'Iterations' },
+          { iter: { src: B + 'sketch3.webp', sel: B + 'selected-bionic.webp', alt: 'Selected bionic forms design', cols: 3,
+            cuts: [[695, 60, 1035, 250], [1100, 60, 1440, 250], [1520, 60, 1865, 250], [690, 330, 1030, 525], [1100, 330, 1440, 525], [1520, 330, 1865, 525]] } },
+          { iter: { src: B + 'sketch4.webp', sel: B + 'selected-spacetech.webp', alt: 'Selected space tech design', cols: 2,
+            cuts: [[590, 85, 1195, 385], [1295, 85, 1900, 385], [585, 410, 1185, 715], [1290, 410, 1890, 715]] } }
+        ];
+        const toView = (v) => {
+          if (!v) return { s: 1, a: 0, b: 0 };
+          const fx0 = (v[0] - CX0) / (CX1 - CX0), fx1 = (v[2] - CX0) / (CX1 - CX0), fy0 = v[1] / SH, fy1 = v[3] / SH;
+          // a gentle push toward the design rather than a full close-up, kept inside the sheet's edges
+          const full = Math.max(1, Math.min(1 / (fx1 - fx0), 1 / (fy1 - fy0)) * 0.9);
+          const sc = Math.min(1.45, 1 + (full - 1) * 0.35);
+          const cl = (v) => Math.max((1 - sc) * 100, Math.min(0, v));
+          return { s: sc, a: cl((0.5 - (fx0 + fx1) / 2 * sc) * 100), b: cl((0.5 - (fy0 + fy1) / 2 * sc) * 100) };
+        };
+        const steps = [];
+        PAGES.forEach((pg, i) => (pg.views || [null]).forEach((v) => steps.push({ page: i, view: toView(v), label: pg.label || null })));
+        const S = steps.length;
+
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'width:100%;background:#000;line-height:normal';
+        const head = document.createElement('div');
+        head.style.cssText = 'display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:1.6rem 4vw;' +
+          'padding:24vh 4vw 14vh;box-sizing:border-box';
+        const h = document.createElement('h2');
+        h.textContent = 'Conceptualisation';
+        h.style.cssText = 'margin:0;' + PIX + 'color:#f3323f;font-size:clamp(28px,4vw,76px);line-height:1.1;letter-spacing:0.02em';
+        const tag = document.createElement('p');
+        tag.textContent = 'Exploring design languages';
+        tag.style.cssText = 'margin:0;' + SANS + 'font-size:clamp(15px,1.35vw,28px);line-height:1.4;color:rgba(244,244,244,0.86)';
+        head.appendChild(h); head.appendChild(tag); wrap.appendChild(head);
+
+        const outer = document.createElement('div');
+        outer.style.cssText = 'position:relative;width:100%;background:#fff';
+        const pin = document.createElement('div');
+        pin.style.cssText = 'position:sticky;top:0;height:100vh;display:flex;flex-direction:column;background:#fff;overflow:hidden';
+        outer.appendChild(pin); wrap.appendChild(outer);
+
+        const paper = document.createElement('div');
+        paper.style.cssText = 'display:flex;flex-direction:column;gap:1.1rem;padding:9vh 4vw 2.5vh;box-sizing:border-box;' +
+          'min-height:calc(9vh + 2.5vh + 6.2rem);transition:opacity 0.3s ease';
+        const sub = document.createElement('h3');
+        sub.style.cssText = 'margin:0;' + PIX + 'color:#131313;font-size:clamp(20px,2.2vw,42px);line-height:1.15;letter-spacing:0.02em';
+        const notes = document.createElement('p');
+        notes.style.cssText = 'margin:0;max-width:900px;' + SANS + 'font-size:clamp(15px,1.35vw,28px);line-height:1.5;' +
+          'color:rgba(19,19,19,0.82);text-wrap:pretty';
+        paper.appendChild(sub); paper.appendChild(notes); pin.appendChild(paper);
+
+        // ITERATIONS lands in the middle of the sheet, then rises into the heading slot and stays there
+        // each title card: lands centred, rises into the heading slot, and fades as the next title arrives
+        const TIs = PAGES.map((pg, i) => (pg.title ? i : -1)).filter((i) => i >= 0);
+        const ttls = TIs.map((ti) => {
+          const el = document.createElement('div');
+          el.textContent = PAGES[ti].title;
+          el.style.cssText = 'position:absolute;left:0;top:0;z-index:4;pointer-events:none;white-space:nowrap;opacity:0;' +
+            'transform-origin:0 0;' + PIX + 'color:#f3323f;font-size:clamp(44px,7vw,150px);line-height:1;letter-spacing:0.03em';
+          pin.appendChild(el);
+          return el;
+        });
+        const box = document.createElement('div');
+        box.style.cssText = 'position:relative;flex:1;min-height:0;display:flex;justify-content:center;align-items:flex-start;padding-bottom:3vh';
+        const stage = document.createElement('div');
+        stage.style.cssText = 'position:relative;overflow:hidden;background:#fff;line-height:0;font-size:0';
+        box.appendChild(stage); pin.appendChild(box);
+
+        const cropImg = (src, x0, y0, x1, y1) => {
+          const c = document.createElement('div');
+          c.style.cssText = 'position:relative;overflow:hidden;width:100%;aspect-ratio:' + (x1 - x0) + '/' + (y1 - y0);
+          const im = document.createElement('img');
+          im.src = src; im.alt = ''; im.decoding = 'async'; im.draggable = false;
+          im.style.cssText = 'position:absolute;display:block;height:auto;max-width:none;width:' + (SW / (x1 - x0) * 100).toFixed(3) +
+            '%;left:' + (-x0 / (x1 - x0) * 100).toFixed(3) + '%;top:' + (-y0 / (y1 - y0) * 100).toFixed(3) + '%';
+          c.appendChild(im);
+          return c;
+        };
+        const fbInk = [], fbRoutes = [];
+        let fbOn = false;
+        const plates = PAGES.map((pg) => {
+          const pl = document.createElement('div');
+          pl.style.cssText = 'position:absolute;inset:0;visibility:hidden;will-change:transform';
+          const cam = document.createElement('div');
+          cam.style.cssText = 'position:absolute;inset:0;transform-origin:0 0';
+          if (pg.src && pg.crop) {
+            // iteration sheet: top row pair only, set as large as the stage allows
+            cam.style.display = 'flex'; cam.style.alignItems = 'center'; cam.style.justifyContent = 'center';
+            cam.style.padding = '0 1%'; cam.style.boxSizing = 'border-box';
+            cam.appendChild(cropImg(pg.src, pg.crop[0], pg.crop[1], pg.crop[2], pg.crop[3]));
+          } else if (pg.src) {
+            cam.appendChild(cropImg(pg.src, CX0, 0, CX1, SH));
+          } else if (pg.feedback) {
+            cam.style.display = 'flex'; cam.style.alignItems = 'center'; cam.style.justifyContent = 'center';
+            cam.style.gap = '12%'; cam.style.padding = '0 9%'; cam.style.boxSizing = 'border-box';
+            // quotes sit in normal flow above each sketch; the leaders are measured from the laid-out
+            // boxes, so nothing can overlap the sketch or its caption at any size
+            const NS = 'http://www.w3.org/2000/svg';
+            pg.feedback.forEach(([src, name, quotes]) => {
+              const fig = document.createElement('div');
+              fig.style.cssText = 'position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:1.4rem;line-height:normal';
+              const row = document.createElement('div');
+              row.style.cssText = 'display:grid;grid-template-columns:repeat(' + quotes.length + ',minmax(0,1fr));gap:4%;align-items:end;margin-bottom:6%';
+              const shot = document.createElement('div');
+              shot.style.cssText = 'position:relative;width:100%';
+              const im = document.createElement('img');
+              im.src = src; im.alt = name + ' selected design'; im.decoding = 'async';
+              im.style.cssText = 'display:block;width:100%;height:auto';
+              shot.appendChild(im);
+              const svg = document.createElementNS(NS, 'svg');
+              svg.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none';
+              const leaders = quotes.map(([q, ax, ay], qi) => {
+                const t = document.createElement('div');
+                t.textContent = q;
+                t.style.cssText = "font-family:'Architects Daughter','Segoe Print','Bradley Hand',cursive;font-size:clamp(12px,1.05vw,20px);" +
+                  'line-height:1.25;color:#c8242f;text-align:center;text-wrap:balance;opacity:0;transition:opacity 0.5s ease ' + (0.1 + qi * 0.45).toFixed(2) + 's';
+                // the middle quote sits a step higher so neighbours never read as one line
+                if (qi === 1) t.style.marginBottom = '1.2em';
+                row.appendChild(t);
+                fbInk.push({ on: () => { t.style.opacity = '1'; }, off: () => { t.style.opacity = '0'; } });
+                const mk = (dur, delay) => {
+                  const p = document.createElementNS(NS, 'path');
+                  p.setAttribute('pathLength', '1'); p.setAttribute('fill', 'none'); p.setAttribute('stroke', '#c8242f');
+                  p.setAttribute('stroke-width', '1.6'); p.setAttribute('stroke-linecap', 'round'); p.setAttribute('stroke-linejoin', 'round');
+                  p.style.cssText = 'stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset ' + dur + 's ease ' + delay.toFixed(2) + 's';
+                  svg.appendChild(p);
+                  fbInk.push({ on: () => { p.style.strokeDashoffset = '0'; }, off: () => { p.style.strokeDashoffset = '1'; } });
+                  return p;
+                };
+                return { t, ax, ay, line: mk(0.9, 0.25 + qi * 0.45), bend: qi % 2 ? -1 : 1 };
+              });
+              // plain leaders that stop just short of the drawing: the first inked pixel in the anchor's
+              // column is found once from the image itself, so the line meets the outline from above
+              let edge = null;
+              const scan = () => {
+                if (!im.naturalWidth) return;
+                const cw = 400, ch = Math.round(400 * im.naturalHeight / im.naturalWidth);
+                const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+                const g = cv.getContext('2d'); g.drawImage(im, 0, 0, cw, ch);
+                let px; try { px = g.getImageData(0, 0, cw, ch).data; } catch (err) { return; }
+                edge = leaders.map((o) => {
+                  const x = Math.min(cw - 1, Math.round(cw * o.ax / 100));
+                  for (let y = 0; y < ch; y++) {
+                    for (let dx = -2; dx <= 2; dx++) {
+                      const i = (y * cw + Math.max(0, Math.min(cw - 1, x + dx))) * 4;
+                      if (px[i] + px[i + 1] + px[i + 2] < 480) return y / ch * 100;
+                    }
+                  }
+                  return o.ay;
+                });
+              };
+              // geometry in the figure's own (unscaled) layout pixels
+              const route = () => {
+                if (!edge) scan();
+                const fw = fig.offsetWidth, fh = fig.offsetHeight;
+                if (!fw) return;
+                svg.setAttribute('viewBox', '0 0 ' + fw + ' ' + fh);
+                leaders.forEach((o, li) => {
+                  const sx = o.t.offsetLeft + o.t.offsetWidth / 2, sy = o.t.offsetTop + o.t.offsetHeight + 4;
+                  const top = edge ? edge[li] : 0;
+                  const ex = shot.offsetLeft + shot.offsetWidth * o.ax / 100, ey = shot.offsetTop + shot.offsetHeight * top / 100 - 8;
+                  const cx = (sx + ex) / 2 + o.bend * fw * 0.06, cy = (sy + ey) / 2 - fw * 0.02;
+                  o.line.setAttribute('d', 'M' + sx.toFixed(1) + ' ' + sy.toFixed(1) + ' Q' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ' + ex.toFixed(1) + ' ' + ey.toFixed(1));
+                });
+              };
+              fbRoutes.push(route);
+              im.addEventListener('load', route);
+              const cap = document.createElement('div');
+              cap.textContent = name;
+              cap.style.cssText = 'align-self:center;' + PIX + 'color:#131313;font-size:clamp(18px,1.8vw,36px);line-height:1.15;letter-spacing:0.02em';
+              fig.appendChild(row); fig.appendChild(shot); fig.appendChild(cap); fig.appendChild(svg); cam.appendChild(fig);
+            });
+          } else if (pg.iter) {
+            cam.style.display = 'flex'; cam.style.alignItems = 'center'; cam.style.gap = '2.5%'; cam.style.padding = '0 0.5%';
+            cam.style.boxSizing = 'border-box';
+            const left = document.createElement('div');
+            left.style.cssText = 'flex:0 0 21%;display:flex;flex-direction:column;gap:1.4rem;line-height:normal';
+            const lab = document.createElement('div');
+            lab.textContent = 'Selected design';
+            lab.style.cssText = PIX + 'color:#f3323f;font-size:clamp(16px,1.6vw,32px);line-height:1.15;letter-spacing:0.02em';
+            const sel = document.createElement('img');
+            sel.src = pg.iter.sel; sel.alt = pg.iter.alt; sel.decoding = 'async';
+            sel.style.cssText = 'display:block;width:100%;height:auto';
+            left.appendChild(lab); left.appendChild(sel);
+            const right = document.createElement('div');
+            // each iteration cut out on its own and packed tight, so they read as large as the column allows
+            right.style.cssText = 'flex:1;min-width:0;display:grid;grid-template-columns:repeat(' + pg.iter.cols + ',minmax(0,1fr));gap:3vh 1.2%;align-items:center';
+            pg.iter.cuts.forEach((r) => right.appendChild(cropImg(pg.iter.src, r[0], r[1], r[2], r[3])));
+            cam.appendChild(left); cam.appendChild(right);
+          }
+          pl.appendChild(cam); stage.appendChild(pl);
+          return { pl, cam };
+        });
+
+        // pixel buttons beside the stage: they step the scroll to the previous / next shot
+        const STEP = 'polygon(4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,100% calc(100% - 4px),' +
+          'calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 4px),0 calc(100% - 4px),0 4px,4px 4px)';
+        const chev = [0, 1, 2, 3, 4, 3, 2, 1, 0].map((x, y) => '<rect x="' + x + '" y="' + y + '" width="2" height="1"/>').join('');
+        let stepPx = 1, p = 0;
+        const goStep = (k) => {
+          k = Math.max(0, Math.min(S - 1, k));
+          ov.scrollTo({ top: ov.scrollTop + outer.getBoundingClientRect().top + k * stepPx + 2, behavior: 'smooth' });
+        };
+        const arrow = (side) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.setAttribute('aria-label', side === 'left' ? 'Previous sketch' : 'Next sketch');
+          b.style.cssText = 'position:absolute;top:50%;width:64px;height:68px;padding:0;border:0;background:none;cursor:pointer;' +
+            'z-index:3;transform:translateY(-50%);line-height:0';
+          const base = document.createElement('span');
+          base.style.cssText = 'position:absolute;left:0;top:4px;width:64px;height:64px;background:#111;clip-path:' + STEP;
+          const face = document.createElement('span');
+          face.style.cssText = 'position:absolute;left:0;top:0;width:64px;height:64px;background:#111;clip-path:' + STEP +
+            ';transition:transform 0.08s steps(2)';
+          const fill = document.createElement('span');
+          fill.style.cssText = 'position:absolute;inset:4px;background:#f4f4f4;clip-path:' + STEP +
+            ';box-shadow:inset -4px -4px 0 #b9b9b9,inset 4px 4px 0 #ffffff;display:flex;align-items:center;justify-content:center';
+          fill.innerHTML = '<svg viewBox="0 0 6 9" width="18" height="27" shape-rendering="crispEdges" style="fill:#111;' +
+            (side === 'left' ? 'transform:scaleX(-1);' : '') + 'margin-' + (side === 'left' ? 'right' : 'left') + ':3px">' + chev + '</svg>';
+          face.appendChild(fill);
+          b.appendChild(base); b.appendChild(face);
+          const paint = (on) => {
+            fill.style.background = on ? '#f3323f' : '#f4f4f4';
+            fill.style.boxShadow = on ? 'inset -4px -4px 0 #a81f29,inset 4px 4px 0 #ff6b74' : 'inset -4px -4px 0 #b9b9b9,inset 4px 4px 0 #ffffff';
+            fill.firstChild.style.fill = on ? '#fff' : '#111';
+          };
+          b.addEventListener('mouseenter', () => paint(true));
+          b.addEventListener('mouseleave', () => { paint(false); face.style.transform = ''; });
+          b.addEventListener('pointerdown', () => { face.style.transform = 'translateY(4px)'; });
+          b.addEventListener('pointerup', () => { face.style.transform = ''; });
+          b.addEventListener('click', (e) => { e.preventDefault(); goStep(Math.round(p) + (side === 'left' ? -1 : 1)); });
+          box.appendChild(b);
+          return b;
+        };
+        const prev = arrow('left'), next = arrow('right');
+
+        let W = 0;
+        const layout = () => {
+          const vh = innerHeight;
+          stepPx = Math.round(vh * 0.7);
+          outer.style.height = (vh + (S - 1) * stepPx) + 'px';
+          const bw = box.clientWidth, bh = box.clientHeight - vh * 0.03;
+          W = Math.max(200, Math.min(bw - 260, bh * R));
+          stage.style.width = W + 'px'; stage.style.height = (W / R) + 'px';
+          const at = 'max(1.5%,calc(50% - ' + (W / 2) + 'px - 100px))';
+          prev.style.left = at; next.style.right = at;
+        };
+        const lerp = (a, b, t) => a + (b - a) * t;
+        const ease = (t) => t * t * (3 - 2 * t);
+        let shown = '';
+        const setLabel = (L) => {
+          const key = L ? L.join('|') : '';
+          if (key === shown) return;
+          shown = key;
+          paper.style.opacity = '0';
+          clearTimeout(setLabel.t);
+          setLabel.t = setTimeout(() => {
+            if (L) { sub.textContent = L[0]; notes.textContent = L[1] || ''; paper.style.opacity = '1'; }
+          }, 260);
+        };
+        const frame = () => {
+          q = false;
+          const r = outer.getBoundingClientRect();
+          if (!r.height) return;
+          if (!W) layout();
+          const vh = innerHeight;
+          p = Math.max(0, Math.min(S - 1, -r.top / stepPx));
+          const k = Math.min(S - 1, Math.floor(p)), f = p - k;
+          const e = k >= S - 1 ? 0 : ease(Math.max(0, Math.min(1, (f - 0.2) / 0.6)));
+          const A = steps[k], Bs = steps[Math.min(S - 1, k + 1)];
+          plates.forEach((o) => { o.pl.style.visibility = 'hidden'; });
+          const put = (st, off, axis, view) => {
+            const o = plates[st.page];
+            o.pl.style.visibility = 'visible';
+            o.pl.style.transform = axis === 'y' ? 'translate3d(0,' + off + '%,0)' : 'translate3d(' + off + '%,0,0)';
+            o.cam.style.transform = 'translate(' + view.a.toFixed(3) + '%,' + view.b.toFixed(3) + '%) scale(' + view.s.toFixed(4) + ')';
+          };
+          if (A.page === Bs.page) {
+            put(A, 0, 'x', { s: lerp(A.view.s, Bs.view.s, e), a: lerp(A.view.a, Bs.view.a, e), b: lerp(A.view.b, Bs.view.b, e) });
+          } else {
+            const axis = PAGES[A.page].title ? 'y' : 'x';
+            put(A, -e * 100, axis, A.view);
+            put(Bs, (1 - e) * 100, axis, Bs.view);
+          }
+          setLabel(e < 0.5 ? A.label : Bs.label);
+          {
+            const FB = PAGES.findIndex((pg) => pg.feedback);
+            const on = (A.page === FB && (Bs.page === FB || e < 0.15)) || (Bs.page === FB && e > 0.6);
+            if (on !== fbOn) { fbOn = on; if (on) fbRoutes.forEach((f) => f()); fbInk.forEach((o) => (on ? o.on() : o.off())); }
+          }
+          {
+            const pr = pin.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+            ttls.forEach((ttl, j) => {
+              const TI = TIs[j], NX = TIs[j + 1] != null ? TIs[j + 1] : Infinity;
+              const tw = ttl.offsetWidth, th = ttl.offsetHeight;
+              const cx = sr.left - pr.left + sr.width / 2 - tw / 2, cy = sr.top - pr.top + sr.height / 2 - th / 2;
+              const ts = Math.min(1, (parseFloat(getComputedStyle(sub).fontSize) * 1.9) / parseFloat(getComputedStyle(ttl).fontSize));
+              const tx = innerWidth * 0.04, ty = innerHeight * 0.09;
+              let u = 0, op = 0;                                 // u: 0 centred, 1 in the heading slot
+              if (A.page < TI && Bs.page === TI) op = e;
+              else if (A.page === TI && Bs.page === TI) op = 1;
+              else if (A.page === TI) { op = 1; u = e; }
+              else if (A.page > TI && A.page < NX) { u = 1; op = Bs.page === NX ? 1 - e : 1; }
+              const sc = lerp(1, ts, u);
+              ttl.style.opacity = op.toFixed(3);
+              ttl.style.transform = 'translate(' + lerp(cx, tx, u).toFixed(1) + 'px,' + lerp(cy, ty, u).toFixed(1) + 'px) scale(' + sc.toFixed(4) + ')';
+            });
+          }
+          // the buttons drop from the stage's middle to its foot as the sheet scrolls up to pin
+          const dt = ease(Math.max(0, Math.min(1, (vh - r.top) / vh)));
+          [prev, next].forEach((b) => {
+            b.style.top = 'calc(' + (50 + 50 * dt).toFixed(2) + '% - ' + (dt * 96).toFixed(1) + 'px)';
+            b.style.transform = 'translateY(' + (-50 * (1 - dt)).toFixed(1) + '%)';
+          });
+          prev.style.opacity = p < 0.05 ? '0.35' : '1';
+          next.style.opacity = p > S - 1.05 ? '0.35' : '1';
+        };
+        let q = false;
+        const onS = () => { if (!q) { q = true; requestAnimationFrame(frame); } };
+        ov.addEventListener('scroll', onS, { passive: true });
+        addEventListener('resize', () => { layout(); fbRoutes.forEach((f) => f()); onS(); });
+        requestAnimationFrame(() => { layout(); frame(); });
+        return wrap;
       };
 
       // p00+p01 of StrahL are one spread: the printed pattern ring is erased with a cream annulus and
@@ -918,19 +1527,33 @@ class Component {
         // loose sheets rather than printed pages: each sits on the paper with its own margin and
         // rises in with the house reveal
         if (it.plate) {
+          if (it.head) {
+            const hd = document.createElement('div');
+            hd.style.cssText = 'width:100%;box-sizing:border-box;background:' + p.bg + ';padding:14vh 6vw 0;display:flex;' +
+              'flex-direction:column;align-items:center;gap:2.2rem;text-align:center';
+            const h = document.createElement('h2');
+            h.textContent = it.head[0];
+            h.style.cssText = "margin:0;font-family:'VG Pixel','Press Start 2P',monospace;font-weight:400;color:#f3323f;" +
+              'font-size:clamp(28px,4vw,76px);line-height:1.1;letter-spacing:0.02em';
+            const s = document.createElement('p');
+            s.textContent = it.head[1];
+            s.style.cssText = "margin:0;font-family:'Courier New',ui-monospace,monospace;color:#f4f4f4;" +
+              'font-size:clamp(16px,1.6vw,30px);line-height:1.3;text-wrap:balance';
+            hd.appendChild(h); hd.appendChild(s); strip.appendChild(hd);
+          }
           const sec = document.createElement('section');
-          sec.style.cssText = 'width:100%;box-sizing:border-box;background:' + p.bg + ';padding:12vh 8vw;display:grid;' +
-            'grid-template-columns:repeat(' + it.plate.length + ',minmax(0,1fr));gap:6vw;align-items:end;' +
+          sec.style.cssText = 'width:100%;box-sizing:border-box;background:' + p.bg + ';padding:' + (it.head ? '8vh 0 12vh' : '12vh 8vw') + ';display:grid;' +
+            'grid-template-columns:repeat(' + it.plate.length + ',minmax(0,1fr));gap:' + (it.head ? '12px' : '6vw') + ';align-items:' + (it.head ? 'center' : 'end') + ';' +
             'justify-items:center;line-height:0;font-size:0';
           it.plate.forEach((pg) => {
             const fig = document.createElement('figure');
-            fig.style.cssText = 'margin:0;display:flex;flex-direction:column;gap:18px;max-width:100%;opacity:0;' +
+            fig.style.cssText = 'margin:0;display:flex;flex-direction:column;gap:18px;max-width:100%;' + (it.head ? 'width:100%;' : '') + 'opacity:0;' +
               'transform:translateY(26px);transition:opacity 0.9s cubic-bezier(0.22,1,0.36,1),' +
               'transform 0.9s cubic-bezier(0.22,1,0.36,1)';
             const pim = document.createElement('img');
             pim.src = pg.src; pim.alt = pg.cap || ''; pim.width = pg.w; pim.height = pg.h;
             pim.loading = 'lazy'; pim.decoding = 'async';
-            pim.style.cssText = 'display:block;width:auto;max-width:100%;max-height:76vh;height:auto';
+            pim.style.cssText = it.head ? 'display:block;width:100%;height:auto' : 'display:block;width:auto;max-width:100%;max-height:76vh;height:auto';
             fig.appendChild(pim);
             if (pg.cap) {
               const c = document.createElement('figcaption');
@@ -944,6 +1567,32 @@ class Component {
             plateFigs.push(fig);
           });
           strip.appendChild(sec);
+          return;
+        }
+        if (it.sketchStory) { strip.appendChild(makeSketchStory()); return; }
+        if (it.hatke) { strip.appendChild(makeHatke()); return; }
+        if (it.reel) {
+          const box = document.createElement('div');
+          box.style.cssText = 'position:relative;width:100%;aspect-ratio:' + it.w + '/' + it.h + ';background:#000;overflow:hidden;line-height:0';
+          const v = document.createElement('video');
+          v.src = it.reel; v.preload = 'auto'; v.playsInline = true; v.setAttribute('playsinline', '');
+          v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover';
+          box.appendChild(v); strip.appendChild(box);
+          // plays (with sound — the reader was opened by a click) each time it scrolls into view
+          let on = false;
+          const chk = () => {
+            if (!box.isConnected) { v.pause(); return; }
+            const b = box.getBoundingClientRect();
+            if (!b.height) return;
+            const vis = b.top < innerHeight * 0.6 && b.bottom > innerHeight * 0.4;
+            if (vis && !on) {
+              on = true; v.currentTime = 0; v.muted = false;
+              v.play().catch(() => { v.muted = true; v.play().catch(() => {}); });
+            } else if (!vis && on && (b.top > innerHeight || b.bottom < 0)) { on = false; v.pause(); }
+          };
+          ov.addEventListener('scroll', chk, { passive: true });
+          let seenOv = false;
+          const reap = setInterval(() => { if (ov.isConnected) { seenOv = true; return; } if (seenOv) { v.pause(); v.removeAttribute('src'); v.load(); clearInterval(reap); } }, 600);
           return;
         }
         if (it.carousel) { strip.appendChild(makeCarousel(it)); return; }
@@ -1063,12 +1712,65 @@ class Component {
           w.appendChild(im);
           strip.appendChild(w);
           if (it.statement) strip.appendChild(window.vgStatement({ scroller: ov }));
+        } else if (it.side) {
+          const holder = document.createElement('div');
+          holder.style.cssText = 'position:relative;width:100%;line-height:0;font-size:0';
+          if (it.frames) {
+            // each photo slides in from the right inside its own frame, one after another
+            holder.style.aspectRatio = it.w + '/' + it.h;
+            holder.style.background = '#000';
+            const fr = it.frames.map(([src, l, t, w, h], j) => {
+              const f = document.createElement('div');
+              f.style.cssText = 'position:absolute;left:' + l + '%;top:' + t + '%;width:' + w + '%;height:' + h + '%;overflow:hidden';
+              const pim = document.createElement('img');
+              pim.src = 'assets/images/bitl/' + src; pim.alt = ''; pim.decoding = 'async';
+              pim.style.cssText = 'display:block;width:100%;height:100%;object-fit:cover;transform:translateX(101%);' +
+                'transition:transform 1.1s cubic-bezier(0.19,1,0.22,1) ' + (j * 0.18) + 's';
+              f.appendChild(pim); holder.appendChild(f);
+              return pim;
+            });
+            let inView = false;
+            const chk = () => {
+              const b = holder.getBoundingClientRect();
+              if (!b.height) return;
+              const on = b.top < innerHeight * 0.7 && b.bottom > 0;
+              if (on && !inView) { inView = true; fr.forEach((m) => { m.style.transform = 'translateX(0)'; }); }
+              else if (!on && inView && b.top > innerHeight) { inView = false; fr.forEach((m) => { m.style.transform = 'translateX(101%)'; }); }
+            };
+            ov.addEventListener('scroll', chk, { passive: true });
+            requestAnimationFrame(chk);
+          } else holder.appendChild(im);
+          const tx = document.createElement('div');
+          tx.style.cssText = 'position:absolute;left:4vw;top:50%;transform:translateY(-50%);width:28%;display:flex;' +
+            'flex-direction:column;gap:2.2rem;line-height:normal';
+          const h = document.createElement('h2');
+          h.textContent = it.side[0];
+          h.style.cssText = "margin:0;font-family:'VG Pixel','Press Start 2P',monospace;font-weight:400;color:#f3323f;" +
+            'font-size:clamp(28px,4vw,76px);line-height:1.1;letter-spacing:0.02em';
+          const s = document.createElement('p');
+          s.textContent = it.side[1];
+          s.style.cssText = "margin:0;font-family:'Courier New',ui-monospace,monospace;color:#f4f4f4;" +
+            'font-size:clamp(16px,1.6vw,30px);line-height:1.3;text-wrap:pretty';
+          tx.appendChild(h); tx.appendChild(s); holder.appendChild(tx);
+          strip.appendChild(holder);
         } else if (it.caption) {
           const holder = document.createElement('div');
           holder.style.cssText = 'position:relative;width:100%;line-height:0;font-size:0';
           holder.appendChild(im);
           const cap = document.createElement('p');
-          cap.textContent = it.caption;
+          // the three qualities warm to the SAFE red one after another as the caption scrolls in
+          const HL = ['elegant', 'beautiful', 'marketable'];
+          const words = [];
+          it.caption.split(/(elegant|beautiful|marketable)/).forEach((seg) => {
+            if (!seg) return;
+            if (HL.indexOf(seg) >= 0) {
+              const w = document.createElement('span');
+              w.textContent = seg;
+              w.style.cssText = 'color:inherit;transition:color 0.9s ease';
+              cap.appendChild(w); words.push(w);
+            } else cap.appendChild(document.createTextNode(seg));
+          });
+          risers.push({ hl: true, mask: cap, words, done: false });
           cap.style.cssText = "position:absolute;left:2%;bottom:5%;width:27%;margin:0;font-family:Outfit," +
             "'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:400;font-size:clamp(13px,1.35vw,30px);" +
             'line-height:1.45;letter-spacing:0.005em;color:rgba(244,244,244,0.82);text-wrap:pretty';
@@ -1080,23 +1782,61 @@ class Component {
           sec.style.cssText = 'width:100%;background:' + p.bg + ';display:flex;flex-direction:column;gap:2.4rem;' +
             'align-items:center;padding:26vh 8vw;line-height:1.5;margin-top:-2px;position:relative;font-size:16px;' +
             'box-sizing:border-box';
+          const bw = [];
           it.body.forEach((t) => {
             const par = document.createElement('p');
-            // **phrase** marks the words that carry the point
+            // **phrase** marks the words that carry the point; every word is its own span so the copy
+            // can fill in word by word as the reader scrolls (bold words fill to the SAFE red)
             t.split(/\*\*/).forEach((seg, k) => {
               if (!seg) return;
-              if (k % 2) {
-                const b = document.createElement('strong');
-                b.textContent = seg; b.style.cssText = 'font-weight:700;color:' + (p.strongInk || '#fff');
-                par.appendChild(b);
-              } else par.appendChild(document.createTextNode(seg));
+              const host = k % 2 ? document.createElement('strong') : par;
+              if (k % 2) { host.style.cssText = 'font-weight:700'; par.appendChild(host); }
+              seg.split(/(\s+)/).forEach((tok) => {
+                if (!tok) return;
+                if (/^\s+$/.test(tok)) return host.appendChild(document.createTextNode(tok));
+                const w = document.createElement('span');
+                w.textContent = tok;
+                w.style.cssText = 'opacity:0.18;transition:opacity 0.15s linear,color 0.3s ease';
+                host.appendChild(w); bw.push({ w, red: !!(k % 2) });
+              });
             });
             par.style.cssText = "margin:0;max-width:1000px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;" +
               'font-weight:400;font-size:clamp(15px,1.35vw,28px);line-height:1.6;letter-spacing:0.005em;' +
               'color:' + (p.copyInk || 'rgba(244,244,244,0.86)') + ';text-wrap:pretty;text-align:center';
             sec.appendChild(par);
           });
-          strip.appendChild(sec);
+          // the section pins mid-screen while the scroll fills it, the same pause as the watchmaker opener
+          const pinBox = document.createElement('div');
+          pinBox.style.cssText = 'position:relative;width:100%;background:' + p.bg;
+          pinBox.appendChild(sec);
+          strip.appendChild(pinBox);
+          sec.style.position = 'sticky';
+          let range = 1, lastT = -1;
+          const lay = () => {
+            const vh = innerHeight, h = sec.offsetHeight;
+            if (!h) return;
+            sec.style.top = Math.round((vh - h) / 2) + 'px';
+            range = Math.round(vh * 1.1);
+            pinBox.style.height = (h + range) + 'px';
+          };
+          const fill = () => {
+            if (!sec.offsetHeight) return;
+            if (pinBox.offsetHeight !== sec.offsetHeight + range) lay();
+            const t = Math.max(0, Math.min(1, ((parseFloat(sec.style.top) || 0) - pinBox.getBoundingClientRect().top) / range));
+            if (Math.abs(t - lastT) < 0.002) return;
+            lastT = t;
+            const n = t * bw.length * 1.04;
+            bw.forEach((o, i) => {
+              const v = Math.max(0, Math.min(1, n - i));
+              o.w.style.opacity = String(0.18 + 0.82 * v);
+              o.w.style.color = o.red && v >= 0.5 ? '#f3323f' : '';
+            });
+          };
+          let fq = false;
+          const onF = () => { if (fq) return; fq = true; requestAnimationFrame(() => { fq = false; fill(); }); };
+          ov.addEventListener('scroll', onF, { passive: true });
+          addEventListener('resize', () => { lay(); onF(); });
+          requestAnimationFrame(() => { lay(); fill(); });
         }
         if (it.after) {
           const brk = document.createElement('section');
@@ -1124,10 +1864,37 @@ class Component {
         }
       });
       // same rise as the statement break, driven off the reader's own scroller
+      const reduceRise = matchMedia('(prefers-reduced-motion: reduce)').matches;
       const checkRisers = () => {
         for (let i = 0; i < risers.length; i++) {
           const r = risers[i];
-          if (r.done) continue;
+          if (r.done) {
+            // once it has dropped back below the fold, re-arm so it plays again on the way down
+            if (reduceRise) continue;
+            const ob = r.mask.getBoundingClientRect();
+            if (ob.height && ob.top > innerHeight) {
+              r.done = false;
+              (r.timers || []).forEach(clearTimeout); r.timers = [];
+              if (r.hl) r.words.forEach((w) => { w.style.color = 'inherit'; });
+              else {
+                const L = r.line, tr = L.style.transition;
+                L.style.transition = 'none'; L.style.opacity = '0'; L.style.transform = 'translateY(14px)';
+                if (r.safe) { r.safe.style.transition = 'none'; r.safe.style.opacity = '0'; r.safe.style.transform = 'translateY(0.12em) scale(0.94)'; }
+                void L.offsetWidth; L.style.transition = tr;
+              }
+            }
+            continue;
+          }
+          r.timers = r.timers || [];
+          const later = (f, t) => r.timers.push(setTimeout(f, t));
+          if (r.hl) {
+            const hb = r.mask.getBoundingClientRect();
+            if (hb.height && hb.bottom < innerHeight * 0.97 && hb.top > 0) {
+              r.done = true;
+              r.words.forEach((w, k) => later(() => { w.style.color = '#f3323f'; }, 80 + k * 220));
+            }
+            continue;
+          }
           const b = r.mask.getBoundingClientRect();
           if (b.height && b.top < innerHeight * 0.86 && b.bottom > 0) {
             r.done = true;
@@ -1136,17 +1903,17 @@ class Component {
             if (r.safe) {
               const s = r.safe;
               // SAFE arrives after the line settles, flickering on like a tube warming up
-              setTimeout(() => {
+              later(() => {
                 s.style.transition = 'opacity 0.14s linear,transform 0.5s cubic-bezier(0.19,1,0.22,1)';
                 s.style.transform = 'translateY(0) scale(1)';
-                [0, 90, 150, 260, 320].forEach((t, k) => setTimeout(() => { s.style.opacity = k % 2 ? '0.15' : '1'; }, t));
-                setTimeout(() => { s.style.opacity = '1'; }, 420);
+                [0, 90, 150, 260, 320].forEach((t, k) => later(() => { s.style.opacity = k % 2 ? '0.15' : '1'; }, t));
+                later(() => { s.style.opacity = '1'; }, 420);
               }, 620);
             }
           }
         }
       };
-      if (matchMedia('(prefers-reduced-motion: reduce)').matches) risers.forEach((r) => { r.done = true; r.line.style.opacity = '1'; r.line.style.transform = 'translateY(0)'; if (r.safe) r.safe.style.opacity = '1'; });
+      if (reduceRise) risers.forEach((r) => { if (r.hl) return; r.done = true; r.line.style.opacity = '1'; r.line.style.transform = 'translateY(0)'; if (r.safe) r.safe.style.opacity = '1'; });
       this._checkRisers = checkRisers;
       if (plateFigs.length) {
         const io = new IntersectionObserver((es) => es.forEach((e) => {
