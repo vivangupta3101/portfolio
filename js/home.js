@@ -188,8 +188,10 @@ class Component {
     window.addEventListener('scroll', onScrollShared, { passive: true });
     window.addEventListener('resize', onResize);
     // preload leak images so the expand never paints mid-decode
-    document.querySelectorAll('[data-wire]').forEach((r) => { const i = new Image(); i.src = (window.__resources && r.dataset.wireRes && window.__resources[r.dataset.wireRes]) || r.dataset.wire; });
-    document.querySelectorAll('[data-leak-img]').forEach((r) => { const i = new Image(); i.src = (window.__resources && r.dataset.leakRes && window.__resources[r.dataset.leakRes]) || r.dataset.leakImg; });
+    (window.__vgKeep || (window.__vgKeep = []));
+    document.querySelectorAll('[data-wire]').forEach((r) => { const i = new Image(); i.src = (window.__resources && r.dataset.wireRes && window.__resources[r.dataset.wireRes]) || r.dataset.wire; window.__vgKeep.push(i); if (i.decode) i.decode().catch(() => {}); });
+    document.querySelectorAll('[data-leak-img]').forEach((r) => { const i = new Image(); i.src = (window.__resources && r.dataset.leakRes && window.__resources[r.dataset.leakRes]) || r.dataset.leakImg; window.__vgKeep.push(i); if (i.decode) i.decode().catch(() => {}); });
+    document.querySelectorAll('.vg-row img').forEach((im) => { im.loading = 'eager'; if (im.decode) im.decode().catch(() => {}); });
     // custom minimal scrollbar: hidden until cursor nears the right edge or page scrolls
     const sb = document.getElementById('vg-sb');
     const sbThumb = document.getElementById('vg-sb-thumb');
@@ -753,6 +755,11 @@ class Component {
               frames: [['proto-a.webp', 34.8, 0, 42.25, 99.56], ['proto-b.webp', 77.9, 0, 21.8, 52.03], ['proto-c.webp', 78.2, 53.98, 21.2, 45.58]] }];
           if (i === 9) return { hatke: true };
           if (i === 10) return { src: 'assets/images/bitl/p10b.webp', w: 2000, h: 836 };
+          // p12: the empty black under "WELCOME TO..." is trimmed so the reel follows closely
+          if (i === 12) return { src: 'assets/images/bitl/p12c.webp', w: 2000, h: 860 };
+          // p15: the photo strip stays printed; the four renders are cut out (red outline baked in),
+          // rise in, and their screens play the logo reel in perspective
+          if (i === 15) return [{ src: 'assets/images/bitl/p15top.webp', w: 2000, h: 300 }, { renders: true }];
           // p13: the static logo under "WELCOME TO..." becomes the logo reel with its sound
           if (i === 13) return [{ reel: 'assets/videos/bitl-logo.mp4', w: 2000, h: 820 },
             { src: 'assets/images/bitl/p13b.webp', w: 2000, h: 586 }];
@@ -795,6 +802,114 @@ class Component {
       strip.style.cssText = 'width:100%;line-height:0;font-size:0';
       // the four sketch slides share one frame: each slides out to the left as the next arrives from
       // the right. Autoplay pauses on hover, where the arrows appear.
+      // BITL renders (p15): cut-out PNGs laid where the printed page had them. Each rises in when the
+      // band arrives; the screens carry one shared, muted, looping logo reel mapped onto the glass
+      // quad (render-local px: TL, TR, BR, BL) so all three play in step.
+      const makeRenders = () => {
+        const PW = 2000, PH = 1100, T0 = 300;
+        const R = [
+          { n: 1, x: 115, y: 353, w: 992, h: 477, q: [386, 95, 701, 163, 774, 306, 429, 241] },
+          { n: 2, x: 1127, y: 409, w: 758, h: 421, q: [120, 9, 396, -118, 781, -6, 456, 143] },
+          { n: 3, x: 192, y: 843, w: 679, h: 414 },
+          { n: 4, x: 893, y: 848, w: 789, h: 435, q: [171, 19, 662, 19, 715, 214, 114, 214] }
+        ];
+        const sec = document.createElement('div');
+        sec.style.cssText = 'position:relative;width:100%;aspect-ratio:' + PW + '/' + PH + ';background:#000;overflow:hidden;line-height:0';
+        const v = document.createElement('video');
+        v.src = 'assets/videos/bitl-logo.mp4'; v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto';
+        v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
+        const quad = (w, h, p) => {
+          const [x0, y0, x1, y1, x2, y2, x3, y3] = p;
+          const dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3, dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3;
+          const den = dx1 * dy2 - dx2 * dy1, g = (dx3 * dy2 - dx2 * dy3) / den, k = (dx1 * dy3 - dx3 * dy1) / den;
+          const a = x1 - x0 + g * x1, b = x3 - x0 + k * x3, d = y1 - y0 + g * y1, e = y3 - y0 + k * y3;
+          return 'matrix3d(' + [a / w, d / w, 0, g / w, b / h, e / h, 0, k / h, 0, 0, 1, 0, x0, y0, 0, 1].join(',') + ')';
+        };
+        const cvs = [], inners = [], figs = [];
+        R.forEach((r, i) => {
+          const fig = document.createElement('div');
+          fig.style.cssText = 'position:absolute;left:' + (r.x / PW * 100) + '%;top:' + ((r.y - T0) / PH * 100) + '%;width:' +
+            (r.w / PW * 100) + '%;aspect-ratio:' + r.w + '/' + r.h + ';opacity:0;transform:translateY(14%);' +
+            'transition:opacity 0.9s ease ' + (i * 0.14) + 's,transform 1.2s cubic-bezier(0.22,1,0.36,1) ' + (i * 0.14) + 's';
+          const inner = document.createElement('div');
+          inner.style.cssText = 'position:absolute;left:0;top:0;width:' + r.w + 'px;height:' + r.h + 'px;transform-origin:0 0;overflow:hidden';
+          if (r.q) {
+            const c = document.createElement('canvas');
+            c.width = 960; c.height = 540;
+            c.style.cssText = 'position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0;transform:' + quad(960, 540, r.q) +
+              ';background:#000';
+            inner.appendChild(c); cvs.push(c);
+          }
+          const img = document.createElement('img');
+          img.src = 'assets/images/bitl/render-' + r.n + '.webp'; img.alt = '';
+          img.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;display:block';
+          // the cut-out sits under the screen: the screen glass is laid over it
+          inner.insertBefore(img, inner.firstChild);
+          fig.appendChild(inner); sec.appendChild(fig);
+          inners.push([inner, r]); figs.push(fig);
+        });
+        const fit = () => inners.forEach(([el, r]) => { const s = el.parentNode.clientWidth / r.w; el.style.transform = 'scale(' + s + ')'; });
+        const ro = new ResizeObserver(fit); ro.observe(sec);
+        // glass layer, painted once in screen space so it takes the same perspective as the reel:
+        // recess shadow along the bezel, a broad diagonal sheen, a sharp window streak and a lit top lip
+        const glass = document.createElement('canvas');
+        glass.width = 960; glass.height = 540;
+        {
+          const g = glass.getContext('2d');
+          let gr = g.createLinearGradient(0, 0, 0, 90);
+          gr.addColorStop(0, 'rgba(0,0,0,0.55)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+          g.fillStyle = gr; g.fillRect(0, 0, 960, 90);
+          gr = g.createLinearGradient(0, 0, 70, 0);
+          gr.addColorStop(0, 'rgba(0,0,0,0.45)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+          g.fillStyle = gr; g.fillRect(0, 0, 70, 540);
+          gr = g.createLinearGradient(960, 0, 900, 0);
+          gr.addColorStop(0, 'rgba(0,0,0,0.3)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+          g.fillStyle = gr; g.fillRect(890, 0, 70, 540);
+          // broad sheen: a soft lit wedge from the top-left, cut by a hard diagonal like the studio render
+          g.save();
+          g.beginPath(); g.moveTo(0, 0); g.lineTo(620, 0); g.lineTo(150, 540); g.lineTo(0, 540); g.closePath(); g.clip();
+          gr = g.createLinearGradient(0, 0, 520, 360);
+          gr.addColorStop(0, 'rgba(255,255,255,0.22)'); gr.addColorStop(0.6, 'rgba(255,255,255,0.07)'); gr.addColorStop(1, 'rgba(255,255,255,0.02)');
+          g.fillStyle = gr; g.fillRect(0, 0, 960, 540);
+          g.restore();
+          // thin window streak
+          g.save();
+          g.beginPath(); g.moveTo(700, 0); g.lineTo(760, 0); g.lineTo(330, 540); g.lineTo(300, 540); g.closePath(); g.clip();
+          gr = g.createLinearGradient(0, 0, 0, 540);
+          gr.addColorStop(0, 'rgba(255,255,255,0.18)'); gr.addColorStop(1, 'rgba(255,255,255,0.03)');
+          g.fillStyle = gr; g.fillRect(0, 0, 960, 540);
+          g.restore();
+          // lit lip along the top edge of the glass
+          gr = g.createLinearGradient(0, 0, 960, 0);
+          gr.addColorStop(0, 'rgba(255,255,255,0.05)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.35)'); gr.addColorStop(1, 'rgba(255,255,255,0.08)');
+          g.fillStyle = gr; g.fillRect(0, 0, 960, 3);
+          // hot spot
+          gr = g.createRadialGradient(170, 90, 0, 170, 90, 260);
+          gr.addColorStop(0, 'rgba(255,255,255,0.10)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+          g.fillStyle = gr; g.fillRect(0, 0, 960, 540);
+        }
+        let raf = 0, live = false, shown = false;
+        const draw = () => {
+          raf = requestAnimationFrame(draw);
+          if (v.readyState < 2) return;
+          cvs.forEach(c => {
+            const x = c.getContext('2d');
+            x.globalCompositeOperation = 'source-over';
+            x.drawImage(v, 0, 0, 960, 540);
+            x.drawImage(glass, 0, 0);
+          });
+        };
+        const io = new IntersectionObserver(es => es.forEach(e => {
+          if (e.isIntersecting && !shown && e.intersectionRatio > 0.12) {
+            shown = true; figs.forEach(f => { f.style.opacity = '1'; f.style.transform = 'none'; });
+          }
+          if (e.isIntersecting && !live) { live = true; v.play().catch(() => {}); raf = requestAnimationFrame(draw); }
+          else if (!e.isIntersecting && live) { live = false; v.pause(); cancelAnimationFrame(raf); }
+        }), { threshold: [0, 0.12, 0.5] });
+        io.observe(sec);
+        const reap = setInterval(() => { if (!sec.isConnected && shown !== null) { if (document.getElementById('vg-reader')) return; io.disconnect(); ro.disconnect(); cancelAnimationFrame(raf); v.pause(); v.removeAttribute('src'); v.load(); clearInterval(reap); } }, 1000);
+        return sec;
+      };
       const makeCarousel = (it) => {
         const root = document.createElement('div');
         const cw = it.crop ? it.crop[1] - it.crop[0] : 1;
@@ -1030,13 +1145,13 @@ class Component {
         aha.appendChild(mk('div', PIX + 'color:#f3323f;font-size:clamp(48px,8vw,150px);line-height:1;letter-spacing:0.02em', 'ahaaaa.'));
         aha.appendChild(mk('p', 'margin:0;' + MONO + 'color:#f4f4f4;font-size:clamp(18px,2vw,38px);line-height:1.3', 'That feels right.'));
         const fin = mk('div', 'position:absolute;inset:0;pointer-events:none');
-        const cadBox = mk('div', 'position:absolute;right:4vw;top:50%;width:min(44vw,82vh);display:flex;flex-direction:column;gap:2.4vh;will-change:transform,opacity');
+        const cadBox = mk('div', 'position:absolute;right:5vw;top:50%;width:min(38vw,74vh);display:flex;flex-direction:column;gap:4vh;will-change:transform,opacity');
         const cad = mk('img', 'display:block;width:100%;height:auto;' +
           '-webkit-mask-image:linear-gradient(to bottom,transparent,#000 20%),linear-gradient(to left,transparent,#000 20%),linear-gradient(to top,transparent,#000 5%);-webkit-mask-composite:source-in;' +
           'mask-image:linear-gradient(to bottom,transparent,#000 20%),linear-gradient(to left,transparent,#000 20%),linear-gradient(to top,transparent,#000 5%);mask-composite:intersect');
         cad.src = B + 'hatke-cad-cut.webp'; cad.alt = 'CAD render of the grip'; cad.decoding = 'async';
         // cardboard tests gathered on the left: the tall hand shot beside the two table shots
-        const grid = mk('div', 'position:absolute;left:4vw;top:50%;width:min(48vw,100vh);height:min(78vh,40vw);display:grid;' +
+        const grid = mk('div', 'position:absolute;left:4vw;top:50%;width:min(44vw,92vh);height:min(78vh,40vw);display:grid;' +
           'grid-template-columns:0.72fr 1fr;grid-template-rows:1fr 1fr;gap:12px;will-change:transform,opacity');
         const CORN = [['hatke-3.webp', 'grid-row:1 / span 2', 'Holding the Orbit grip'],
           ['hatke-1.webp', '', 'Cardboard frame on Orbit tubs'],
@@ -1049,7 +1164,7 @@ class Component {
         });
         fin.appendChild(grid);
         cadBox.appendChild(cad);
-        cadBox.appendChild(mk('p', 'margin:0;' + MONO + 'color:#f4f4f4;font-size:clamp(15px,1.3vw,24px);line-height:1.45;text-wrap:pretty',
+        cadBox.appendChild(mk('p', 'margin:0 0 0 6%;max-width:40ch;' + MONO + 'color:#f4f4f4;font-size:clamp(15px,1.3vw,24px);line-height:1.5;text-wrap:pretty',
           "The Orbit's ellipse felt like the perfect shape contour in the position, which I quickly tested and then replicated on the inner side of my design."));
         fin.appendChild(cadBox);
         [row, b1, b2, l3, aha, sub0, title, fin].forEach((e) => pin.appendChild(e));
@@ -1571,13 +1686,17 @@ class Component {
         }
         if (it.sketchStory) { strip.appendChild(makeSketchStory()); return; }
         if (it.hatke) { strip.appendChild(makeHatke()); return; }
+        if (it.renders) { strip.appendChild(makeRenders()); return; }
         if (it.reel) {
           const box = document.createElement('div');
-          box.style.cssText = 'position:relative;width:100%;aspect-ratio:' + it.w + '/' + it.h + ';background:#000;overflow:hidden;line-height:0';
+          box.style.cssText = 'position:relative;width:100%;background:#000;overflow:hidden;line-height:0;display:flex;align-items:center;justify-content:center;margin-bottom:-1px';
           const v = document.createElement('video');
           v.src = it.reel; v.preload = 'auto'; v.playsInline = true; v.setAttribute('playsinline', '');
-          v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover';
+          v.style.cssText = 'display:block;width:min(100%,150vh);height:auto;aspect-ratio:16/9;object-fit:contain;clip-path:inset(1px)';
           box.appendChild(v); strip.appendChild(box);
+          const gap = document.createElement('div');
+          gap.style.cssText = 'width:100%;height:16vh;background:#000';
+          strip.appendChild(gap);
           // plays (with sound — the reader was opened by a click) each time it scrolls into view
           let on = false;
           const chk = () => {
@@ -2406,24 +2525,41 @@ class Component {
       });
       return found;
     };
+    // fast scrolling: tiles flick past the resting cursor, and each would start its expand (photo
+    // fades to glass) only to be abandoned a frame later — that is the grey flash. Hold new enters
+    // until the page settles; leaving still happens at once.
+    let lastY = window.scrollY, lastT = performance.now(), fastUntil = 0, settleT = 0;
+    const onScrollSpeed = () => {
+      const now = performance.now(), y = window.scrollY;
+      const v = Math.abs(y - lastY) / Math.max(1, now - lastT);
+      lastY = y; lastT = now;
+      if (v > 0.6) {
+        fastUntil = now + 160;
+        clearTimeout(settleT);
+        settleT = setTimeout(() => { if (this._syncHover) this._syncHover(); }, 180);
+      }
+    };
+    window.addEventListener('scroll', onScrollSpeed, { passive: true });
     const setHover = (row, pt) => {
       // while a project is opening/open the hover layers are owned by the reveal; drop the tracked
       // row so the first hover after it closes counts as a fresh enter
       if (this._locked) { hoverRow = null; return; }
+      // the cursor shape always follows the tile under it, even mid-scroll; only the tile's expand
+      // waits for the page to settle
+      const bc = row && BALL_CLS[row.getAttribute('data-screen-label')];
+      if (ball) Object.values(BALL_CLS).forEach((c) => { if (c !== bc) ball.classList.remove(c); });
+      if (bc && ball) ball.classList.add(bc);
+      if (row && !TOUCH && performance.now() < fastUntil) row = null;
       if (row === hoverRow) return;
       if (hoverRow) {
         const prev = HOVER.get(hoverRow);
         if (prev) prev.leave();
-        const c0 = BALL_CLS[hoverRow.getAttribute('data-screen-label')];
-        if (c0 && ball) ball.classList.remove(c0);
       }
       hoverRow = row;
       if (row) {
         const p = pt || this._pt;
         const nxt = HOVER.get(row);
         if (nxt) nxt.enter(p ? { clientX: p.x, clientY: p.y } : null);
-        const c1 = BALL_CLS[row.getAttribute('data-screen-label')];
-        if (c1 && ball) ball.classList.add(c1);
       }
     };
     this._syncHover = () => {
@@ -2449,9 +2585,9 @@ class Component {
     }, true);
     let hoverRafPending = false;
     const queueSync = () => {
-      if (window.__vgBusy || hoverRafPending) return;
+      if (hoverRafPending) return;
       hoverRafPending = true;
-      requestAnimationFrame(() => { hoverRafPending = false; this._syncHover(); });
+      requestAnimationFrame(() => { hoverRafPending = false; if (!window.__vgBusy) this._syncHover(); });
     };
     window.addEventListener('scroll', queueSync, { passive: true });
     window.addEventListener('wheel', queueSync, { passive: true });
