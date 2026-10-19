@@ -723,7 +723,7 @@ class Component {
         imgs: [{ src: 'assets/images/watchmaker/cover.webp', w: 2880, h: 1620 }].concat(Array.from({ length: 12 }, (_, i) => ({
           src: 'assets/images/watchmaker/p' + String(i).padStart(2, '0') + '.webp', w: 2880, h: i === 11 ? 1622 : 1632 }))) },
       '#bitl': { bg: '#000000', ink: '#f4f4f4', label: 'BITL', first: 'assets/images/bitl/p00.webp', hero: 'bitl',
-        imgs: Array.from({ length: 14 }, (_, k) => { const i = k + 2; const it = { src: 'assets/images/bitl/p' + String(i).padStart(2, '0') + '.webp' + (i === 11 ? '?v=20261018a' : ''), w: 2745,
+        imgs: Array.from({ length: 14 }, (_, k) => { const i = k + 2; const it = { src: 'assets/images/bitl/p' + String(i).padStart(2, '0') + '.webp' + (i === 11 ? '?v=20261019a' : ''), w: 2745,
           h: i < 7 ? 1839 : i === 7 ? 1830 : i < 15 ? 1930 : 1922 };
           // the mood-board page leaves an empty column under its first image: the caption sits there,
           // and the line that turns the argument follows the page before the re-mood board
@@ -889,15 +889,20 @@ class Component {
           g.fillStyle = gr; g.fillRect(0, 0, 960, 540);
         }
         let raf = 0, live = false, shown = false;
+        const ctxs = cvs.map((c) => c.getContext('2d'));
+        const paint = () => ctxs.forEach((x) => { x.drawImage(v, 0, 0, 960, 540); x.drawImage(glass, 0, 0); });
+        // one paint per decoded video frame (not per display frame) where the browser can say when that is
+        const VFC = typeof v.requestVideoFrameCallback === 'function';
+        let vfcOn = false;
         const draw = () => {
+          if (VFC) {
+            if (vfcOn) return;
+            vfcOn = true;
+            v.requestVideoFrameCallback(function cb() { if (!live) { vfcOn = false; return; } paint(); v.requestVideoFrameCallback(cb); });
+            return;
+          }
           raf = requestAnimationFrame(draw);
-          if (v.readyState < 2) return;
-          cvs.forEach(c => {
-            const x = c.getContext('2d');
-            x.globalCompositeOperation = 'source-over';
-            x.drawImage(v, 0, 0, 960, 540);
-            x.drawImage(glass, 0, 0);
-          });
+          if (v.readyState >= 2) paint();
         };
         const io = new IntersectionObserver(es => es.forEach(e => {
           if (e.isIntersecting && !shown && e.intersectionRatio > 0.12) {
@@ -1118,6 +1123,7 @@ class Component {
             'transition:transform 0.7s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s ease,filter 0.6s ease');
           const im = mk('img', 'display:block;height:100%;width:auto');
           im.src = B + src; im.alt = alt; im.decoding = 'async';
+          im.addEventListener('load', () => { layout(); onS(); });
           w.appendChild(im); row.appendChild(w);
           return w;
         });
@@ -1172,8 +1178,13 @@ class Component {
         const cl = (v) => Math.max(0, Math.min(1, v));
         const ease = (t) => t * t * (3 - 2 * t);
         const seg = (p, a, b) => ease(cl((p - a) / (b - a)));
-        let stepPx = 1, popped = -1;
-        const layout = () => { stepPx = Math.round(innerHeight * 0.8); outer.style.height = (innerHeight + N * stepPx) + 'px'; };
+        let stepPx = 1, popped = -1, tH = 0, OX = 0, OY = 0, RW = 0, RH = 0, lastZ = -1;
+        // measured once per resize / image load: reading them per scroll frame after the writes forced a layout every frame
+        const layout = () => {
+          stepPx = Math.round(innerHeight * 0.8); outer.style.height = (innerHeight + N * stepPx) + 'px';
+          tH = title.offsetHeight; OX = orbit.offsetLeft + orbit.offsetWidth / 2; OY = orbit.offsetTop + orbit.offsetHeight / 2;
+          RW = row.clientWidth; RH = row.clientHeight; ringW = 0; sizeRing();
+        };
         const frame = () => {
           q = false;
           const r = outer.getBoundingClientRect();
@@ -1181,7 +1192,6 @@ class Component {
           const p = Math.max(0, -r.top) / stepPx;
           // title: centre -> header
           const up = seg(p, 0.3, 1.0), vh = innerHeight;
-          const tH = title.offsetHeight;
           title.style.transform = 'translate(-50%,' + ((1 - up) * (-tH / 2 - vh * 0.03) + up * (-vh * 0.5 + vh * 0.07)).toFixed(1) + 'px) scale(' + (1 - up * 0.45).toFixed(3) + ')';
           title.style.opacity = String(1 - seg(p, 6.4, 6.8));
           sub0.style.transform = 'translate(-50%,' + (tH / 2 + vh * 0.02 - up * 40).toFixed(1) + 'px)';
@@ -1205,14 +1215,12 @@ class Component {
               o.style.opacity = j <= k ? '1' : '0'; o.style.transform = j <= k ? 'scale(1)' : 'scale(0) translateY(20%)';
             });
           }
-          objs.forEach((o, j) => { if (j < 3) o.style.filter = 'brightness(' + (1 - zoom).toFixed(3) + ') blur(' + (zoom * 4).toFixed(2) + 'px)'; });
+          if (zoom !== lastZ) { lastZ = zoom; const fv = zoom > 0.0005 ? 'brightness(' + (1 - zoom).toFixed(3) + ') blur(' + (zoom * 4).toFixed(2) + 'px)' : ''; objs.forEach((o, j) => { if (j < 3) o.style.filter = fv; }); }
           // soft zoom onto the Orbit tub
-          const ox = orbit.offsetLeft + orbit.offsetWidth / 2, oy = orbit.offsetTop + orbit.offsetHeight / 2;
-          const W = row.clientWidth, s = 1 + zoom * 0.45;
+          const ox = OX, oy = OY, W = RW, s = 1 + zoom * 0.45;
           row.style.transformOrigin = ox + 'px ' + oy + 'px';
-          row.style.transform = 'translate(' + (zoom * (W * 0.5 - ox)).toFixed(1) + 'px,' + (zoom * (row.clientHeight * 0.5 - oy + vh * 0.04)).toFixed(1) + 'px) scale(' + s.toFixed(3) + ')';
+          row.style.transform = 'translate(' + (zoom * (W * 0.5 - ox)).toFixed(1) + 'px,' + (zoom * (RH * 0.5 - oy + vh * 0.04)).toFixed(1) + 'px) scale(' + s.toFixed(3) + ')';
           row.style.opacity = String(1 - gone);
-          sizeRing();
           const dr = seg(p, 4.4, 5.4);
           ringR.style.opacity = dr > 0.001 ? '1' : '0';
           ringR.setAttribute('stroke-dashoffset', ((1 - dr) * ringL).toFixed(1));
@@ -1235,6 +1243,7 @@ class Component {
         ov.addEventListener('scroll', onS, { passive: true });
         addEventListener('resize', () => { layout(); onS(); });
         requestAnimationFrame(() => { layout(); frame(); });
+        if (document.fonts) document.fonts.ready.then(() => { layout(); onS(); });
         return outer;
       };
 
@@ -1508,7 +1517,12 @@ class Component {
           stage.style.width = W + 'px'; stage.style.height = (W / R) + 'px';
           const at = 'max(1.5%,calc(50% - ' + (W / 2) + 'px - 100px))';
           prev.style.left = at; next.style.right = at;
+          measureSO(); TM = []; ttls.forEach((_, j) => measureT(j));
         };
+        let TM = [], SO = { x: 0, y: 0, w: 0, h: 0 };
+        const measureSO = () => { const pr = pin.getBoundingClientRect(), sr = stage.getBoundingClientRect(); SO = { x: sr.left - pr.left, y: sr.top - pr.top, w: sr.width, h: sr.height }; };
+        const measureT = (j) => { const t = ttls[j]; return (TM[j] = { w: t.offsetWidth, h: t.offsetHeight,
+          ts: Math.min(1, (parseFloat(getComputedStyle(sub).fontSize) * 1.9) / parseFloat(getComputedStyle(t).fontSize)) }); };
         const lerp = (a, b, t) => a + (b - a) * t;
         const ease = (t) => t * t * (3 - 2 * t);
         let shown = '';
@@ -1519,7 +1533,7 @@ class Component {
           paper.style.opacity = '0';
           clearTimeout(setLabel.t);
           setLabel.t = setTimeout(() => {
-            if (L) { sub.textContent = L[0]; notes.textContent = L[1] || ''; paper.style.opacity = '1'; }
+            if (L) { sub.textContent = L[0]; notes.textContent = L[1] || ''; paper.style.opacity = '1'; requestAnimationFrame(() => { measureSO(); onS(); }); }
           }, 260);
         };
         const frame = () => {
@@ -1553,12 +1567,11 @@ class Component {
             if (on !== fbOn) { fbOn = on; if (on) fbRoutes.forEach((f) => f()); fbInk.forEach((o) => (on ? o.on() : o.off())); }
           }
           {
-            const pr = pin.getBoundingClientRect(), sr = stage.getBoundingClientRect();
             ttls.forEach((ttl, j) => {
               const TI = TIs[j], NX = TIs[j + 1] != null ? TIs[j + 1] : Infinity;
-              const tw = ttl.offsetWidth, th = ttl.offsetHeight;
-              const cx = sr.left - pr.left + sr.width / 2 - tw / 2, cy = sr.top - pr.top + sr.height / 2 - th / 2;
-              const ts = Math.min(1, (parseFloat(getComputedStyle(sub).fontSize) * 1.9) / parseFloat(getComputedStyle(ttl).fontSize));
+              const m = TM[j] || measureT(j);
+              const tw = m.w, th = m.h, ts = m.ts;
+              const cx = SO.x + SO.w / 2 - tw / 2, cy = SO.y + SO.h / 2 - th / 2;
               const tx = innerWidth * 0.04, ty = innerHeight * 0.09;
               let u = 0, op = 0;                                 // u: 0 centred, 1 in the heading slot
               if (A.page < TI && Bs.page === TI) op = e;
@@ -1584,6 +1597,7 @@ class Component {
         ov.addEventListener('scroll', onS, { passive: true });
         addEventListener('resize', () => { layout(); fbRoutes.forEach((f) => f()); onS(); });
         requestAnimationFrame(() => { layout(); frame(); });
+        if (document.fonts) document.fonts.ready.then(() => { layout(); onS(); });
         return wrap;
       };
 
@@ -2082,6 +2096,13 @@ class Component {
         ov.style.transition = 'none';
         void ov.getBoundingClientRect();
         ov.style.opacity = '1';
+        // the reader is opaque: the home page under it (hero video, blurred nav, tiles) stops painting and decoding
+        setTimeout(() => {
+          if (!ov.isConnected || !this._readerOpen) return;
+          document.documentElement.classList.add('vg-reader-on');
+          this._underVids = Array.from(document.querySelectorAll('video')).filter((v) => !ov.contains(v) && !v.paused);
+          this._underVids.forEach((v) => v.pause());
+        }, 320);
       };
       if (first) {
         const ready = first.decode ? first.decode() : Promise.resolve();
@@ -2091,6 +2112,9 @@ class Component {
       const close = (e) => {
         if (e) e.preventDefault();
         this._readerOpen = false;
+        document.documentElement.classList.remove('vg-reader-on');
+        (this._underVids || []).forEach((v) => { v.play().catch(() => {}); });
+        this._underVids = null;
         if (this._hero) { this._hero.destroy(); this._hero = null; }
         if (this._readerScrollReset) this._readerScrollReset(null);
         document.removeEventListener('keydown', onKey);

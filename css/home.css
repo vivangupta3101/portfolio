@@ -163,3 +163,6 @@ body.vg-focus .vg-row.vg-expand { -webkit-backdrop-filter: none !important; back
   .vg-hud-l { left: 40px !important; }
   .vg-hud-r { right: 40px !important; }
 }
+
+/* reader open: the opaque overlay hides the home page, so it is not painted underneath */
+html.vg-reader-on body > :is(header, section, main, footer, nav, #vg-index, #vg-sb, #vg-leak) { visibility: hidden !important; }

@@ -104,7 +104,10 @@ window.mountBitlHero = function () {
   const lite = matchMedia('(prefers-reduced-motion: reduce)').matches || matchMedia('(hover: none)').matches;
   let px = innerWidth * 0.5, py = innerHeight * 0.7;
   let moved = true;
-  const onMove = (e) => { px = e.clientX; py = e.clientY; moved = true; };
+  const onMove = (e) => { px = e.clientX; py = e.clientY; moved = true; kick(); };
+  // the loop only runs while something is changing: cursor moves, a scroll, or a trail still fading
+  function kick() { if (!raf && !dead) raf = requestAnimationFrame(frame); }
+  const onScrollK = () => { moved = true; kick(); };
   addEventListener('mousemove', onMove, { passive: true });
 
   let raf = 0, dead = false, started = false;
@@ -115,6 +118,7 @@ window.mountBitlHero = function () {
   // only once page 1 has scrolled away so the two never draw the cursor twice
   const roam = el('canvas', 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:8005;' +
     'mix-blend-mode:screen;opacity:0;transition:opacity 0.35s ease;display:none');
+  roam.id = 'vg-roam';
   const rctx = roam.getContext('2d');
 
   const stroke = (c, w, hgt, map, gate) => {
@@ -137,8 +141,11 @@ window.mountBitlHero = function () {
   let live = 0, roamOn = false, coverOn = null;
   function frame() {
     if (dead) return;
-    raf = requestAnimationFrame(frame);
+    raf = 0;
+    // every read first, then the writes: no forced layout mid-frame
+    checkRise();
     const r = stage.getBoundingClientRect();
+    const r2 = stage2.getBoundingClientRect();
     const scrolled = r.top !== frame._t; frame._t = r.top;
 
     // the tip eases toward the cursor rather than snapping, so a fast turn rounds off instead of
@@ -167,7 +174,6 @@ window.mountBitlHero = function () {
         (p, h) => Math.max(0, Math.min(1, (p.y / h - 0.52) / 0.22))); // only over the grid
     }
 
-    const r2 = stage2.getBoundingClientRect();
     if (dirty && r2.width && r2.bottom > 0 && r2.top < innerHeight) spot2.move(r2, px - r2.left, py - r2.top);
 
     if (coverOn !== onCover) {
@@ -183,7 +189,10 @@ window.mountBitlHero = function () {
     } else if (onCover && roamOn) { roamOn = false; setTimeout(() => { if (coverOn) roam.style.display = 'none'; }, 400); }
 
     pts.forEach((p) => { p.a *= 0.945; });
-    checkRise();
+    // an empty screen-blend canvas still costs a full-viewport composite: hide it once the trail is gone
+    const vis = alive || live > 0 ? 'visible' : 'hidden';
+    if (trail.style.visibility !== vis) { trail.style.visibility = vis; roam.style.visibility = vis; }
+    if (alive || live > 0) kick();
   }
 
   // the statement rises once it is actually on screen. A scroll check rather than an
@@ -209,8 +218,8 @@ window.mountBitlHero = function () {
     line.style.transform = 'translateY(0)'; started = true;
   } else {
     document.body.appendChild(roam);
-    raf = requestAnimationFrame(frame);
-    addEventListener('scroll', checkRise, { passive: true, capture: true });
+    kick();
+    addEventListener('scroll', onScrollK, { passive: true, capture: true });
   }
 
   return {
@@ -219,7 +228,7 @@ window.mountBitlHero = function () {
       dead = true;
       cancelAnimationFrame(raf);
       roam.remove();
-      removeEventListener('scroll', checkRise, true);
+      removeEventListener('scroll', onScrollK, true);
       removeEventListener('mousemove', onMove);
     }
   };

@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap">
-<link rel="stylesheet" href="css/home.css?v=20261018c">
+<link rel="stylesheet" href="css/home.css?v=20261019a">
 </head>
 <body>
 <div id="vg-intro" style="display: none; position: fixed; inset: 0; z-index: 9999; background: #000000; align-items: center; justify-content: center">
@@ -26,8 +26,8 @@
   <img id="vg-intro-mark" src="assets/images/logo-mark-light.webp" alt="" width="194" height="168" style="position: absolute; width: 194px; height: 168px; opacity: 0; transform-origin: left top; will-change: transform, opacity">
 
 </div>
-<script src="js/smooth-scroll.js?v=20261018b"></script>
-<script src="js/intro.js?v=20261018b"></script>
+<script src="js/smooth-scroll.js?v=20261019a"></script>
+<script src="js/intro.js?v=20261019a"></script>
 <script>
 // returning from a project page that isn't the in-page reader (e.g. watchmaker.html): cover the
 // screen with its cover image immediately, before the grid paints, then home.js shrinks it down
@@ -55,7 +55,17 @@
 })();
 </script>
 
-<link rel="preload" as="image" href="assets/images/pasted-1784884557335-0-x.webp"><link rel="preload" as="image" href="assets/images/pasted-1784891319683-0-x.webp"><link rel="preload" as="image" href="assets/images/pasted-1784891346988-0-x.webp"><link rel="preload" as="image" href="assets/images/watchmaker/cover.webp"><link rel="preload" as="image" href="assets/images/aeron/cover-shield-v4.webp"><link rel="preload" as="image" href="assets/images/watchmaker-silhouette.webp"><link rel="preload" as="image" href="assets/images/bitl-silhouette.webp"><link rel="preload" as="image" href="assets/images/mobius-silhouette.webp"><link rel="preload" as="image" href="assets/images/strahl-silhouette.webp">
+<link rel="preload" as="image" href="assets/images/pasted-1784884557335-0-x.webp"><link rel="preload" as="image" href="assets/images/kirmada/cover.webp"><link rel="preload" as="image" href="assets/images/pasted-1784891319683-0-x.webp"><link rel="preload" as="image" href="assets/images/pasted-1784891346988-0-x.webp"><link rel="preload" as="image" href="assets/images/watchmaker/cover.webp"><link rel="preload" as="image" href="assets/images/aeron/cover-shield-v4.webp"><link rel="preload" as="image" href="assets/images/watchmaker-silhouette.webp"><link rel="preload" as="image" href="assets/images/bitl-silhouette.webp"><link rel="preload" as="image" href="assets/images/mobius-silhouette.webp"><link rel="preload" as="image" href="assets/images/strahl-silhouette.webp">
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <filter id="kir-mist" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.008 0.014" numOctaves="2" seed="3" result="n">
+      <animate attributeName="baseFrequency" dur="14s" values="0.008 0.014;0.011 0.018;0.008 0.014" repeatCount="indefinite"></animate>
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="26" xChannelSelector="R" yChannelSelector="G">
+      <animate attributeName="scale" dur="9s" values="18;34;18" repeatCount="indefinite"></animate>
+    </feDisplacementMap>
+  </filter>
+</svg>
 <svg width="0" height="0" style="position: absolute" aria-hidden="true">
   <filter id="vg-edge" color-interpolation-filters="sRGB">
     <feColorMatrix type="saturate" values="0"></feColorMatrix>
@@ -77,6 +87,25 @@
   </div>
 </div>
 <div id="vg-full" style="position: fixed; inset: 0; z-index: 30; background-position: center; background-size: cover; background-repeat: no-repeat; opacity: 0; transition: opacity 0.9s ease; pointer-events: none"></div>
+<script>
+(function () {
+  var full = document.getElementById('vg-full'); if (!full) return;
+  var M = "radial-gradient(ellipse 9% 12% at 28% 34%, #000 30%, transparent 100%), radial-gradient(ellipse 7% 9% at 72% 48%, #000 30%, transparent 100%), radial-gradient(ellipse 18% 16% at 76% 86%, #000 30%, transparent 100%), radial-gradient(ellipse 10% 8% at 36% 66%, #000 30%, transparent 100%), radial-gradient(ellipse 12% 8% at 34% 96%, #000 30%, transparent 100%)";
+  var mist = null;
+  function sync() {
+    var on = /kirmada\/cover/.test(full.style.backgroundImage || '');
+    if (on && !mist) {
+      mist = document.createElement('div');
+      mist.setAttribute('aria-hidden', 'true');
+      mist.style.cssText = 'position:absolute;inset:0;pointer-events:none;background:url("assets/images/kirmada/cover.webp") no-repeat;background-size:cover;filter:url(#kir-mist);-webkit-mask-image:' + M + ';mask-image:' + M;
+      full.appendChild(mist);
+    } else if (!on && mist) { mist.remove(); mist = null; }
+    if (mist) mist.style.backgroundPosition = full.style.backgroundPosition || 'center';
+  }
+  new MutationObserver(sync).observe(full, { attributes: true, attributeFilter: ['style'] });
+  sync();
+})();
+</script>
 <div id="vg-ball"><div class="vg-ball-inner"></div></div>
 <div id="vg-index">
   <span class="vg-idx-head" style="font-size: 15px; letter-spacing: 0.42em; font-weight: 500; margin-bottom: 36px; color: #ec7e41">CATEGORIES</span>
@@ -299,6 +328,23 @@ var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isInter
     </div>
   </div>
 
+  <div class="vg-proj" data-cat="personal" style="display: flex; flex-direction: row; align-items: center; gap: 56px" data-ink="light">
+    <a href="#kirmada" class="vg-row vg-reveal" data-leak="#6e0a0c" data-leak-img="assets/images/kirmada/cover.webp" data-screen-label="Kirmada" style="position: relative; display: block; flex: 0 0 68%; overflow: hidden; aspect-ratio: 1.9 / 1; border-radius: 20px; background: #6e0a0c">
+    <div class="vg-win" style="position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background: #6e0a0c url('assets/images/kirmada/cover.webp') center / cover no-repeat"></div>
+    <div class="vg-scrim" style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 38%)"></div>
+    <div class="vg-cap" style="position: absolute; left: 0; right: 0; bottom: 0; padding: 32px 40px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; color: #ffffff">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span class="vg-t" style="font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(40px, 4.6vw, 68px); font-weight: 600; letter-spacing: 0.01em; line-height: 1.05; color: #ffffff">KIRMADA</span>
+      </div>
+      <span class="vg-arrow" style="font-size: 26px; color: #ffffff">→</span>
+    </div>
+  </a>
+    <div class="vg-reveal" style="flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: right">
+      <span style="font-size: 12px; letter-spacing: 0.22em; color: #9a968e; font-weight: 500">PERSONAL PROJECT</span>
+      <p style="margin: 0; font-family: 'neuzeit-grotesk', 'DIN Neuzeit Grotesk', Jost, 'Helvetica Neue', sans-serif; font-size: clamp(20px, 2vw, 28px); line-height: 1.35; color: #131313; text-wrap: pretty">KIRMADA</p>
+    </div>
+  </div>
+
   <div class="vg-proj" data-cat="complex" style="display: flex; flex-direction: row; align-items: center; gap: 56px" data-ink="dark">
     <a href="#strahl" class="vg-row vg-reveal" data-leak="#f2e3cb" data-leak-img="assets/images/pasted-1784891346988-0-x.webp" data-leak-res="leakStrahl" data-screen-label="StrahL" style="position: relative; display: block; flex: 0 0 68%; overflow: hidden; aspect-ratio: 1.9 / 1; border-radius: 20px; background: #efefec">
     <div class="vg-win" style="position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; background: url('assets/images/pasted-1784891346988-0-x.webp') center / cover no-repeat"></div>
@@ -463,16 +509,17 @@ var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isInter
   <span style="font-size: 12px; color: #999999">Vivan Gupta © 2026</span>
 </footer>
 
-<script src="js/bitl-live.js?v=20261018b"></script>
-<script src="js/scrollwords.js?v=20261018b"></script>
-<script src="js/statement.js?v=20261018b"></script>
-<script src="js/trace-baked.js?v=20261018b"></script>
-<script src="js/hero-overlay.js?v=20261018b"></script>
-<script src="js/proj-graphics.js?v=20261018b"></script>
-<script src="js/logo-flow.js?v=20261018b"></script>
-<script src="js/title-tilt.js?v=20261018b"></script>
-<script src="js/title-matte.js?v=20261018b"></script>
-<script src="js/home.js?v=20261018b"></script>
-<script src="js/phone.js?v=20261018b"></script>
+<script src="js/bitl-live.js?v=20261019a"></script>
+<script src="js/scrollwords.js?v=20261019a"></script>
+<script src="js/statement.js?v=20261019a"></script>
+<script src="js/trace-baked.js?v=20261019a"></script>
+<script src="js/hero-overlay.js?v=20261019a"></script>
+<script src="js/proj-graphics.js?v=20261019a"></script>
+<script src="js/logo-flow.js?v=20261019a"></script>
+<script src="js/title-tilt.js?v=20261019a"></script>
+<script src="js/title-matte.js?v=20261019a"></script>
+<script src="js/home.js?v=20261019a"></script>
+<script src="js/phone.js?v=20261019a"></script>
+<script src="js/warm.js?v=20261019a"></script>
 </body>
 </html>
