@@ -422,14 +422,14 @@
         '@keyframes vgRotArc{0%,14%{opacity:0}26%,40%{opacity:1}50%,100%{opacity:0}}';
       document.head.appendChild(rk);
       var rot = document.createElement('div');
-      rot.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:26px;transition:opacity 0.4s ease';
+      rot.setAttribute('data-rot', ''); rot.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:26px;transition:opacity 0.4s ease';
       rot.innerHTML = '<div style="position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center">' +
         '<div style="width:20px;height:34px;border:1.5px solid rgba(255,255,255,0.85);border-radius:4px;box-sizing:border-box;position:relative;animation:vgRot 2.8s cubic-bezier(0.65,0,0.35,1) infinite">' +
         '<span style="position:absolute;left:50%;bottom:3px;width:6px;height:1.5px;margin-left:-3px;background:#ec7e41"></span></div>' +
         '<span style="position:absolute;inset:0;border:1.5px solid transparent;border-top-color:#ec7e41;border-left-color:#ec7e41;border-radius:50%;transform:rotate(-20deg);animation:vgRotArc 2.8s ease infinite"></span></div>' +
-        '<div style="' + FACE + ';font-size:12px;letter-spacing:0.2em;color:rgba(255,255,255,0.6)">Rotate for landscape</div>';
+        '<div style="' + FACE + ';font-size:12px;letter-spacing:0.2em;color:rgba(255,255,255,0.6);text-align:center;max-width:80vw;line-height:1.5">Rotate your phone for the best experience</div>';
       loader.appendChild(rot);
-      var hideRot = function () { if (matchMedia('(orientation: landscape)').matches) rot.style.opacity = '0'; else rot.style.opacity = '1'; };
+      var hideRot = function () { rot.style.opacity = (loaded || matchMedia('(orientation: landscape)').matches) ? '0' : '1'; };
       window.addEventListener('resize', hideRot);
     }
     var fill = loader.querySelector('[data-fill]');
@@ -479,6 +479,8 @@
     var showGate = function () {
       if (loaded) return; loaded = true;
       shown = 1; fill.style.transform = 'scaleX(1)';
+      // the rotate hint belongs to the loading bar only: it goes as soon as the bar is full
+      var rh = loader.querySelector('[data-rot]'); if (rh) { rh.style.transition = 'opacity 0.25s ease'; rh.style.opacity = '0'; }
       setTimeout(function () {
         // the bar clears first, then the choice comes up on clean black
         loader.style.opacity = '0';
