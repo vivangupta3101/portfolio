@@ -1094,7 +1094,7 @@ class Component {
         const N = 8;
         const mk = (tag, css, txt) => { const e = document.createElement(tag); e.style.cssText = css; if (txt) e.textContent = txt; return e; };
         const outer = mk('div', 'position:relative;width:100%;background:#000');
-        const pin = mk('div', 'position:sticky;top:0;height:100vh;overflow:hidden;background:#000;line-height:normal');
+        const pin = mk('div', 'position:sticky;top:0;height:100vh;height:100dvh;overflow:hidden;background:#000;line-height:normal');
         outer.appendChild(pin);
         const C = 'position:absolute;left:50%;top:50%;width:min(84vw,1100px);display:flex;flex-direction:column;align-items:center;' +
           'gap:2.2rem;text-align:center;will-change:transform,opacity';
@@ -1507,13 +1507,28 @@ class Component {
         };
         const prev = arrow('left'), next = arrow('right');
 
-        let W = 0;
+        let W = 0, LW = 0;
+        // phones: the pin is sized to the reader's real height (100vh on mobile Safari is the tall,
+        // toolbar-hidden viewport, so the sticky pin overran the scrollport and shuddered), the caption
+        // block keeps the height of its longest label so the sheet never jumps when the text changes,
+        // and the arrows give way to the sheet (scrolling drives it)
+        const phone = matchMedia('(max-width: 700px)').matches;
+        const reserve = () => {
+          paper.style.minHeight = '';
+          const keep = [sub.textContent, notes.textContent];
+          let mh = 0;
+          PAGES.forEach((pg) => { if (!pg.label) return; sub.textContent = pg.label[0]; notes.textContent = pg.label[1] || ''; mh = Math.max(mh, paper.offsetHeight); });
+          sub.textContent = keep[0]; notes.textContent = keep[1];
+          if (mh) paper.style.minHeight = mh + 'px';
+        };
         const layout = () => {
-          const vh = innerHeight;
+          const vh = phone ? (ov.clientHeight || innerHeight) : innerHeight;
+          LW = innerWidth;
+          if (phone) { pin.style.height = vh + 'px'; reserve(); prev.style.display = next.style.display = 'none'; }
           stepPx = Math.round(vh * 0.7);
           outer.style.height = (vh + (S - 1) * stepPx) + 'px';
           const bw = box.clientWidth, bh = box.clientHeight - vh * 0.03;
-          W = Math.max(200, Math.min(bw - 260, bh * R));
+          W = Math.max(200, Math.min(phone ? bw - 24 : bw - 260, bh * R));
           stage.style.width = W + 'px'; stage.style.height = (W / R) + 'px';
           const at = 'max(1.5%,calc(50% - ' + (W / 2) + 'px - 100px))';
           prev.style.left = at; next.style.right = at;
@@ -1595,7 +1610,8 @@ class Component {
         let q = false;
         const onS = () => { if (!q) { q = true; requestAnimationFrame(frame); } };
         ov.addEventListener('scroll', onS, { passive: true });
-        addEventListener('resize', () => { layout(); fbRoutes.forEach((f) => f()); onS(); });
+        // a phone's toolbar showing/hiding fires resize on every scroll; only a real width change re-lays out
+        addEventListener('resize', () => { if (phone && innerWidth === LW) return; layout(); fbRoutes.forEach((f) => f()); onS(); });
         requestAnimationFrame(() => { layout(); frame(); });
         if (document.fonts) document.fonts.ready.then(() => { layout(); onS(); });
         return wrap;
@@ -2493,7 +2509,15 @@ class Component {
             this._closeReader = close;
           }, 1080);
         }
-        else setTimeout(() => { this._locked = false; window.__vgBusy = false; if (this._lockScroll) this._lockScroll(false); }, 1200);
+        else {
+          // in-page posters (KIRMADA) stay open like a project — cursor moves don't close them; index.html
+          // closes them through this hook after animating the return
+          window.__vgPosterClose = () => {
+            window.__vgPosterClose = null;
+            this._locked = false; window.__vgBusy = false; if (this._lockScroll) this._lockScroll(false);
+            leave(); hoverRow = null;
+          };
+        }
       };
       const leave = () => {
         leak.style.transition = 'none';

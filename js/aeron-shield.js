@@ -111,8 +111,12 @@
   const sstep = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 
   function size() {
-    DPR = Math.min(2, devicePixelRatio || 1);
-    W = cv.clientWidth; H = cv.clientHeight;
+    // a phone's toolbar sliding in and out fires resize on every swipe; the stage is svh-sized, so the
+    // canvas only needs rebuilding when its box really changes
+    const nd = Math.min(2, devicePixelRatio || 1), nw = cv.clientWidth, nh = cv.clientHeight;
+    if (M && nw === W && nh === H && nd === DPR && cv.width) return;
+    DPR = nd;
+    W = nw; H = nh;
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
     lastKey = '';
     if (LAZY && M) {
@@ -143,7 +147,8 @@
 
   function progress() {
     if (FIXED != null) return FIXED;
-    const r = scrub.getBoundingClientRect(), span = r.height - innerHeight;
+    // measured against the stage (100svh), not innerHeight, which changes as a phone's toolbar hides
+    const r = scrub.getBoundingClientRect(), span = r.height - (H || innerHeight);
     return clamp(-r.top / span, 0, 1);
   }
 

@@ -414,6 +414,24 @@
       '<div data-fill style="position:absolute;inset:0;background:#ec7e41;transform-origin:0 50%;transform:scaleX(0);transition:transform 0.25s linear"></div></div>' +
       '<div style="' + FACE + ';font-size:clamp(12px,0.95vw,14px);letter-spacing:0.22em;color:rgba(255,255,255,0.72)">Loading your experience</div>';
     host.appendChild(loader);
+    // phones held upright: a small phone outline turns onto its side under the bar, as a hint to rotate
+    var phoneUp = window.matchMedia && matchMedia('(max-width: 700px) and (orientation: portrait) and (pointer: coarse)').matches;
+    if (phoneUp) {
+      var rk = document.createElement('style');
+      rk.textContent = '@keyframes vgRot{0%,18%{transform:rotate(0deg)}46%,74%{transform:rotate(-90deg)}100%{transform:rotate(0deg)}}' +
+        '@keyframes vgRotArc{0%,14%{opacity:0}26%,40%{opacity:1}50%,100%{opacity:0}}';
+      document.head.appendChild(rk);
+      var rot = document.createElement('div');
+      rot.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:26px;transition:opacity 0.4s ease';
+      rot.innerHTML = '<div style="position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center">' +
+        '<div style="width:20px;height:34px;border:1.5px solid rgba(255,255,255,0.85);border-radius:4px;box-sizing:border-box;position:relative;animation:vgRot 2.8s cubic-bezier(0.65,0,0.35,1) infinite">' +
+        '<span style="position:absolute;left:50%;bottom:3px;width:6px;height:1.5px;margin-left:-3px;background:#ec7e41"></span></div>' +
+        '<span style="position:absolute;inset:0;border:1.5px solid transparent;border-top-color:#ec7e41;border-left-color:#ec7e41;border-radius:50%;transform:rotate(-20deg);animation:vgRotArc 2.8s ease infinite"></span></div>' +
+        '<div style="' + FACE + ';font-size:12px;letter-spacing:0.2em;color:rgba(255,255,255,0.6)">Rotate for landscape</div>';
+      loader.appendChild(rot);
+      var hideRot = function () { if (matchMedia('(orientation: landscape)').matches) rot.style.opacity = '0'; else rot.style.opacity = '1'; };
+      window.addEventListener('resize', hideRot);
+    }
     var fill = loader.querySelector('[data-fill]');
     var SZ = { v: 6849114, a: 3880844 }, got = { v: 0, a: 0 }, shown = 0;
     var setBar = function () {

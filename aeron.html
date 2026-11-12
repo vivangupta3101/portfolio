@@ -31,6 +31,8 @@
   #sh-scrub{--paper:#efefec;--ink:#0e0e0d;--mute:#85877f;--lime-deep:#6f8c0e;--pad:clamp(16px,2.2vw,34px);position:relative;height:1000vh;background:var(--paper);color:var(--ink);font:500 11px/1.35 "Inter Tight",system-ui,sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:.005em}
   #sh-scrub a{color:inherit;text-decoration:none}
   .sh-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
+  /* phones: a swipe travels much further than a wheel notch, so the scrub is shorter */
+  @media (max-width:700px){#sh-scrub{height:650vh}}
   #sh-cv{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transform:scale(1.035);transition:opacity 1.4s cubic-bezier(.2,.7,.1,1),transform 2.2s cubic-bezier(.2,.7,.1,1)}
   .sh-ready #sh-cv{opacity:1;transform:none}
   .sh-ui{position:absolute;inset:0;pointer-events:none;padding:calc(var(--pad) + 46px + env(safe-area-inset-top,0px)) var(--pad) var(--pad)}
@@ -159,6 +161,45 @@
   </div>
   <img id="ae-runner" src="assets/images/aeron/runner.webp" alt="Runner wearing Aeron eyewear" width="1292" height="2000" style="position: absolute; left: -6vw; bottom: 0; z-index: 2; height: 84vh; width: auto; display: block; transform: translateY(60%); will-change: transform">
 </section>
+
+<section data-screen-label="Coming soon" id="ae-soon" style="position: relative; z-index: 3; background: #ffffff; min-height: 108vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; padding: 120px 40px">
+  <svg id="ae-soon-svg" viewBox="0 0 760 130" style="width: min(70vw, 760px); height: auto; overflow: visible" aria-label="Coming soon" role="img">
+    <text x="380" y="98" text-anchor="middle" style="font-family: Poppins, sans-serif; font-weight: 600; font-size: 112px; letter-spacing: -0.03em; fill: none; stroke: #131313; stroke-width: 1.2">Coming soon</text>
+  </svg>
+  <a id="ae-soon-back" href="index.html" style="display: inline-flex; align-items: center; gap: 12px; font-family: Outfit, sans-serif; font-size: 12px; letter-spacing: 0.16em; font-weight: 500; color: rgba(19,19,19,0.62); opacity: 0; transform: translateY(10px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22,1,0.36,1), color 0.35s ease">
+    <span class="ae-soon-arrow" style="display: inline-block; transition: transform 0.35s cubic-bezier(0.22,1,0.36,1)">&#8592;</span>
+    <span>BACK TO PROJECTS</span>
+  </a>
+</section>
+<script>
+  (function () {
+    var sec = document.getElementById('ae-soon');
+    if (!sec) return;
+    var t = document.querySelector('#ae-soon-svg text');
+    var back = document.getElementById('ae-soon-back');
+    var arrow = back.querySelector('.ae-soon-arrow');
+    var len = 2600;
+    try { len = t.getComputedTextLength() * 3.2; } catch (e) {}
+    t.style.strokeDasharray = len;
+    t.style.strokeDashoffset = len;
+    t.style.transition = 'stroke-dashoffset 2.4s cubic-bezier(0.33,0,0.16,1), fill 0.9s ease 1.7s';
+    var played = false;
+    var play = function () {
+      if (played) return;
+      played = true;
+      requestAnimationFrame(function () {
+        t.style.strokeDashoffset = '0';
+        t.style.fill = '#131313';
+        setTimeout(function () { back.style.opacity = '1'; back.style.transform = 'translateY(0)'; }, 1400);
+      });
+    };
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) play(); }); }, { threshold: 0.4 }).observe(sec);
+    } else play();
+    back.addEventListener('mouseenter', function () { back.style.color = '#131313'; arrow.style.transform = 'translateX(-6px)'; });
+    back.addEventListener('mouseleave', function () { back.style.color = 'rgba(19,19,19,0.62)'; arrow.style.transform = 'translateX(0)'; });
+  })();
+</script>
 
 <script>
   (function () {

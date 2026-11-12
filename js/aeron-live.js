@@ -628,7 +628,11 @@ const AUD = 240, ENTRY_T = 2.2, HOLD = STORY + 6;
 let mode = 'hold', t0 = 0, loaded = false, played = false, locked = false, lockY = 0, done = false;
 let actx = null, voice = null, chain = 0;
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-function fit(){ resize(innerWidth, innerHeight, Math.min(devicePixelRatio||1, 1.75)); }
+// sized to the hero frame (100vh, fixed on phones) rather than innerHeight, which changes every time a
+// phone's toolbar slides; rebuilding the canvas on each of those was the scroll stutter
+const frameEl = document.getElementById('ae-frame');
+const vw = () => (frameEl && frameEl.clientWidth) || innerWidth, vh = () => (frameEl && frameEl.clientHeight) || innerHeight;
+function fit(){ resize(vw(), vh(), Math.min(devicePixelRatio||1, 1.75)); }
 addEventListener('resize', fit); fit();
 function swapVoice(full, overlap){
   if(!actx) return;
@@ -674,6 +678,9 @@ window.__aeron = { play, sound(on){
 // the header has dissolved to bare paper: cut straight onto the hero (also paper at ENTRY_T), no visible scroll
 addEventListener('sh:handoff', () => { if(!played && loaded && hero) enter(0); });
 const block = e => { if(locked) e.preventDefault(); };
+const touchy = matchMedia('(hover: none)').matches;
+let hard = false;
+function hardLock(on){ if(!touchy || hard === on) return; hard = on; const v = on ? 'hidden' : ''; document.documentElement.style.overflow = v; document.body.style.overflow = v; }
 addEventListener('wheel', block, { passive:false });
 addEventListener('touchmove', block, { passive:false });
 addEventListener('keydown', e => { if(locked && [' ','PageDown','PageUp','ArrowDown','ArrowUp','Home','End'].includes(e.key)) e.preventDefault(); });
@@ -683,7 +690,7 @@ addEventListener('scroll', () => {
   if(hero.getBoundingClientRect().top <= innerHeight*0.3) enter();
 }, { passive:true });
 function enter(dur){
-  played = true; locked = true;
+  played = true; locked = true; hardLock(true);
   const y0 = scrollY, y1 = y0 + hero.getBoundingClientRect().top, d = dur ?? 650, st = performance.now();
   if(!d){ lockY = Math.round(y1); scrollTo(0, lockY); play(); return; }
   lockY = y0;
@@ -772,7 +779,7 @@ let warm = 0;
 function frame(now){
   lastFrame = performance.now();
   const dpr = Math.min(devicePixelRatio||1, 1.75);
-  if (canvas.width !== Math.round(innerWidth*dpr) || canvas.height !== Math.round(innerHeight*dpr)) fit();
+  if (canvas.width !== Math.round(vw()*dpr) || canvas.height !== Math.round(vh()*dpr)) fit();
   let T = ENTRY_T;
   if (mode === 'story') T = reduce ? HOLD : Math.min(ENTRY_T + (now - t0)/1000, HOLD);
   // while the header is being scrubbed the hero is off-screen: skip the GPU work and pixel readbacks entirely
@@ -780,7 +787,7 @@ function frame(now){
   const far = mode !== 'story' && hr && (hr.top > innerHeight*1.6 || hr.bottom < -innerHeight*0.6);
   if (!far || warm < 3) { warm++; const pc = mode === 'story' ? ENTRY_T + (now - t0)/1000 : null;   // play-relative clock: every play identical
     draw(T, pc ?? now/1000, pc ?? ENTRY_T); bandSync(); topSync(); }
-  if(mode === 'story' && !done && T > STORY + 0.6){ done = true; locked = false; if(arrow) arrow.style.opacity = '0.72'; }
+  if(mode === 'story' && !done && T > STORY + 0.6){ done = true; locked = false; hardLock(false); if(arrow) arrow.style.opacity = '0.72'; }
   requestAnimationFrame(frame);
 }
 ready.then(() => {
